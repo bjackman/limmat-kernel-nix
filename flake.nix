@@ -21,7 +21,7 @@
             limmat = inputs.limmat.packages."${system}".default;
           in
           rec {
-            limmatToml = pkgs.writeText "limmat.toml" ''
+            limmatTOML = pkgs.writeText "limmat.toml" ''
               [[tests]]
               name = "hello"
               command = "echo hello world"
@@ -37,7 +37,7 @@
 
               installPhase = ''
                 makeWrapper ${limmat}/bin/limmat $out/bin/limmat-kernel \
-                  --set LIMMAT_CONFIG ${limmatToml}
+                  --set LIMMAT_CONFIG ${limmatTOML}
               '';
             };
           });
