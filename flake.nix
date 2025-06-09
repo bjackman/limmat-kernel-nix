@@ -20,7 +20,13 @@
             pkgs = import nixpkgs { inherit system; };
             limmat = inputs.limmat.packages."${system}".default;
           in
-          {
+          rec {
+            limmatToml = pkgs.writeText "limmat.toml" ''
+              [[tests]]
+              name = "hello"
+              command = "echo hello world"
+            '';
+
             default = pkgs.stdenv.mkDerivation {
               pname = "limmat-kernel";
               version = "0.1.0";
@@ -28,13 +34,10 @@
               src = ./.;
 
               nativeBuildInputs = [ pkgs.makeWrapper ];
-              buildInputs = [ limmat ];
 
               installPhase = ''
-                mkdir -p $out/etc
-                cp limmat.toml $out/etc
                 makeWrapper ${limmat}/bin/limmat $out/bin/limmat-kernel \
-                  --set LIMMAT_CONFIG $out/etc/limmat.toml
+                  --set LIMMAT_CONFIG ${limmatToml}
               '';
             };
           });
