@@ -1,0 +1,5 @@
+# This is the limmat.toml for _hacking on this repository_, it is not intended
+# for kernel development.
+[[tests]]
+name = "flake-check"
+command = "nix flake check"
