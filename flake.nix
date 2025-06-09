@@ -25,6 +25,27 @@
       {
         formatter = pkgs.nixfmt-tree;
 
+        # Check formatting.
+        # TODO: This is dumb, there has to be a simple way to configure this.
+        # There's https://github.com/numtide/treefmt-nix but it's also
+        # over-engineered.
+        checks.default =
+          pkgs.runCommand "check-nix-format"
+            {
+              nativeBuildInputs = [ pkgs.nixfmt-rfc-style ];
+              src = nixpkgs.lib.fileset.toSource {
+                root = ./.;
+                fileset = nixpkgs.lib.fileset.gitTracked ./.;
+              };
+              output = "/dev/null";
+            }
+            ''
+              for file in $(find $src -name "*.nix"); do
+                nixfmt --check $file
+              done
+              touch $out
+            '';
+
         packages = rec {
 
           limmatTOML = format.generate "limmat.toml" limmatConfig;
