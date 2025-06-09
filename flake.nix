@@ -8,15 +8,25 @@
   };
 
   outputs =
-    inputs@{ self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+    inputs@{
+      self,
+      nixpkgs,
+      flake-utils,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs { inherit system; };
         limmat = inputs.limmat.packages."${system}".default;
         limmatConfig = (pkgs.callPackage ./limmat-config.nix { }).config;
         format = pkgs.formats.toml { };
-      in {
+      in
+      {
+        formatter = pkgs.nixfmt-tree;
+
         packages = rec {
+
           limmatTOML = format.generate "limmat.toml" limmatConfig;
 
           default = pkgs.stdenv.mkDerivation {
@@ -33,5 +43,6 @@
             '';
           };
         };
-      });
+      }
+    );
 }
