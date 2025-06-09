@@ -4,43 +4,34 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-25.05";
     limmat.url = "github:bjackman/limmat";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
-    inputs@{ self, nixpkgs, ... }:
-    {
-      packages =
-        let
-          # Other systems probably work too, I just don't have them to test. If you wanna try on Arm
-          # or Darwin, add the system here, and if it works send a PR.
-          supportedSystems = [ "x86_64-linux" ];
-          forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-        in
-        forAllSystems (
-          system:
-          let
-            pkgs = import nixpkgs { inherit system; };
-            limmat = inputs.limmat.packages."${system}".default;
-            limmatConfig = (pkgs.callPackage ./limmat-config.nix { }).config;
-            format = pkgs.formats.toml { };
-          in
-          rec {
-            limmatTOML = format.generate "limmat.toml" limmatConfig;
+    inputs@{ self, nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+        limmat = inputs.limmat.packages."${system}".default;
+        limmatConfig = (pkgs.callPackage ./limmat-config.nix { }).config;
+        format = pkgs.formats.toml { };
+      in {
+        packages = rec {
+          limmatTOML = format.generate "limmat.toml" limmatConfig;
 
-            default = pkgs.stdenv.mkDerivation {
-              pname = "limmat-kernel";
-              version = "0.1.0";
+          default = pkgs.stdenv.mkDerivation {
+            pname = "limmat-kernel";
+            version = "0.1.0";
 
-              src = ./.;
+            src = ./.;
 
-              nativeBuildInputs = [ pkgs.makeWrapper ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
 
-              installPhase = ''
-                makeWrapper ${limmat}/bin/limmat $out/bin/limmat-kernel \
-                  --set LIMMAT_CONFIG ${limmatTOML}
-              '';
-            };
-          }
-        );
-    };
+            installPhase = ''
+              makeWrapper ${limmat}/bin/limmat $out/bin/limmat-kernel \
+                --set LIMMAT_CONFIG ${limmatTOML}
+            '';
+          };
+        };
+      });
 }
