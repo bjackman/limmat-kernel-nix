@@ -13,19 +13,24 @@
         # or Darwin, add the system here, and if it works send a PR.
         supportedSystems = [ "x86_64-linux" ];
         forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+        limmatConfig = {
+          tests = [
+            {
+              name = "hello";
+              command = "echo hello world";
+            }
+          ];
+        };
       in
         forAllSystems (
           system:
           let
             pkgs = import nixpkgs { inherit system; };
             limmat = inputs.limmat.packages."${system}".default;
+            format = pkgs.formats.toml {};
           in
           rec {
-            limmatTOML = pkgs.writeText "limmat.toml" ''
-              [[tests]]
-              name = "hello"
-              command = "echo hello world"
-            '';
+            limmatTOML = format.generate "limmat.toml" limmatConfig;
 
             default = pkgs.stdenv.mkDerivation {
               pname = "limmat-kernel";
