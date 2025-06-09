@@ -1,11 +1,11 @@
 { pkgs }:
 {
-    config = {
-        tests = [
-            {
-                name = "hello";
-                command = "echo hello world";
-            }
-        ];
-    };
+  config = {
+    tests = [
+      {
+        name = "hello";
+        command = "echo hello world";
+      }
+    ];
+  };
 }

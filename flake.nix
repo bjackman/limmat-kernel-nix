@@ -6,21 +6,23 @@
     limmat.url = "github:bjackman/limmat";
   };
 
-  outputs = inputs@{ self, nixpkgs, ... }: {
-    packages =
-      let
-        # Other systems probably work too, I just don't have them to test. If you wanna try on Arm
-        # or Darwin, add the system here, and if it works send a PR.
-        supportedSystems = [ "x86_64-linux" ];
-        forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      in
+  outputs =
+    inputs@{ self, nixpkgs, ... }:
+    {
+      packages =
+        let
+          # Other systems probably work too, I just don't have them to test. If you wanna try on Arm
+          # or Darwin, add the system here, and if it works send a PR.
+          supportedSystems = [ "x86_64-linux" ];
+          forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+        in
         forAllSystems (
           system:
           let
             pkgs = import nixpkgs { inherit system; };
             limmat = inputs.limmat.packages."${system}".default;
-            limmatConfig = (pkgs.callPackage ./limmat-config.nix {}).config;
-            format = pkgs.formats.toml {};
+            limmatConfig = (pkgs.callPackage ./limmat-config.nix { }).config;
+            format = pkgs.formats.toml { };
           in
           rec {
             limmatTOML = format.generate "limmat.toml" limmatConfig;
@@ -38,6 +40,7 @@
                   --set LIMMAT_CONFIG ${limmatTOML}
               '';
             };
-          });
-  };
+          }
+        );
+    };
 }
