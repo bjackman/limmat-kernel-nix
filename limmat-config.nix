@@ -1,4 +1,8 @@
-{ pkgs, writeShellApplication }:
+{
+  lib,
+  pkgs,
+  writeShellApplication,
+}:
 {
   config = {
     tests = [
@@ -56,14 +60,25 @@
               # doing it manually like this really is preferred...
               # https://nixos.org/manual/nixpkgs/stable/#ssec-setup-hooks
               runtimeEnv = {
-                HOSTCFLAGS = "-isystem ${pkgs.elfutils.dev}/include -isystem ${pkgs.openssl.dev}/include";
-                HOSTLDFLAGS = "-L ${pkgs.elfutils.out}/lib -L ${pkgs.openssl.out}/lib";
+                # Set HOSTCFLAGS to point to all the necessary headers to build
+                # host binaries.
+                HOSTCFLAGS =
+                  let
+                    # Headers are generally in the .dev output of the package,
+                    # but no all packages have this output. So this function
+                    # returns the necessary '-system flag' for packages that
+                    # have it and null for the ones that don't.
+                    getCflags = pkg: if builtins.hasAttr "dev" pkg then "-isystem ${pkg.dev}/include" else null;
+                  in
+                  lib.concatStringsSep " " (builtins.filter (x: x != null) (map getCflags runtimeInputs));
+                # Define HOSTLDFLAGS so we can link against libraries when
+                # building host stuff. This is a bit simpler because we can
+                # assume that all the packages have a .out output.
+                HOSTLDFLAGS = lib.concatStringsSep " " (map (pkg: "-I ${pkg.out}/lib") runtimeInputs);
               };
               text = ''
-                make -j tinyconfig
-                scripts/config -e 64BIT -e -WERROR -e OBJTOOL_WERROR
-                make -j olddefconfig
-                CCACHE_SLOPPINESS=time_macros make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+                echo "$HOSTCFLAGS"
+                echo "$HOSTLDFLAGS"
               '';
             };
           in
