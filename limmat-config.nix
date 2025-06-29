@@ -59,15 +59,14 @@
           runtimeEnv = {
             # Set HOSTCFLAGS to point to all the necessary headers to build
             # host binaries.
-            HOSTCFLAGS =
-              let
-                # Headers are generally in the .dev output of the package,
-                # but no all packages have this output. So this function
-                # returns the necessary '-system flag' for packages that
-                # have it and null for the ones that don't.
-                getCflags = pkg: if builtins.hasAttr "dev" pkg then "-isystem ${pkg.dev}/include" else null;
-              in
-              lib.concatStringsSep " " (builtins.filter (x: x != null) (map getCflags runtimeInputs));
+            #
+            # Headers are generally in the .dev output of the package,
+            # but no all packages have this output. catAttrs is a convenient
+            # way to get that attribute for the ones that have it and ignore
+            # the ones that don't.
+            HOSTCFLAGS = lib.concatStringsSep " " (
+              map (pkgDev: "-isystem ${pkgDev}/include") (builtins.catAttrs "dev" runtimeInputs)
+            );
             # Define HOSTLDFLAGS so we can link against libraries when
             # building host stuff. This is a bit simpler because we can
             # assume that all the packages have a .out output.
