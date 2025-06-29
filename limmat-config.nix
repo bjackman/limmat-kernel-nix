@@ -71,7 +71,7 @@
             # Define HOSTLDFLAGS so we can link against libraries when
             # building host stuff. This is a bit simpler because we can
             # assume that all the packages have a .out output.
-            HOSTLDFLAGS = lib.concatStringsSep " " (map (pkg: "-I ${pkg.out}/lib") runtimeInputs);
+            HOSTLDFLAGS = lib.concatStringsSep " " (map (pkg: "-L ${pkg.out}/lib") runtimeInputs);
             # This may or may not make ccache work better I dunno.
             CCACHE_SLOPPINESS = "time_macros";
           };
