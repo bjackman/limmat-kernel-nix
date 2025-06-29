@@ -72,6 +72,8 @@
             # building host stuff. This is a bit simpler because we can
             # assume that all the packages have a .out output.
             HOSTLDFLAGS = lib.concatStringsSep " " (map (pkg: "-I ${pkg.out}/lib") runtimeInputs);
+            # This may or may not make ccache work better I dunno.
+            CCACHE_SLOPPINESS = "time_macros";
           };
         };
     in
@@ -87,7 +89,7 @@
                 make -j tinyconfig
                 scripts/config -e 64BIT -e -WERROR -e OBJTOOL_WERROR
                 make -j olddefconfig
-                CCACHE_SLOPPINESS=time_macros make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+                make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
                 '';
               };
             in
