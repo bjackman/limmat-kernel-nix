@@ -73,8 +73,10 @@
                 HOSTLDFLAGS = lib.concatStringsSep " " (map (pkg: "-I ${pkg.out}/lib") runtimeInputs);
               };
               text = ''
-                echo "$HOSTCFLAGS"
-                echo "$HOSTLDFLAGS"
+                make -j tinyconfig
+                scripts/config -e 64BIT -e -WERROR -e OBJTOOL_WERROR
+                make -j olddefconfig
+                CCACHE_SLOPPINESS=time_macros make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
               '';
             };
           in
