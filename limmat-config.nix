@@ -45,10 +45,6 @@
                 # Other stuff.
                 ccache
               ];
-              extraShellCheckFlags = [
-                "--external-sources"
-                "--source-path=${pkgs.stdenv}"
-              ];
               # TODO: Even if we did actually prefer to build the environment
               # quite manually, it seems unlikely that specifying these
               # variables completely explicitly like this would really be
