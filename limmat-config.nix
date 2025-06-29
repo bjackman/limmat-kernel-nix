@@ -86,10 +86,10 @@
               pkg = writeBuildScript {
                 name = "test-build_min";
                 text = ''
-                make -j tinyconfig
-                scripts/config -e 64BIT -e -WERROR -e OBJTOOL_WERROR
-                make -j olddefconfig
-                make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+                  make -j tinyconfig
+                  scripts/config -e 64BIT -e -WERROR -e OBJTOOL_WERROR
+                  make -j olddefconfig
+                  make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
                 '';
               };
             in
