@@ -39,9 +39,9 @@
           # 'nix develop'. So.... let's just call `nix develop`...? I'm pretty
           # sure there are gonna be sketchy consequences of this but I'm not
           # really sure what they will be.
-          writeShellScript "nix-develop_build_min" ''
+          "${writeShellScript "nix-develop_build_min" ''
             ${pkgs.nix}/bin/nix develop ${kernelDevShell.drvPath} --command ${script}
-          '';
+          ''}";
       }
     ];
   };
