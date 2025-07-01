@@ -48,7 +48,8 @@
           # sure there are gonna be sketchy consequences of this but I'm not
           # really sure what they will be.
           "${writeShellScript "nix-develop_build_min" ''
-            ${pkgs.nix}/bin/nix develop ${kernelDevShell.drvPath} --command ${script}
+            ${pkgs.nix}/bin/nix --extra-experimental-features 'nix-command flakes' \
+              develop ${kernelDevShell.drvPath} --command ${script}
           ''}";
       }
     ];

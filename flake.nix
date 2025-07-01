@@ -25,26 +25,60 @@
       {
         formatter = pkgs.nixfmt-tree;
 
-        # Check formatting.
-        # TODO: This is dumb, there has to be a simple way to configure this.
-        # There's https://github.com/numtide/treefmt-nix but it's also
-        # over-engineered.
-        checks.default =
-          pkgs.runCommand "check-nix-format"
-            {
-              nativeBuildInputs = [ pkgs.nixfmt-rfc-style ];
-              src = nixpkgs.lib.fileset.toSource {
-                root = ./.;
-                fileset = nixpkgs.lib.fileset.gitTracked ./.;
-              };
-              output = "/dev/null";
-            }
-            ''
-              for file in $(find $src -name "*.nix"); do
-                nixfmt --check $file
-              done
+        checks = {
+          # Check formatting.
+          #
+          # TODO: This is dumb, there has to be a simple way to configure this.
+          # There's https://github.com/numtide/treefmt-nix but it's also
+          # over-engineered.
+          format =
+            pkgs.runCommand "check-nix-format"
+              {
+                nativeBuildInputs = [ pkgs.nixfmt-rfc-style ];
+                src = nixpkgs.lib.fileset.toSource {
+                  root = ./.;
+                  fileset = nixpkgs.lib.fileset.gitTracked ./.;
+                };
+                output = "/dev/null";
+              }
+              ''
+                for file in $(find $src -name "*.nix"); do
+                  nixfmt --check $file
+                done
+                touch $out
+              '';
+          # Check that the tests defined in the Limmat config pass against a
+          # reference kernel source. The kernel from nixpkgs is a reasonable
+          # choice for this.
+          test =
+            let
+              refKernel = pkgs.linuxPackages.kernel;
+            in
+            pkgs.runCommand "test-limmat-config" { } ''
+              set -eux
+              cd $TMPDIR
+
+              ${pkgs.gnutar}/bin/tar xf ${refKernel.src}
+              cd linux-${refKernel.version}
+
+              # By default limmat logs to your home dir (dumb?). This isn't
+              # accessible from the sandbox.
+              export LIMMAT_LOGFILE=$TMPDIR/limmat.log
+
+              # Limmat fails if you aren't in a Git repository with commits in
+              # it.
+              ${pkgs.git}/bin/git init
+              ${pkgs.git}/bin/git config user.email chung.flunch@example.com
+              ${pkgs.git}/bin/git config user.name "Chungonius Flunchér XIII"
+              ${pkgs.git}/bin/git add .
+              ${pkgs.git}/bin/git commit -m "init fake repo to make limmat happy"
+
+              ${self.packages."${system}".limmat-kernel}/bin/limmat-kernel \
+                --git-binary ${pkgs.git}/bin/git --result-db $TMPDIR/limmat-db \
+                test build_min
               touch $out
             '';
+        };
 
         packages = rec {
 
