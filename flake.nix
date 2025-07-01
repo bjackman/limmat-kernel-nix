@@ -50,7 +50,7 @@
 
           limmatTOML = format.generate "limmat.toml" limmatConfig;
 
-          default = pkgs.stdenv.mkDerivation {
+          limmat-kernel = pkgs.stdenv.mkDerivation {
             pname = "limmat-kernel";
             version = "0.1.0";
 
@@ -63,6 +63,7 @@
                 --set LIMMAT_CONFIG ${limmatTOML}
             '';
           };
+          default = limmat-kernel;
         };
       }
     );
