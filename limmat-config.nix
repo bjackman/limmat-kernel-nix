@@ -47,6 +47,9 @@
           # 'nix develop'. So.... let's just call `nix develop`...? I'm pretty
           # sure there are gonna be sketchy consequences of this but I'm not
           # really sure what they will be.
+          # OKAY: one of the sketchy outcomes of this is that we cannot run this
+          # inside the Nix build sandbox. This prevents us from defining a flake
+          # check that verifies the configuration. Hmm.
           "${writeShellScript "nix-develop_build_min" ''
             ${pkgs.nix}/bin/nix develop ${kernelDevShell.drvPath} --command ${script}
           ''}";
