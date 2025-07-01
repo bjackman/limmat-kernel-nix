@@ -24,11 +24,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1749070065,
-        "narHash": "sha256-kA8b2NHUuBauvdSgYxNyGV2YSTfB1vR/V14bz0e5SQU=",
+        "lastModified": 1751406254,
+        "narHash": "sha256-Z/BKsnd6xS2FSvUQ4QRPpAFjoDTstM3l6DAuddeXoL0=",
         "owner": "bjackman",
         "repo": "limmat",
-        "rev": "8f67525001cd6515b42e71822c99319f66ee62f2",
+        "rev": "da5ee3da6fa5b9b4414830819e0566cc7b17226d",
         "type": "github"
       },
       "original": {
