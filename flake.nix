@@ -87,6 +87,10 @@
                   set -eux
                   cd "$TMPDIR"
 
+                  # Why do we re-extract the kernel every time? If we just have
+                  # a Nix derivation that produces a kernel repository then
+                  # Limmat will fall over because the .git dir has what Git
+                  # describes as "dubious permissions".
                   tar xf ${refKernel.src}
                   cd linux-${refKernel.version}
 
