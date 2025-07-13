@@ -56,20 +56,33 @@
         # flake check which would run inside the build sandbox. So instead the
         # tests for the config are exposed as an app that is run
         # non-hermetically.
-        apps.test-golden = {
-          type = "app";
-          program =
-            let
-              pkg = pkgs.callPackage ./test-golden.nix {
-                # Passing packages "manually" as a normal arg like this might be
-                # in poor taste, I'm not sure. Like maybe the "proper" way is via
-                # a nixpkgs overlay or something like that.
-                limmat-kernel = self.packages."${system}".limmat-kernel;
-                inherit limmatConfig;
-                inherit refKernel;
-              };
-            in
-            "${pkg}/bin/limmat-kernel-test-golden";
+        apps = {
+          test-golden = {
+            type = "app";
+            program =
+              let
+                pkg = pkgs.callPackage ./test-golden.nix {
+                  # Passing packages "manually" as a normal arg like this might be
+                  # in poor taste, I'm not sure. Like maybe the "proper" way is via
+                  # a nixpkgs overlay or something like that.
+                  limmat-kernel = self.packages."${system}".limmat-kernel;
+                  inherit limmatConfig;
+                  inherit refKernel;
+                };
+              in
+              "${pkg}/bin/limmat-kernel-test-golden";
+          };
+
+          run-vm = {
+            type = "app";
+            program =
+              let
+                pkg = pkgs.callPackage ./run-vm.nix {
+                  nixosSystem = nixpkgs.lib.nixosSystem;
+                };
+              in
+              "${pkg}/bin/run-nixos-vm";
+          };
         };
 
         devShells.kernel = pkgs.mkShell {
