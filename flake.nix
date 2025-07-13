@@ -70,7 +70,7 @@
         # flake check which would run inside the build sandbox. So instead the
         # tests for the config are exposed as an app that is run
         # non-hermetically.
-        apps.test = {
+        apps.test-golden = {
           type = "app";
           program =
             let

@@ -3,3 +3,7 @@
 [[tests]]
 name = "flake-check"
 command = "nix flake check"
+
+[[tests]]
+name = "test-golden"
+command = "nix run .#test-golden"
