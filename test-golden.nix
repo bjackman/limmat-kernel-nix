@@ -1,8 +1,12 @@
 {
   pkgs,
   lib,
+  # The main package of this repository.
   limmat-kernel,
+  # The Limmat configuration defined by this repository as a Nix attrset.
   limmatConfig,
+  # The kernel derivation to be used as the golden kernel code to test against.
+  refKernel,
 }:
 let
   refKernel = pkgs.linuxPackages.kernel;

@@ -19,7 +19,13 @@
       let
         pkgs = import nixpkgs { inherit system; };
         limmat = inputs.limmat.packages."${system}".default;
-        limmatConfig = (pkgs.callPackage ./limmat-config.nix { }).config;
+        # This package will be used for golden testing, and also to grab the
+        # toolchains etc for the devShell.
+        refKernel = pkgs.linuxPackages.kernel;
+        limmatConfig =
+          (pkgs.callPackage ./limmat-config.nix {
+            kernelDevShell = self.devShells."${system}".kernel;
+          }).config;
         format = pkgs.formats.toml { };
       in
       {
@@ -80,9 +86,15 @@
                 # a nixpkgs overlay or something like that.
                 limmat-kernel = self.packages."${system}".limmat-kernel;
                 inherit limmatConfig;
+                inherit refKernel;
               };
             in
             "${pkg}/bin/limmat-kernel-test-golden";
+        };
+
+        devShells.kernel = pkgs.mkShell {
+          inputsFrom = [ refKernel ];
+          packages = [ pkgs.ccache ];
         };
       }
     );

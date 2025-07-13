@@ -3,8 +3,8 @@
   pkgs,
   writeShellScript,
   writeShellApplication,
-  mkShell,
   linuxPackages,
+  kernelDevShell,
 }:
 {
   # Why does this need to return everything inside a ".config" field instead of
@@ -27,10 +27,6 @@
               make -j olddefconfig
               make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
             '';
-            kernelDevShell = mkShell {
-              inputsFrom = [ linuxPackages.kernel ];
-              packages = [ pkgs.ccache ];
-            };
           in
           # Alright, so we are gonna want to define a devShell anyway. And
           # devShells include all the necessary magic for setting up the build
