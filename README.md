@@ -13,7 +13,7 @@ config to refer directly to those binaries.
 ## TODO
 
 - [ ] Get all the tasks from `limmat-kernel` coded up via a Nix config.
-- [ ] Set up tests to ensure the configs all run against a golden kernel source,
+- [x] Set up tests to ensure the configs all run against a golden kernel source,
       which can then be run via `nix flake check`.
 
       Note I tried this, but it's impossible to do this with a flake check and
@@ -21,6 +21,9 @@ config to refer directly to those binaries.
       that can't be done from inside the build sandbox. This does seem to
       confirm that we might be doing something fundementally bogus here. But,
       I'm not sure.
+
+      Anyway, I worked around it by just hacking together an `apps` output that
+      can be run for testing.
 - [x] Figure out how to create `devShell`s for the scripts that get run in the
       Limmat config.
 - [ ] Try to do some general niceness for configuration, like:
