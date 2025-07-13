@@ -106,7 +106,11 @@
                   git add .
                   git commit -m "init fake repo to make limmat happy"
 
-                  limmat-kernel --result-db "$TMPDIR"/limmat-db test build_min
+                  # Disable warning if loop always has exactly one iteration.
+                  # shellcheck disable=SC2043
+                  for test in ${pkgs.lib.strings.concatStringsSep " " (map (t: t.name) limmatConfig.tests)}; do
+                    limmat-kernel --result-db "$TMPDIR"/limmat-db test "$test"
+                  done
                 '';
               };
             in
