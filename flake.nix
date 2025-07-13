@@ -47,7 +47,6 @@
             '';
 
         packages = rec {
-
           limmatTOML = format.generate "limmat.toml" limmatConfig;
 
           limmat-kernel = pkgs.stdenv.mkDerivation {
@@ -64,6 +63,50 @@
             '';
           };
           default = limmat-kernel;
+        };
+
+        # Because of the hackery involved in this system, where we use `nix
+        # develop` from within the config, this can't be tested via a normal
+        # flake check which would run inside the build sandbox. So instead the
+        # tests for the config are exposed as an app that is run
+        # non-hermetically.
+        apps.test = {
+          type = "app";
+          program =
+            let
+              refKernel = pkgs.linuxPackages.kernel;
+              pkg = pkgs.writeShellApplication {
+                name = "limmat-kernel-test-golden";
+                runtimeInputs = [
+                  pkgs.gnutar
+                  pkgs.git
+                  self.packages."${system}".limmat-kernel
+                ];
+                text = ''
+                  TMPDIR="''${TMPIR:-/tmp}"
+                  set -eux
+                  cd "$TMPDIR"
+
+                  tar xf ${refKernel.src}
+                  cd linux-${refKernel.version}
+
+                  # By default limmat logs to your home dir (dumb?). This isn't
+                  # accessible from the sandbox.
+                  export LIMMAT_LOGFILE=$TMPDIR/limmat.log
+
+                  # Limmat fails if you aren't in a Git repository with commits in
+                  # it.
+                  git init
+                  git config user.email chung.flunch@example.com
+                  git config user.name "Chungonius Flunchér XIII"
+                  git add .
+                  git commit -m "init fake repo to make limmat happy"
+
+                  limmat-kernel --result-db "$TMPDIR"/limmat-db test build_min
+                '';
+              };
+            in
+            "${pkg}/bin/limmat-kernel-test-golden";
         };
       }
     );
