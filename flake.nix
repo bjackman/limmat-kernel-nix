@@ -68,8 +68,8 @@
             };
           };
 
-          run-vm = flake-utils.lib.mkApp {
-            drv = pkgs.callPackage ./run-vm.nix {
+          vm-run = flake-utils.lib.mkApp {
+            drv = pkgs.callPackage ./vm-run.nix {
               nixosSystem = nixpkgs.lib.nixosSystem;
             };
           };

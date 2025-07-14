@@ -32,7 +32,7 @@ let
   nixosRunner = nixosConfig.config.system.build.vm;
 in
 pkgs.writeShellApplication {
-  name = "limmat-kernel-run-vm";
+  name = "limmat-kernel-vm-run";
   runtimeInputs = [ nixosRunner ];
   text = ''
     set -eux
