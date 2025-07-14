@@ -8,10 +8,12 @@
   nixosSystem,
 }:
 let
+  hostName = "testvm";
   nixosConfig = nixosSystem {
     inherit system;
     modules = [
       {
+        networking.hostName = hostName;
         virtualisation.vmVariant.virtualisation = {
           graphics = false;
           # This BIOS doesn't mess up the terminal and is apparently faster.
@@ -25,5 +27,18 @@ let
       }
     ];
   };
+  # This is the "official" entry point for running NixOS as a QEMU guest, we'll
+  # wrap this.
+  nixosRunner = nixosConfig.config.system.build.vm;
 in
-nixosConfig.config.system.build.vm
+pkgs.writeShellApplication {
+  name = "limmat-kernel-run-vm";
+  runtimeInputs = [ nixosRunner ];
+  text = ''
+    set -eux
+
+    export NIXPKGS_QEMU_KERNEL_${hostName}="$1"
+    shift
+    ${nixosRunner}/bin/run-${hostName}-vm "$@"
+  '';
+}

@@ -81,7 +81,7 @@
                   nixosSystem = nixpkgs.lib.nixosSystem;
                 };
               in
-              "${pkg}/bin/run-nixos-vm";
+              "${pkg}/bin/limmat-kernel-run-vm";
           };
         };
 
