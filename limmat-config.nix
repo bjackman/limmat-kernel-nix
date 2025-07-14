@@ -45,6 +45,8 @@ in
       {
         name = "build_min";
         command = mkDevShellScript "build_min" ''
+          set -eux
+
           make -j tinyconfig
           scripts/config -e 64BIT -e -WERROR -e OBJTOOL_WERROR
           make -j olddefconfig
