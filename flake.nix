@@ -49,6 +49,11 @@
             '';
           };
           default = limmat-kernel;
+
+          vm-run = pkgs.callPackage ./vm-run.nix {
+            nixosSystem = nixpkgs.lib.nixosSystem;
+          };
+          vm-kconfig = pkgs.callPackage ./vm-kconfig.nix { };
         };
 
         # Because of the hackery involved in this system, where we use `nix
@@ -66,16 +71,6 @@
               inherit limmatConfig;
               inherit refKernel;
             };
-          };
-
-          vm-run = flake-utils.lib.mkApp {
-            drv = pkgs.callPackage ./vm-run.nix {
-              nixosSystem = nixpkgs.lib.nixosSystem;
-            };
-          };
-
-          vm-kconfig = flake-utils.lib.mkApp {
-            drv = pkgs.callPackage ./vm-kconfig.nix { };
           };
         };
 
