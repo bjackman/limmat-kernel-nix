@@ -6,4 +6,6 @@ command = "nix flake check"
 
 [[tests]]
 name = "test-golden"
-command = "nix run .#test-golden"
+command = """
+TMPDIR=$LIMMAT_ARTIFACTS nix run .#test-golden
+"""
