@@ -57,31 +57,21 @@
         # tests for the config are exposed as an app that is run
         # non-hermetically.
         apps = {
-          test-golden = {
-            type = "app";
-            program =
-              let
-                pkg = pkgs.callPackage ./test-golden.nix {
-                  # Passing packages "manually" as a normal arg like this might be
-                  # in poor taste, I'm not sure. Like maybe the "proper" way is via
-                  # a nixpkgs overlay or something like that.
-                  limmat-kernel = self.packages."${system}".limmat-kernel;
-                  inherit limmatConfig;
-                  inherit refKernel;
-                };
-              in
-              "${pkg}/bin/limmat-kernel-test-golden";
+          test-golden = flake-utils.lib.mkApp {
+            drv = pkgs.callPackage ./test-golden.nix {
+              # Passing packages "manually" as a normal arg like this might be
+              # in poor taste, I'm not sure. Like maybe the "proper" way is via
+              # a nixpkgs overlay or something like that.
+              limmat-kernel = self.packages."${system}".limmat-kernel;
+              inherit limmatConfig;
+              inherit refKernel;
+            };
           };
 
-          run-vm = {
-            type = "app";
-            program =
-              let
-                pkg = pkgs.callPackage ./run-vm.nix {
-                  nixosSystem = nixpkgs.lib.nixosSystem;
-                };
-              in
-              "${pkg}/bin/limmat-kernel-run-vm";
+          run-vm = flake-utils.lib.mkApp {
+            drv = pkgs.callPackage ./run-vm.nix {
+              nixosSystem = nixpkgs.lib.nixosSystem;
+            };
           };
         };
 
