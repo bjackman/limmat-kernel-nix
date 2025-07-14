@@ -43,6 +43,7 @@ in
   config = {
     tests = [
       {
+        # Build tinyconfig just because it's cheap.
         name = "build_min";
         command = mkDevShellScript "build_min" ''
           set -eux
@@ -50,6 +51,16 @@ in
           make -j tinyconfig
           scripts/config -e 64BIT -e -WERROR -e OBJTOOL_WERROR
           make -j olddefconfig
+          make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+        '';
+      }
+      {
+        # Build a kernel that's suitable for running in the vm-run guest.
+        name = "build";
+        command = mkDevShellScript "build" ''
+          set -eux
+
+          limmat-kernel-vm-kconfig
           make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
         '';
       }
