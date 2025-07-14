@@ -33,12 +33,57 @@ let
 in
 pkgs.writeShellApplication {
   name = "limmat-kernel-vm-run";
-  runtimeInputs = [ nixosRunner ];
+  runtimeInputs = [
+    nixosRunner
+    pkgs.getopt
+  ];
   text = ''
-    set -eux
+    KERNEL_PATH="arch/x86/boot/bzImage"
 
-    export NIXPKGS_QEMU_KERNEL_${hostName}="$1"
-    shift
+    usage() {
+        cat <<EOF
+    Usage: $(basename "$0") [OPTIONS]
+
+    Options:
+      -k, --kernel PATH   Specify the path to the kernel image.
+                          Default: $KERNEL_PATH
+      -h, --help          Display this help message and exit.
+
+    EOF
+    }
+
+
+    PARSED_ARGUMENTS=$(getopt -o k:h --long kernel:,help -- "$@")
+    # shellcheck disable=SC2181
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to parse arguments." >&2
+      usage
+      exit 1
+    fi
+    eval set -- "$PARSED_ARGUMENTS"
+
+    while true; do
+        case "$1" in
+            -k|--kernel)
+              KERNEL_PATH="$2"
+              shift 2
+              ;;
+            -h|--help)
+              usage
+              exit 0
+              ;;
+            --)
+              shift
+              break
+              ;;
+            *)
+              echo "Unexpected argument, script bug? $1" >&2
+              exit 1
+              ;;
+        esac
+    done
+
+    export NIXPKGS_QEMU_KERNEL_${hostName}="$KERNEL_PATH"
     ${nixosRunner}/bin/run-${hostName}-vm "$@"
   '';
 }
