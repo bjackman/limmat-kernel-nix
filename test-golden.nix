@@ -19,7 +19,7 @@ pkgs.writeShellApplication {
     limmat-kernel
   ];
   text = ''
-    TMPDIR="''${TMPIR:-/tmp}"
+    TMPDIR="''${TMPDIR:-/tmp}"
     GOLDEN_KERNEL_TREE="''${GOLDEN_KERNEL_TREE:-"$TMPDIR"/lkn-golden-kernel}"
     set -eux -o pipefail
     mkdir -p "$GOLDEN_KERNEL_TREE"
