@@ -73,6 +73,10 @@
               nixosSystem = nixpkgs.lib.nixosSystem;
             };
           };
+
+          vm-kconfig = flake-utils.lib.mkApp {
+            drv = pkgs.callPackage ./vm-kconfig.nix { };
+          };
         };
 
         devShells.kernel = pkgs.mkShell {
