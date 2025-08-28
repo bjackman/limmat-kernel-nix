@@ -86,7 +86,9 @@ pkgs.writeShellApplication {
         esac
     done
 
-    export NIXPKGS_QEMU_KERNEL_${hostName}="$KERNEL_PATH"
+    # This NixOS VM script only works with absolute paths.
+    NIXPKGS_QEMU_KERNEL_${hostName}="$(realpath "$KERNEL_PATH")"
+    export NIXPKGS_QEMU_KERNEL_${hostName}
     ${nixosRunner}/bin/run-${hostName}-vm "$@"
   '';
 }
