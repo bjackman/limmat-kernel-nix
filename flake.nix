@@ -77,7 +77,7 @@
         devShells.kernel = pkgs.mkShell {
           inputsFrom = [ refKernel ];
           packages =
-            [ pkgs.ccache ]
+            [ pkgs.ccache pkgs.ncurses ]
             ++ (with self.packages."${system}"; [
               vm-run
               vm-kconfig
