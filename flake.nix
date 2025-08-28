@@ -5,6 +5,10 @@
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-25.05";
     limmat.url = "github:bjackman/limmat";
     flake-utils.url = "github:numtide/flake-utils";
+    kernel = {
+      url = "github:torvalds/linux";
+      flake = false;
+    };
   };
 
   outputs =
@@ -12,6 +16,7 @@
       self,
       nixpkgs,
       flake-utils,
+      kernel,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -53,7 +58,10 @@
           vm-run = pkgs.callPackage ./vm-run.nix {
             nixosSystem = nixpkgs.lib.nixosSystem;
           };
-          vm-kconfig = pkgs.callPackage ./vm-kconfig.nix { };
+          vm-kconfig = pkgs.callPackage ./kconfig.nix {
+            kernelSrc = kernel;
+            requiredConfigs = [ "OVERLAY_FS" ];
+          };
         };
 
         # Because of the hackery involved in this system, where we use `nix

@@ -18,6 +18,22 @@
         "type": "github"
       }
     },
+    "kernel": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1756347531,
+        "narHash": "sha256-DwBVFEM2TEsXFeNZp9G14UnojNamwZ0mrhKxCZv4Rp0=",
+        "owner": "torvalds",
+        "repo": "linux",
+        "rev": "07d9df80082b8d1f37e05658371b087cb6738770",
+        "type": "github"
+      },
+      "original": {
+        "owner": "torvalds",
+        "repo": "linux",
+        "type": "github"
+      }
+    },
     "limmat": {
       "inputs": {
         "naersk": "naersk",
@@ -93,6 +109,7 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
+        "kernel": "kernel",
         "limmat": "limmat",
         "nixpkgs": "nixpkgs_2"
       }
