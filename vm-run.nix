@@ -61,6 +61,8 @@ pkgs.writeShellApplication {
       -k, --kernel PATH   Specify the path to the kernel image. If you set
                           --tree, defaults to the x86 bzImage in that treee.
       -c, --cmdline ARGS  Args to append to kernel cmdline. Single string.
+      -d, --debug         Enable GDB stub in QEMU. Connect with "target
+                          remote localhost:1234" in GDB.
       -h, --help          Display this help message and exit.
 
     EOF
@@ -71,8 +73,9 @@ pkgs.writeShellApplication {
     KERNEL_TREE=
     KERNEL_PATH=
     CMDLINE=
+    QEMU_OPTS=
 
-    PARSED_ARGUMENTS=$(getopt -o t:k:c:h --long tree:,kernel:,cmdline:,help -- "$@")
+    PARSED_ARGUMENTS=$(getopt -o t:k:c:dh --long tree:,kernel:,cmdline:,debug,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -95,6 +98,10 @@ pkgs.writeShellApplication {
             -c|--cmdline)
               CMDLINE="$2"
               shift 2
+              ;;
+            -d|--debug)
+              QEMU_OPTS="-s -S"
+              shift
               ;;
             -h|--help)
               usage
@@ -132,6 +139,7 @@ pkgs.writeShellApplication {
     export NIXPKGS_QEMU_KERNEL_${hostName}
     export KERNEL_TREE
     export QEMU_KERNEL_PARAMS="$CMDLINE"
+    export QEMU_OPTS
     ${nixosRunner}/bin/run-${hostName}-vm "$@"
   '';
 }
