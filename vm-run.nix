@@ -34,6 +34,7 @@ let
               target = "/mnt/kernel";
             };
           };
+          memorySize = 4 * 1024; # Megabytes
         };
         system.stateVersion = "25.05";
         services.getty.autologinUser = "root";
