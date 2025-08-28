@@ -14,6 +14,10 @@ pkgs.writeShellApplication {
     scripts/config -e OVERLAY_FS
     make -j olddefconfig
 
+    # Hm, need some more flexible way to configure this. For now, it's harmless
+    # to just enable it everywhere I think.
+    scripts/config -e GUP_TEST
+
     if ! grep -q OVERLAY_FS .config; then
         echo "OVERLAY_FS not defined in final config!"
         exit 1
