@@ -76,7 +76,12 @@
 
         devShells.kernel = pkgs.mkShell {
           inputsFrom = [ refKernel ];
-          packages = [ pkgs.ccache ];
+          packages =
+            [ pkgs.ccache ]
+            ++ (with self.packages."${system}"; [
+              vm-run
+              vm-kconfig
+            ]);
         };
       }
     );
