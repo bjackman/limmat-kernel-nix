@@ -24,6 +24,16 @@ let
             "-bios"
             "qboot.rom"
           ];
+          # Tell the VM runner script that it should mount a directory on the
+          # host, named in the environment variable, to /mnt/kernel. That
+          # variable must point to a directory. This is coupled with the script
+          # content below.
+          sharedDirectories = {
+            kernel-tree = {
+              source = "$KERNEL_TREE";
+              target = "/mnt/kernel";
+            };
+          };
         };
         system.stateVersion = "25.05";
         services.getty.autologinUser = "root";
@@ -41,22 +51,26 @@ pkgs.writeShellApplication {
     pkgs.getopt
   ];
   text = ''
-    KERNEL_PATH="arch/x86/boot/bzImage"
-
     usage() {
         cat <<EOF
     Usage: $(basename "$0") [OPTIONS]
 
     Options:
-      -k, --kernel PATH   Specify the path to the kernel image.
-                          Default: $KERNEL_PATH
+      -t, --tree TREE     Optional path to a kernel tree.
+      -k, --kernel PATH   Specify the path to the kernel image. If you set
+                          --tree, defaults to the x86 bzImage in that treee.
       -h, --help          Display this help message and exit.
 
     EOF
     }
 
+    # Note the name of the KERNEL_TREE variable is coupled with the
+    # virtualisation.sharedDirectories option in the NixOS config.
+    KERNEL_TREE=
+    KERNEL_PATH=
 
-    PARSED_ARGUMENTS=$(getopt -o k:h --long kernel:,help -- "$@")
+    PARSED_ARGUMENTS=$(getopt -o t:k:h --long tree:,kernel:,help -- "$@")
+
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
       echo "Error: Failed to parse arguments." >&2
@@ -69,6 +83,10 @@ pkgs.writeShellApplication {
         case "$1" in
             -k|--kernel)
               KERNEL_PATH="$2"
+              shift 2
+              ;;
+            -t|--tree)
+              KERNEL_TREE="$2"
               shift 2
               ;;
             -h|--help)
@@ -86,9 +104,26 @@ pkgs.writeShellApplication {
         esac
     done
 
+    if [[ -z "$KERNEL_PATH" && -n "$KERNEL_TREE" ]]; then
+      KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
+    fi
+    if [[ -z "$KERNEL_PATH" ]]; then
+      echo "Must set --kernel or --tree."
+      exit 1
+    fi
+
+    # If --tree wasn't provided, create a dummy directory since the shared
+    # directory with the guest is mandatory.
+    if [[ -z "$KERNEL_TREE" ]]; then
+      KERNEL_TREE=$(mktemp -d)
+      trap 'rmdir $KERNEL_TREE' EXIT
+    fi
+
     # This NixOS VM script only works with absolute paths.
     NIXPKGS_QEMU_KERNEL_${hostName}="$(realpath "$KERNEL_PATH")"
+    KERNEL_TREE="$(realpath "$KERNEL_TREE")"
     export NIXPKGS_QEMU_KERNEL_${hostName}
+    export KERNEL_TREE
     ${nixosRunner}/bin/run-${hostName}-vm "$@"
   '';
 }
