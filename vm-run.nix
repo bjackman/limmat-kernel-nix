@@ -60,6 +60,7 @@ pkgs.writeShellApplication {
       -t, --tree TREE     Optional path to a kernel tree.
       -k, --kernel PATH   Specify the path to the kernel image. If you set
                           --tree, defaults to the x86 bzImage in that treee.
+      -c, --cmdline ARGS  Args to append to kernel cmdline. Single string.
       -h, --help          Display this help message and exit.
 
     EOF
@@ -69,8 +70,9 @@ pkgs.writeShellApplication {
     # virtualisation.sharedDirectories option in the NixOS config.
     KERNEL_TREE=
     KERNEL_PATH=
+    CMDLINE=
 
-    PARSED_ARGUMENTS=$(getopt -o t:k:h --long tree:,kernel:,help -- "$@")
+    PARSED_ARGUMENTS=$(getopt -o t:k:c:h --long tree:,kernel:,cmdline:,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -88,6 +90,10 @@ pkgs.writeShellApplication {
               ;;
             -t|--tree)
               KERNEL_TREE="$2"
+              shift 2
+              ;;
+            -c|--cmdline)
+              CMDLINE="$2"
               shift 2
               ;;
             -h|--help)
@@ -125,6 +131,7 @@ pkgs.writeShellApplication {
     KERNEL_TREE="$(realpath "$KERNEL_TREE")"
     export NIXPKGS_QEMU_KERNEL_${hostName}
     export KERNEL_TREE
+    export QEMU_KERNEL_PARAMS="$CMDLINE"
     ${nixosRunner}/bin/run-${hostName}-vm "$@"
   '';
 }
