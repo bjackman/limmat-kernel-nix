@@ -62,6 +62,10 @@
             kernelSrc = kernel;
             requiredConfigs = [ "OVERLAY_FS" ];
           };
+          vm-bzImage = pkgs.callPackage ./bzImage.nix {
+            kernelSrc = kernel;
+            kconfig = vm-kconfig;
+          };
         };
 
         # Because of the hackery involved in this system, where we use `nix
