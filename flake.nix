@@ -5,6 +5,10 @@
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-25.05";
     limmat.url = "github:bjackman/limmat";
     flake-utils.url = "github:numtide/flake-utils";
+    kernel = {
+      url = "github:torvalds/linux";
+      flake = false;
+    };
   };
 
   outputs =
@@ -12,6 +16,7 @@
       self,
       nixpkgs,
       flake-utils,
+      kernel,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -49,6 +54,11 @@
             '';
           };
           default = limmat-kernel;
+
+          # Version of kselftests built from the nixpkgs kernel.
+          kselftests = pkgs.callPackage ./kselftests.nix {
+            kernelSrc = kernel;
+          };
 
           vm-run = pkgs.callPackage ./vm-run.nix {
             nixosSystem = nixpkgs.lib.nixosSystem;
