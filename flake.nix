@@ -62,6 +62,7 @@
 
           vm-run = pkgs.callPackage ./vm-run.nix {
             nixosSystem = nixpkgs.lib.nixosSystem;
+            inherit kselftests;
           };
           vm-kconfig = pkgs.callPackage ./vm-kconfig.nix { };
         };

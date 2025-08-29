@@ -9,6 +9,8 @@
   # configuration. It is not actually a part of nixpkgs itself but one of the
   # nixpkgs flakes' `lib` outputs so it needs to be passed here explicitly.
   nixosSystem,
+  # kselftests package to install in the guest.
+  kselftests,
 }:
 let
   hostName = "testvm";
@@ -38,6 +40,7 @@ let
         };
         system.stateVersion = "25.05";
         services.getty.autologinUser = "root";
+        environment.systemPackages = [ kselftests ];
       }
     ];
   };
