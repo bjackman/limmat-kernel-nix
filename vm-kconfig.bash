@@ -5,6 +5,8 @@ usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Options:
+    -b, --base NAME      Name of base config targets, space-separated. Default
+                         is 'defconfig kvm_guest.config'.
     -e, --enable CONFIG  Config that must be enabled in final config.
                          Repeatable. You can omit the CONFIG_ prefix.
     -h, --help           Display this help message and exit.
@@ -12,7 +14,7 @@ Options:
 EOF
 }
 
-PARSED_ARGUMENTS=$(getopt -o e:h --long enable:,help -- "$@")
+PARSED_ARGUMENTS=$(getopt -o e:b:h --long enable:,base:,help -- "$@")
 
 # shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
@@ -22,6 +24,8 @@ if [ $? -ne 0 ]; then
 fi
 eval set -- "$PARSED_ARGUMENTS"
 
+BASE_TARGETS="defconfig kvm_guest.config"
+
 # OVERLAY_FS required for NixOS to boot.
 REQUIRED_KCONFIGS=("OVERLAY_FS")
 
@@ -29,6 +33,10 @@ while true; do
     case "$1" in
         -e|--enable)
             REQUIRED_KCONFIGS+=("$2")
+            shift 2
+            ;;
+        -b|--base)
+            BASE_TARGETS="$2"
             shift 2
             ;;
         --)
@@ -46,8 +54,9 @@ while true; do
     esac
 done
 
-make defconfig
-make kvm_guest.config
+for target in $BASE_TARGETS; do
+    make "$target"
+done
 
 # TODO: Don't hard code this shit
 scripts/config -e GUP_TEST
