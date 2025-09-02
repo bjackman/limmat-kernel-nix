@@ -22,6 +22,7 @@ let
     }:
     {
       name = "build_${name}";
+      cache = "by_tree";
       command = ''
         set -eux
 
@@ -44,6 +45,7 @@ in
   # normal attribute set. But if you instead access an attribute of the returned
   # value then you get a nice red blooeded American attrset.
   config = {
+    num_worktrees = 8;
     tests = [
       (mkBuild {
         name = "min";
