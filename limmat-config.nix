@@ -6,6 +6,11 @@
   linuxPackages,
   kernelDevShell,
 }:
+# In a former life I tried to define this all hermetically so that all the
+# dependencies were captured and the configuration's hash would change whenever
+# I modified anything.
+# For now I've given up on that, and this just assumes you are running it from
+# the devShell defined in the top of this repo.
 {
   # Why does this need to return everything inside a ".config" field instead of
   # just directly returning the config? Well, let me explain. Basically, it's
@@ -22,9 +27,7 @@
         command = ''
           set -eux
 
-          make -j tinyconfig
-          scripts/config -e 64BIT -e -WERROR -e OBJTOOL_WERROR
-          make -j olddefconfig
+          limmat-kernel-vm-kconfig -b tinyconfig -e 64BIT -e -WERROR -e OBJTOOL_WERROR
           make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
         '';
       }
