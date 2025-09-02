@@ -92,6 +92,9 @@
               ccache
               ncurses
               gdb
+
+              # For building the user-mode tests like tools/testing/vma
+              liburcu
             ])
             ++ (with self.packages."${system}"; [
               vm-run
