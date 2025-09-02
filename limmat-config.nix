@@ -11,6 +11,23 @@
 # I modified anything.
 # For now I've given up on that, and this just assumes you are running it from
 # the devShell defined in the top of this repo.
+let
+  mkBuild =
+    {
+      name,
+      base,
+      configs,
+    }:
+    {
+      name = "build_${name}";
+      command = ''
+        set -eux
+
+        limmat-kernel-vm-kconfig -b ${base} ${lib.concatMapStringsSep " " (elem: "-e ${elem}") configs}
+        make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+      '';
+    };
+in
 {
   # Why does this need to return everything inside a ".config" field instead of
   # just directly returning the config? Well, let me explain. Basically, it's
@@ -22,15 +39,15 @@
   # value then you get a nice red blooeded American attrset.
   config = {
     tests = [
-      {
-        name = "build_min";
-        command = ''
-          set -eux
-
-          limmat-kernel-vm-kconfig -b tinyconfig -e 64BIT -e -WERROR -e OBJTOOL_WERROR
-          make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
-        '';
-      }
+      (mkBuild {
+        name = "min";
+        base = "tinyconfig";
+        configs = [
+          "64BIT"
+          "WERROR"
+          "OBJTOOL_WERROR"
+        ];
+      })
     ];
   };
 }
