@@ -27,10 +27,7 @@
         # This package will be used for golden testing, and also to grab the
         # toolchains etc for the devShell.
         refKernel = pkgs.linuxPackages.kernel;
-        limmatConfig =
-          (pkgs.callPackage ./limmat-config.nix {
-            kernelDevShell = self.devShells."${system}".kernel;
-          }).config;
+        limmatConfig = (pkgs.callPackage ./limmat-config.nix { }).config;
         format = pkgs.formats.toml { };
       in
       {

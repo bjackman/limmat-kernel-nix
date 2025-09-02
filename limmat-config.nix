@@ -1,10 +1,6 @@
 {
   lib,
   pkgs,
-  writeShellScript,
-  writeShellApplication,
-  linuxPackages,
-  kernelDevShell,
 }:
 # In a former life I tried to define this all hermetically so that all the
 # dependencies were captured and the configuration's hash would change whenever
