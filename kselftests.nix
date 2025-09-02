@@ -38,7 +38,8 @@ stdenv.mkDerivation {
   '';
   # Note these flags get re-used for both the buildPhase and the configurePhase.
   makeFlags = [
-    "-C" "tools/testing/selftests"
+    "-C"
+    "tools/testing/selftests"
     "TARGETS=mm" # TODO: Build the others too once that works
     "EXTRA_CFLAGS=-Wno-error=unused-result"
     # I'm not entirely sure how that $(out) thing works, I copied it from
