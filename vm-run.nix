@@ -42,6 +42,26 @@ let
         services.getty.autologinUser = "root";
         environment.systemPackages = [ kselftests ];
         boot.kernelParams = [ "nokaslr" "earlyprintk=serial" ];
+
+        # As an easy way to be able to run it from the kernel cmdline, just
+        # encode kselftests into a systemd service. You can then run it with
+        # systemd.unit=kselftests.service.
+        systemd.services.kselftests = {
+          path = [ pkgs.which ];
+          environment = {
+            # TODO: Make this more flexible somehow.
+            KSELFTEST_RUN_VMTESTS_SH_ARGS = "-t mmap";
+          };
+          script = ''
+            ${kselftests}/bin/run_kselftest.sh
+          '';
+          serviceConfig = {
+            Type = "oneshot";
+            StandardOutput = "tty";
+            StandardError = "tty";
+          };
+          onSuccess = [ "poweroff.target" ];
+        };
       }
     ];
   };
@@ -67,6 +87,8 @@ pkgs.writeShellApplication {
       -c, --cmdline ARGS  Args to append to kernel cmdline. Single string.
       -d, --debug         Enable GDB stub in QEMU. Connect with "target
                           remote localhost:1234" in GDB.
+      -s, --kselftests    Run a hardcoded set of kselftests then shutdown.
+                          Doesn't report the result as the exit code (TODO).
       -h, --help          Display this help message and exit.
 
     EOF
@@ -78,8 +100,9 @@ pkgs.writeShellApplication {
     KERNEL_PATH=
     CMDLINE=
     QEMU_OPTS=
+    KSELFTESTS=false
 
-    PARSED_ARGUMENTS=$(getopt -o t:k:c:dh --long tree:,kernel:,cmdline:,debug,help -- "$@")
+    PARSED_ARGUMENTS=$(getopt -o t:k:c:dsh --long tree:,kernel:,cmdline:,debug,kselftests,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -105,6 +128,10 @@ pkgs.writeShellApplication {
               ;;
             -d|--debug)
               QEMU_OPTS="-s -S"
+              shift
+              ;;
+            -s|--kselftests)
+              KSELFTESTS=true
               shift
               ;;
             -h|--help)
@@ -135,6 +162,10 @@ pkgs.writeShellApplication {
     if [[ -z "$KERNEL_TREE" ]]; then
       KERNEL_TREE=$(mktemp -d)
       trap 'rmdir $KERNEL_TREE' EXIT
+    fi
+
+    if "$KSELFTESTS"; then
+      CMDLINE="$CMDLINE systemd.unit=kselftests.service"
     fi
 
     # This NixOS VM script only works with absolute paths.
