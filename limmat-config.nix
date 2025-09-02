@@ -12,7 +12,7 @@ let
     {
       name,
       base,
-      configs,
+      configs ? [],
       # Skip the test if this string doesn't appear in the repo.
       ifContains ? "",
     }:
@@ -44,12 +44,37 @@ in
     num_worktrees = 8;
     tests = [
       (mkBuild {
-        name = "min";
+        name = "32";
         base = "tinyconfig";
+      })
+      (mkBuild {
+        name = "min";
+        # Hm OK this isn't really that minimal, it's enough to boot a VM.
+        # Maybe we want a really really fast 64-bit build too (no
+        # kvm_guest.config)?
+        # TODO: This is my attempt to find a config that boots but it's not
+        # enough, something is missing.
+        base = "tinyconfig kvm_guest.config";
         configs = [
           "64BIT"
           "WERROR"
           "OBJTOOL_WERROR"
+          "OVERLAY_FS"
+          # TODO: Which ones of these are actually needed?
+          "MISC_FILESYSTEMS" # TODO: This is just a dependency
+          "SQUASHFS"
+          "FUSE_FS" # TODO: This is just a dependency
+          "VIRTIO_FS"
+          "PROC_FS"
+          "PROC_KCORE"
+          "VIRTIO_MENU" # TODO: This is just a dependency
+          "VIRTIO_MMIO"
+          "BLOCK" # TODO: This is just a dependency
+          "BLK_DEV_SD"
+          "SCSI" # TODO: This is just a dependency
+          "SCSI_VIRTIO"
+          "ACPI"
+          # TODO: Disable WLAN and ETHERNET
         ];
       })
       (mkBuild {

@@ -41,7 +41,7 @@ let
         system.stateVersion = "25.05";
         services.getty.autologinUser = "root";
         environment.systemPackages = [ kselftests ];
-        boot.kernelParams = [ "nokaslr" "earlyprintk=serial" ];
+        boot.kernelParams = [ "nokaslr" "earlyprintk=serial" "debug" "loglevel=7" ];
 
         # As an easy way to be able to run it from the kernel cmdline, just
         # encode kselftests into a systemd service. You can then run it with
