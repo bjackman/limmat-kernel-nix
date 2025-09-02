@@ -17,11 +17,17 @@ let
       name,
       base,
       configs,
+      # Skip the test if this string doesn't appear in the repo.
+      ifContains ? "",
     }:
     {
       name = "build_${name}";
       command = ''
         set -eux
+
+        if [[ -n "${ifContains}" ]] && ! git grep -q "${ifContains}"; then
+          exit 0
+        fi
 
         limmat-kernel-vm-kconfig -b ${base} ${lib.concatMapStringsSep " " (elem: "-e ${elem}") configs}
         make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
@@ -46,6 +52,15 @@ in
           "64BIT"
           "WERROR"
           "OBJTOOL_WERROR"
+        ];
+      })
+      (mkBuild {
+        name = "asi";
+        base = "defconfig";
+        ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
+        configs = [
+          "MITIGATION_ADDRESS_SPACE_ISOLATION"
+          "CMA"
         ];
       })
     ];
