@@ -104,7 +104,7 @@ pkgs.writeShellApplication {
     KERNEL_TREE=
     KERNEL_PATH=
     CMDLINE=
-    QEMU_OPTS=
+    QEMU_OPTS="''${QEMU_OPTS:-}"
     KSELFTESTS=false
 
     PARSED_ARGUMENTS=$(getopt -o t:k:c:dsh --long tree:,kernel:,cmdline:,debug,kselftests,help -- "$@")
