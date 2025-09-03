@@ -26,6 +26,7 @@ let
         set -eux
 
         if [[ -n "${ifContains}" ]] && ! git grep -q "${ifContains}"; then
+          touch "$LIMMAT_ARTIFACTS"/skipped
           exit 0
         fi
 
@@ -110,6 +111,10 @@ in
         command = ''
           set -eux
 
+          if [[ -e "$LIMMAT_ARTIFACTS_build_asi"/skipped ]]; then
+            # Kernel wasn't built, don't try to run it.
+            exit 0
+          fi
           kernel="$LIMMAT_ARTIFACTS_build_asi"/bzImage
 
           # Hack: the NixOS QEMU script by default uses ./$hostname.qcow2 for
