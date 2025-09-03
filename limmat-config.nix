@@ -150,7 +150,9 @@ in
           kernel="$LIMMAT_ARTIFACTS_build_asi"/bzImage
 
           # Hack: the NixOS QEMU script by default uses ./$hostname.qcow2 for
-          # its disk. Switch to a tempdir to avoid sharing that.
+          # its disk. Switch to a tempdir to avoid sharing that (we have
+          # needs_worktree = false so we are running in the original source
+          # directory).
           tmpdir="$(mktemp -d)"
           pushd "$tmpdir"
           trap "popd && rm -rf $tmpdir" EXIT
