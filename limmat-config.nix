@@ -79,11 +79,10 @@ in
       })
       (mkBuild {
         name = "asi";
-        base = "defconfig";
+        base = "defconfig debug.config";
         ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
         configs = [
           "MITIGATION_ADDRESS_SPACE_ISOLATION"
-          "DEBUG_LIST"
           "CMA"
         ];
       })
