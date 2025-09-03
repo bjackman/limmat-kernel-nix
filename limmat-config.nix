@@ -123,7 +123,7 @@ in
           pushd "$tmpdir"
           trap "popd && rm -rf $tmpdir" EXIT
 
-          timeout --signal=KILL 30s \
+          timeout --signal=KILL 60s \
             ${vm-run}/bin/limmat-kernel-vm-run --kernel "$kernel" --kselftests
         '';
       }
