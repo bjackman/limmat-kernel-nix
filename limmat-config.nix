@@ -12,7 +12,7 @@ let
     {
       name,
       base,
-      configs ? [],
+      configs ? [ ],
       # Skip the test if this string doesn't appear in the repo.
       ifContains ? "",
     }:
