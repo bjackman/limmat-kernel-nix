@@ -16,59 +16,70 @@ let
   hostName = "testvm";
   nixosConfig = nixosSystem {
     inherit system;
-    modules = [
-      {
-        networking.hostName = hostName;
-        virtualisation.vmVariant.virtualisation = {
-          graphics = false;
-          # This BIOS doesn't mess up the terminal and is apparently faster.
-          qemu.options = [
-            "-bios"
-            "qboot.rom"
-          ];
-          # Tell the VM runner script that it should mount a directory on the
-          # host, named in the environment variable, to /mnt/kernel. That
-          # variable must point to a directory. This is coupled with the script
-          # content below.
-          sharedDirectories = {
-            kernel-tree = {
-              source = "$KERNEL_TREE";
-              target = "/mnt/kernel";
+    modules =
+      let
+        # I/O port that will be used for the isa-debug-exit device. I don't know
+        # how arbitrary this value is, I got it from Gemini who I suspect is
+        # cargo-culting from https://os.phil-opp.com/testing/
+        qemuExitPortHex = "0xf4";
+      in
+      [
+        {
+          networking.hostName = hostName;
+          virtualisation.vmVariant.virtualisation = {
+            graphics = false;
+            # This BIOS doesn't mess up the terminal and is apparently faster.
+            qemu.options = [
+              "-bios"
+              "qboot.rom"
+              "-device"
+              "isa-debug-exit,iobase=${qemuExitPortHex},iosize=0x04"
+            ];
+            # Tell the VM runner script that it should mount a directory on the
+            # host, named in the environment variable, to /mnt/kernel. That
+            # variable must point to a directory. This is coupled with the script
+            # content below.
+            sharedDirectories = {
+              kernel-tree = {
+                source = "$KERNEL_TREE";
+                target = "/mnt/kernel";
+              };
             };
+            memorySize = 4 * 1024; # Megabytes
           };
-          memorySize = 4 * 1024; # Megabytes
-        };
-        system.stateVersion = "25.05";
-        services.getty.autologinUser = "root";
-        environment.systemPackages = [ kselftests ];
-        boot.kernelParams = [
-          "nokaslr"
-          "earlyprintk=serial"
-          "debug"
-          "loglevel=7"
-        ];
+          system.stateVersion = "25.05";
+          services.getty.autologinUser = "root";
+          environment.systemPackages = [ kselftests ];
+          boot.kernelParams = [
+            "nokaslr"
+            "earlyprintk=serial"
+            "debug"
+            "loglevel=7"
+          ];
 
-        # As an easy way to be able to run it from the kernel cmdline, just
-        # encode kselftests into a systemd service. You can then run it with
-        # systemd.unit=kselftests.service.
-        systemd.services.kselftests = {
-          path = [ pkgs.which ];
-          environment = {
-            # TODO: Make this more flexible somehow.
-            KSELFTEST_RUN_VMTESTS_SH_ARGS = "-t mmap";
+          # As an easy way to be able to run it from the kernel cmdline, just
+          # encode kselftests into a systemd service. You can then run it with
+          # systemd.unit=kselftests.service.
+          systemd.services.kselftests = {
+            path = [ pkgs.which ];
+            environment = {
+              # TODO: Make this more flexible somehow.
+              KSELFTEST_RUN_VMTESTS_SH_ARGS = "-t mmap";
+            };
+            script = ''
+              # Writing the value v to the isa-debug-exit port will cause QEMU to
+              # immediately exit with the exit code `v << 1 | 1`.
+              ${kselftests}/bin/run_kselftest.sh || ${pkgs.ioport} ${qemuExitPortHex} $(( $? - 1 ))
+            '';
+            serviceConfig = {
+              Type = "oneshot";
+              StandardOutput = "tty";
+              StandardError = "tty";
+            };
+            onSuccess = [ "poweroff.target" ];
           };
-          script = ''
-            ${kselftests}/bin/run_kselftest.sh
-          '';
-          serviceConfig = {
-            Type = "oneshot";
-            StandardOutput = "tty";
-            StandardError = "tty";
-          };
-          onSuccess = [ "poweroff.target" ];
-        };
-      }
-    ];
+        }
+      ];
   };
   # This is the "official" entry point for running NixOS as a QEMU guest, we'll
   # wrap this.
@@ -92,8 +103,8 @@ pkgs.writeShellApplication {
       -c, --cmdline ARGS  Args to append to kernel cmdline. Single string.
       -d, --debug         Enable GDB stub in QEMU. Connect with "target
                           remote localhost:1234" in GDB.
-      -s, --kselftests    Run a hardcoded set of kselftests then shutdown.
-                          Doesn't report the result as the exit code (TODO).
+      -s, --kselftests    Run a hardcoded set of kselftests then shutdown. QEMU
+                          exit code reflects test result.
       -h, --help          Display this help message and exit.
 
     EOF
