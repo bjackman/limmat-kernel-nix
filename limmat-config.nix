@@ -57,10 +57,15 @@ in
     ];
 
     tests = [
-      (mkBuild {
-        name = "32";
-        base = "tinyconfig";
-      })
+      (
+        mkBuild {
+          name = "32";
+          base = "tinyconfig";
+        }
+        // {
+          depends_on = [ "kselftests" ]; # Hack to deprioritise
+        }
+      )
       (mkBuild {
         name = "min";
         # Hm OK this isn't really that minimal, it's enough to boot a VM.
