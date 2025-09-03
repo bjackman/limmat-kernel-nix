@@ -161,6 +161,23 @@ in
             ${vm-run}/bin/limmat-kernel-vm-run --kernel "$kernel" --kselftests
         '';
       }
+      {
+        name = "kunit_asi";
+        cache = "by_tree";
+        resources = [ "qemu_throttle" ];
+        command = ''
+          set -eux
+
+          kunitconfig=arch/x86/mm/.kunitconfig
+          if [[ ! -e "$kunitconfig" ]]; then
+            exit 0
+          fi
+
+          make mrproper
+          tools/testing/kunit/kunit.py run --arch=x86_64 \
+            --kunitconfig=arch/x86/mm/.kunitconfig --kernel_args asi=on
+        '';
+      }
     ];
   };
 }
