@@ -1,6 +1,9 @@
 {
   lib,
   pkgs,
+
+  # Required args
+  vm-run,
 }:
 # In a former life I tried to define this all hermetically so that all the
 # dependencies were captured and the configuration's hash would change whenever
@@ -27,7 +30,8 @@ let
         fi
 
         limmat-kernel-vm-kconfig -b ${base} ${lib.concatMapStringsSep " " (elem: "-e ${elem}") configs}
-        make -sj"$(nproc)" vmlinux CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+        make -sj"$(nproc)" bzImage CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+        mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
       '';
     };
 in
@@ -42,6 +46,15 @@ in
   # value then you get a nice red blooeded American attrset.
   config = {
     num_worktrees = 8;
+    resources = [
+      # When I run lots of QEMUs I sometimes see the guest complain that the
+      # IOAPIC is broken. Trying throttling to 1 at a time...
+      {
+        name = "qemu_throttle";
+        count = 1;
+      }
+    ];
+
     tests = [
       (mkBuild {
         name = "32";
@@ -88,6 +101,20 @@ in
           "CMA"
         ];
       })
+      {
+        name = "kselftests";
+        cache = "by_tree";
+        depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
+        resources = [ "qemu_throttle" ];
+        requires_worktree = false;
+        command = ''
+          set -eux
+
+          kernel="$LIMMAT_ARTIFACTS_build_asi"/bzImage
+          timeout --signal=KILL 30s \
+            ${vm-run}/bin/limmat-kernel-vm-run --kernel "$kernel" --kselftests
+        '';
+      }
     ];
   };
 }
