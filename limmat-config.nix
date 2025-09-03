@@ -84,6 +84,7 @@ in
         configs = [
           "MITIGATION_ADDRESS_SPACE_ISOLATION"
           "DEBUG_LIST"
+          "DEBUG_VM"
           "CMA"
         ];
       })
