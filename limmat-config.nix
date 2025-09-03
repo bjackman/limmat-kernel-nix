@@ -111,6 +111,13 @@ in
           set -eux
 
           kernel="$LIMMAT_ARTIFACTS_build_asi"/bzImage
+
+          # Hack: the NixOS QEMU script by default uses ./$hostname.qcow2 for
+          # its disk. Switch to a tempdir to avoid sharing that.
+          tmpdir="$(mktemp -d)"
+          pushd "$tmpdir"
+          trap "popd && rm -rf $tmpdir" EXIT
+
           timeout --signal=KILL 30s \
             ${vm-run}/bin/limmat-kernel-vm-run --kernel "$kernel" --kselftests
         '';
