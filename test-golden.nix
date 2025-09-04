@@ -71,8 +71,13 @@ pkgs.writeShellApplication {
 
     # Disable warning if loop always has exactly one iteration.
     # shellcheck disable=SC2043
+    failures=false
     for test in ${lib.strings.concatStringsSep " " (map (t: t.name) limmatConfig.tests)}; do
-      limmat-kernel --result-db "$TMPDIR"/limmat-db test "$test"
+      # TODO: Limmat's test command doesn't report the exit code for some reason.
+      limmat-kernel --result-db "$TMPDIR"/limmat-db test "$test" || failures=true
     done
+    if $failures; then
+      exit 1
+    fi
   '';
 }
