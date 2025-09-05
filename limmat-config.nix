@@ -12,6 +12,26 @@
 # For now I've given up on that, and this just assumes you are running it from
 # the devShell defined in the top of this repo.
 let
+  # For simplicity, all the scripts just have a common set of runtimeInputs.
+  # This will also be exported in order to expose that stuff to the devShell.
+  runtimeInputs = [ pkgs.ccache ];
+  # Helper to generate a script with the runtimeInputs in its environment.
+  # Outputs the full path of the script itself, not the overall derivation.
+  mkTestScript =
+    {
+      name,
+      text,
+    }:
+    let
+      appName = "limmat-kernel_${name}";
+    in
+    "${
+      pkgs.writeShellApplication {
+        inherit runtimeInputs text;
+        name = appName;
+      }
+    }/bin/${appName}";
+  # Helper to generate a test script that runs a kernel build.
   mkBuild =
     {
       name,
@@ -23,18 +43,24 @@ let
     {
       name = "build_${name}";
       cache = "by_tree";
-      command = ''
-        set -eux
+      command = mkTestScript {
+        inherit name;
+        text = ''
+          set -eux
 
-        if [[ -n "${ifContains}" ]] && ! git grep -q "${ifContains}"; then
-          touch "$LIMMAT_ARTIFACTS"/skipped
-          exit 0
-        fi
+          # shellcheck disable=SC2157
+          if [[ -n "${ifContains}" ]] && ! git grep -q "${ifContains}"; then
+            touch "$LIMMAT_ARTIFACTS"/skipped
+            exit 0
+          fi
 
-        ${vm-kconfig}/bin/limmat-kernel-vm-kconfig -b ${base} ${lib.concatMapStringsSep " " (elem: "-e ${elem}") configs}
-        make -sj"$(nproc)" bzImage CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
-        mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
-      '';
+          ${vm-kconfig}/bin/limmat-kernel-vm-kconfig -b ${base} ${
+            lib.concatMapStringsSep " " (elem: "-e ${elem}") configs
+          }
+          make -sj"$(nproc)" bzImage CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+          mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
+        '';
+      };
     };
 in
 {
