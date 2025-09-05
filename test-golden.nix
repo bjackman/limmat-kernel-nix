@@ -73,7 +73,6 @@ pkgs.writeShellApplication {
     # shellcheck disable=SC2043
     failures=false
     for test in ${lib.strings.concatStringsSep " " (map (t: t.name) limmatConfig.tests)}; do
-      # TODO: Limmat's test command doesn't report the exit code for some reason.
       limmat-kernel --result-db "$TMPDIR"/limmat-db test "$test" || failures=true
     done
     if $failures; then
