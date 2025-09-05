@@ -30,6 +30,7 @@
         limmatConfig =
           (pkgs.callPackage ./limmat-config.nix {
             vm-run = self.packages."${system}".vm-run;
+            vm-kconfig = self.packages."${system}".vm-kconfig;
           }).config;
         format = pkgs.formats.toml { };
       in

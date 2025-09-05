@@ -4,6 +4,7 @@
 
   # Required args
   vm-run,
+  vm-kconfig,
 }:
 # In a former life I tried to define this all hermetically so that all the
 # dependencies were captured and the configuration's hash would change whenever
@@ -30,7 +31,7 @@ let
           exit 0
         fi
 
-        limmat-kernel-vm-kconfig -b ${base} ${lib.concatMapStringsSep " " (elem: "-e ${elem}") configs}
+        ${vm-kconfig}/bin/limmat-kernel-vm-kconfig -b ${base} ${lib.concatMapStringsSep " " (elem: "-e ${elem}") configs}
         make -sj"$(nproc)" bzImage CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
         mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
       '';
