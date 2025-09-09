@@ -5,12 +5,8 @@
   limmat-kernel,
   # The Limmat configuration defined by this repository as a Nix attrset.
   limmatConfig,
-  # The kernel derivation to be used as the golden kernel code to test against.
-  refKernel,
+  kernelSrc,
 }:
-let
-  refKernel = pkgs.linuxPackages.kernel;
-in
 pkgs.writeShellApplication {
   name = "limmat-kernel-test-golden";
   runtimeInputs = [
@@ -29,7 +25,7 @@ pkgs.writeShellApplication {
     # deterministic.
     export GIT_AUTHOR_DATE="2000-01-01T00:00:00Z"
     export GIT_COMMITTER_DATE="2000-01-01T00:00:00Z"
-    GOLDEN_COMMIT_HASH=a4b04c10828e88f9299e1f6d16c25de915d1e94b
+    GOLDEN_COMMIT_HASH=a022b70a91ddd847040fbef67e2b4c051ad13fa5
 
     # If we just have a Nix derivation that produces a kernel
     # repository then Limmat will fall over because the .git dir
@@ -46,10 +42,8 @@ pkgs.writeShellApplication {
         exit 1
       fi
     else
-      # The src repo contains seomthing like linux-6.6.1/, the
-      # --strip components strips that out and directly extracts
-      # the contents of that dir.
-      tar --strip-components=1 -xf ${refKernel.src}
+      # Copy preserving permissions but setting the writable bit on directories.
+      rsync -a --chmod=Du+w ${kernelSrc}/* .
 
       # By default limmat logs to your home dir (dumb?).
       export LIMMAT_LOGFILE=$TMPDIR/limmat.log

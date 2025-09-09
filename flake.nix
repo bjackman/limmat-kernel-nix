@@ -81,7 +81,7 @@
               # a nixpkgs overlay or something like that.
               limmat-kernel = self.packages."${system}".limmat-kernel;
               inherit limmatConfig;
-              inherit refKernel;
+              kernelSrc = kernel;
             };
           };
         };
