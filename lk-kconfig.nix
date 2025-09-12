@@ -6,7 +6,7 @@
 # derivation explicitly aware of the tools from the devShell but as I found out
 # this is pretty awkward. What do I do...?
 pkgs.writeShellApplication {
-  name = "limmat-kernel-vm-kconfig";
+  name = "lk-kconfig";
   runtimeInputs = [ pkgs.gnugrep ];
-  text = builtins.readFile ./vm-kconfig.bash;
+  text = builtins.readFile ./lk-kconfig.bash;
 }

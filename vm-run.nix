@@ -1,5 +1,5 @@
 # This defines a script that runs a minimal NixOS VM with the kernel bzImage you
-# pass as an argument. Use vm-kconfig to configure the kernel so that it's
+# pass as an argument. Use lk-kconfig to configure the kernel so that it's
 # compatible with this hypervisor.
 {
   pkgs,

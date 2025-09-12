@@ -30,7 +30,7 @@
         limmatConfig =
           (pkgs.callPackage ./limmat-config.nix {
             vm-run = self.packages."${system}".vm-run;
-            vm-kconfig = self.packages."${system}".vm-kconfig;
+            lk-kconfig = self.packages."${system}".lk-kconfig;
           }).config;
         format = pkgs.formats.toml { };
       in
@@ -65,7 +65,7 @@
             nixosSystem = nixpkgs.lib.nixosSystem;
             inherit kselftests;
           };
-          vm-kconfig = pkgs.callPackage ./vm-kconfig.nix { };
+          lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
         };
 
         # Because of the hackery involved in this system, where we use `nix
@@ -99,7 +99,7 @@
             ])
             ++ (with self.packages."${system}"; [
               vm-run
-              vm-kconfig
+              lk-kconfig
             ]);
         };
       }
