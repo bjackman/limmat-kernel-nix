@@ -1,4 +1,4 @@
-# Defines a script that generates a kconfig compatible with the vm-run script.
+# Defines a script that generates a kconfig compatible with the lk-vm script.
 {
   pkgs,
 }:

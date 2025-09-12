@@ -86,7 +86,7 @@ let
   nixosRunner = nixosConfig.config.system.build.vm;
 in
 pkgs.writeShellApplication {
-  name = "limmat-kernel-vm-run";
+  name = "lk-vm";
   runtimeInputs = [
     nixosRunner
     pkgs.getopt

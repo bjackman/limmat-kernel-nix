@@ -29,7 +29,7 @@
         refKernel = pkgs.linuxPackages.kernel;
         limmatConfig =
           (pkgs.callPackage ./limmat-config.nix {
-            vm-run = self.packages."${system}".vm-run;
+            lk-vm = self.packages."${system}".lk-vm;
             lk-kconfig = self.packages."${system}".lk-kconfig;
           }).config;
         format = pkgs.formats.toml { };
@@ -61,7 +61,7 @@
             kernelSrc = kernel;
           };
 
-          vm-run = pkgs.callPackage ./vm-run.nix {
+          lk-vm = pkgs.callPackage ./lk-vm.nix {
             nixosSystem = nixpkgs.lib.nixosSystem;
             inherit kselftests;
           };
@@ -98,7 +98,7 @@
               liburcu
             ])
             ++ (with self.packages."${system}"; [
-              vm-run
+              lk-vm
               lk-kconfig
             ]);
         };

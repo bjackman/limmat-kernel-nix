@@ -3,7 +3,7 @@
   pkgs,
 
   # Required args
-  vm-run,
+  lk-vm,
   lk-kconfig,
 }:
 # In a former life I tried to define this all hermetically so that all the
@@ -158,7 +158,7 @@ in
           trap "popd && rm -rf $tmpdir" EXIT
 
           timeout --signal=KILL 60s \
-            ${vm-run}/bin/limmat-kernel-vm-run --kernel "$kernel" --kselftests
+            ${lk-vm}/bin/lk-vm --kernel "$kernel" --kselftests
         '';
       }
       {
