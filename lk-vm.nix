@@ -78,6 +78,30 @@ let
             };
             onSuccess = [ "poweroff.target" ];
           };
+
+          # Disable all networking stuff. The goal here was to speed up boot, it
+          # doesn't seem to have a measurable effect but at least it avoids
+          # having annoying errors in the logs.
+          networking = {
+            dhcpcd.enable = false;
+            firewall.enable = false;
+            useNetworkd = true;
+          };
+          services.resolved.enable = false;
+          systemd.network = {
+            enable = true;
+            networks = {};
+          };
+
+          # Not sure what this is but it seems irrelevant to this usecase.
+          # Disabling it avoids some log spam and also seems to shave a couple
+          # of hundred milliseconds off boot.
+          security.enableWrappers = false;
+
+          # Don't bother storing logs to disk, that seems like it will just
+          # occasionally lead to unnecessary slowdowns for log rotation and
+          # stuff.
+          services.journald.storage = "volatile";
         }
       ];
   };
