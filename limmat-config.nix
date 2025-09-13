@@ -49,7 +49,8 @@ let
           let
             fragsStr = lib.concatStringsSep " " configFrags;
             enablesStr = lib.concatStringsSep " " extraConfigs;
-          in ''
+          in
+          ''
             set -eux
 
             # shellcheck disable=SC2157
@@ -61,7 +62,7 @@ let
             ${lk-kconfig}/bin/lk-kconfig --frags "${fragsStr}" --enable "${enablesStr}"
             make -sj"$(nproc)" bzImage CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
             mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
-        '';
+          '';
       };
     };
 in
@@ -99,12 +100,20 @@ in
       # Minimal kernel for running kselftests in a NixOS VM
       (mkBuild {
         name = "ksft";
-        configFrags = [ "base" "vm-boot" "kselftests" ];
+        configFrags = [
+          "base"
+          "vm-boot"
+          "kselftests"
+        ];
       })
       (mkBuild {
         name = "asi";
         ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
-        configFrags = [ "base" "vm-boot" "kselftests" ];
+        configFrags = [
+          "base"
+          "vm-boot"
+          "kselftests"
+        ];
         extraConfigs = [
           "MITIGATION_ADDRESS_SPACE_ISOLATION"
         ];

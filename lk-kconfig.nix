@@ -8,6 +8,8 @@ in
 pkgs.writeShellApplication {
   name = "lk-kconfig";
   runtimeInputs = [ pkgs.gnugrep ];
-  runtimeEnv = { LK_KCONFIG_FRAGMENTS_DIR = fragments; };
+  runtimeEnv = {
+    LK_KCONFIG_FRAGMENTS_DIR = fragments;
+  };
   text = builtins.readFile ./lk-kconfig.bash;
 }
