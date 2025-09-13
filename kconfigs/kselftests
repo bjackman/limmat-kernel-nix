@@ -1,2 +1,3 @@
 # Stuff for running kselftests
-GUP_TEST=y
+CONFIG_DEBUG_FS=y
+CONFIG_GUP_TEST=y
