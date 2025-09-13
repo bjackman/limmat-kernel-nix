@@ -69,6 +69,10 @@ let
             path = [ pkgs.which ];
             environment = {
               # TODO: Make this more flexible somehow.
+              # Note that this kselftests thing doesn't really work. The -t
+              # argument to run_vmtests.sh is a string with spaces in it, AFAIK
+              # there's no way to pass that via this environment variable.
+              # We need a custom script to wrap kselftests I think.
               KSELFTEST_RUN_VMTESTS_SH_ARGS = "-t mmap";
             };
             script = ''
