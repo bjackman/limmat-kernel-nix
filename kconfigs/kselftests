@@ -1,3 +1,4 @@
 # Stuff for running kselftests
 CONFIG_DEBUG_FS=y
+CONFIG_HUGETLBFS=y
 CONFIG_GUP_TEST=y
