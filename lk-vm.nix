@@ -105,6 +105,7 @@ pkgs.writeShellApplication {
                           remote localhost:1234" in GDB.
       -s, --kselftests    Run a hardcoded set of kselftests then shutdown. QEMU
                           exit code reflects test result.
+      -b, --shutdown      Just boot and then immediately shut down again.
       -h, --help          Display this help message and exit.
 
     EOF
@@ -117,8 +118,11 @@ pkgs.writeShellApplication {
     CMDLINE=
     QEMU_OPTS=
     KSELFTESTS=false
+    SHUTDOWN=false
 
-    PARSED_ARGUMENTS=$(getopt -o t:k:c:dsh --long tree:,kernel:,cmdline:,debug,kselftests,help -- "$@")
+    PARSED_ARGUMENTS=$(
+      getopt -o t:k:c:dsbh \
+        --long tree:,kernel:,cmdline:,debug,kselftests,shutdown,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -148,6 +152,10 @@ pkgs.writeShellApplication {
               ;;
             -s|--kselftests)
               KSELFTESTS=true
+              shift
+              ;;
+            -b|--shutdown)
+              SHUTDOWN=true
               shift
               ;;
             -h|--help)
@@ -182,6 +190,12 @@ pkgs.writeShellApplication {
 
     if "$KSELFTESTS"; then
       CMDLINE="$CMDLINE systemd.unit=kselftests.service"
+    elif "$SHUTDOWN"; then
+      # I dunno why the systemd.unit= is needed here, possibly as NixOS bug,
+      # based on the systemd manual I expect setting systemd.run should
+      # automatically make that the boot target.
+      run_cmdline='"/run/current-system/sw/bin/bash -c true"'
+      CMDLINE="$CMDLINE systemd.unit=kernel-command-line.service systemd.run=$run_cmdline"
     fi
 
     # This NixOS VM script only works with absolute paths.
