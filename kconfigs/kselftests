@@ -2,3 +2,6 @@
 CONFIG_DEBUG_FS=y
 CONFIG_HUGETLBFS=y
 CONFIG_GUP_TEST=y
+# Creates /proc/sys/kernel/shmmax etc
+CONFIG_SYSVIPC=y
+CONFIG_SYSVIPC_SYSCTL=y
