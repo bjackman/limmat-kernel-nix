@@ -107,6 +107,11 @@ let
           # occasionally lead to unnecessary slowdowns for log rotation and
           # stuff.
           services.journald.storage = "volatile";
+
+          # Turns out this doesn't stop the initrd from faffing around with the
+          # device mapper but I guess disabling it might save some time
+          # somewhere.
+          services.lvm.enable = false;
         }
       ];
   };
