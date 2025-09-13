@@ -93,6 +93,10 @@
               ccache
               ncurses
               gdb
+              # This adds a `cc` binary (etc) to $PATH that will cause them to
+              # use ccache. There's no other ccache configuration in here so
+              # this will just use the user's global configuration/cache etc.
+              ccacheWrapper
 
               # For building the user-mode tests like tools/testing/vma
               liburcu
