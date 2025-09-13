@@ -41,6 +41,24 @@
         packages = rec {
           limmatTOML = format.generate "limmat.toml" limmatConfig;
 
+          # Mostly for convenient testing, export a version of Limmat with the
+          # config from this repo hard-coded into it. Usually you'll instead
+          # just want to run the 'limmat' command from a devShell instead.
+          limmat-kernel = pkgs.stdenv.mkDerivation {
+            pname = "limmat-kernel";
+            version = "0.1.0";
+
+            src = ./.;
+
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+
+            installPhase = ''
+              makeWrapper ${limmat}/bin/limmat $out/bin/limmat-kernel \
+                --set LIMMAT_CONFIG ${limmatTOML}
+            '';
+          };
+          default = limmat-kernel;
+
           # Version of kselftests built from the nixpkgs kernel.
           kselftests = pkgs.callPackage ./kselftests.nix {
             kernelSrc = kernel;

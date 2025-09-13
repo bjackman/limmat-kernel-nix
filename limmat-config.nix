@@ -94,7 +94,7 @@ in
           configFrags = [ "base" ];
         }
         // {
-          depends_on = [ "kselftests" ]; # Hack to deprioritise
+          depends_on = [ "ksft" ]; # Hack to deprioritise
         }
       )
       # Minimal kernel for running kselftests in a NixOS VM
@@ -119,7 +119,28 @@ in
         ];
       })
       {
-        name = "kselftests";
+        name = "ksft";
+        cache = "by_tree";
+        depends_on = [ "build_ksft" ]; # Defined by a mkBuild call with name = "ksft"
+        resources = [ "qemu_throttle" ];
+        requires_worktree = false;
+        command = ''
+          set -eux
+
+          # Hack: the NixOS QEMU script by default uses ./$hostname.qcow2 for
+          # its disk. Switch to a tempdir to avoid sharing that (we have
+          # needs_worktree = false so we are running in the original source
+          # directory).
+          tmpdir="$(mktemp -d)"
+          pushd "$tmpdir"
+          trap "popd && rm -rf $tmpdir" EXIT
+
+          timeout --signal=KILL 60s \
+            ${lk-vm}/bin/lk-vm --kernel "$LIMMAT_ARTIFACTS_build_ksft/bzImage" --kselftests
+        '';
+      }
+      {
+        name = "ksft_asi";
         cache = "by_tree";
         depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
         resources = [ "qemu_throttle" ];
@@ -133,10 +154,6 @@ in
           fi
           kernel="$LIMMAT_ARTIFACTS_build_asi"/bzImage
 
-          # Hack: the NixOS QEMU script by default uses ./$hostname.qcow2 for
-          # its disk. Switch to a tempdir to avoid sharing that (we have
-          # needs_worktree = false so we are running in the original source
-          # directory).
           tmpdir="$(mktemp -d)"
           pushd "$tmpdir"
           trap "popd && rm -rf $tmpdir" EXIT
