@@ -1,0 +1,4 @@
+# Stuff to make debugging easier
+DEBUG_KERNEL=y
+DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y
+GDB_SCRIPT=y

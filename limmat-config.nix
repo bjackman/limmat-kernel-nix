@@ -35,8 +35,8 @@ let
   mkBuild =
     {
       name,
-      base,
-      configs ? [ ],
+      configFrags,
+      extraConfigs ? [ ],
       # Skip the test if this string doesn't appear in the repo.
       ifContains ? "",
     }:
@@ -45,20 +45,22 @@ let
       cache = "by_tree";
       command = mkTestScript {
         inherit name;
-        text = ''
-          set -eux
+        text =
+          let
+            fragsStr = lib.concatStringsSep " " configFrags;
+            enablesStr = lib.concatStringsSep " " extraConfigs;
+          in ''
+            set -eux
 
-          # shellcheck disable=SC2157
-          if [[ -n "${ifContains}" ]] && ! git grep -q "${ifContains}"; then
-            touch "$LIMMAT_ARTIFACTS"/skipped
-            exit 0
-          fi
+            # shellcheck disable=SC2157
+            if [[ -n "${ifContains}" ]] && ! git grep -q "${ifContains}"; then
+              touch "$LIMMAT_ARTIFACTS"/skipped
+              exit 0
+            fi
 
-          ${lk-kconfig}/bin/lk-kconfig -b ${base} ${
-            lib.concatMapStringsSep " " (elem: "-e ${elem}") configs
-          }
-          make -sj"$(nproc)" bzImage CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
-          mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
+            ${lk-kconfig}/bin/lk-kconfig --frags "${fragsStr}" --enable "${enablesStr}"
+            make -sj"$(nproc)" bzImage CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= 2>&1
+            mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
         '';
       };
     };
@@ -84,54 +86,27 @@ in
     ];
 
     tests = [
+      # Ultra minimal - this shouldn't even enable 64bit
       (
         mkBuild {
           name = "32";
-          base = "tinyconfig";
+          configFrags = [ "base" ];
         }
         // {
           depends_on = [ "kselftests" ]; # Hack to deprioritise
         }
       )
+      # Minimal kernel for running kselftests in a NixOS VM
       (mkBuild {
-        name = "min";
-        # Hm OK this isn't really that minimal, it's enough to boot a VM.
-        # Maybe we want a really really fast 64-bit build too (no
-        # kvm_guest.config)?
-        # TODO: This is my attempt to find a config that boots but it's not
-        # enough, something is missing.
-        base = "tinyconfig kvm_guest.config";
-        configs = [
-          "64BIT"
-          "WERROR"
-          "OBJTOOL_WERROR"
-          "OVERLAY_FS"
-          # TODO: Which ones of these are actually needed?
-          "MISC_FILESYSTEMS" # TODO: This is just a dependency
-          "SQUASHFS"
-          "FUSE_FS" # TODO: This is just a dependency
-          "VIRTIO_FS"
-          "PROC_FS"
-          "PROC_KCORE"
-          "VIRTIO_MENU" # TODO: This is just a dependency
-          "VIRTIO_MMIO"
-          "BLOCK" # TODO: This is just a dependency
-          "BLK_DEV_SD"
-          "SCSI" # TODO: This is just a dependency
-          "SCSI_VIRTIO"
-          "ACPI"
-          # TODO: Disable WLAN and ETHERNET
-        ];
+        name = "ksft";
+        configFrags = [ "base" "vm-boot" "kselftests" ];
       })
       (mkBuild {
         name = "asi";
-        base = "defconfig";
         ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
-        configs = [
+        configFrags = [ "base" "vm-boot" "kselftests" ];
+        extraConfigs = [
           "MITIGATION_ADDRESS_SPACE_ISOLATION"
-          "DEBUG_LIST"
-          "DEBUG_VM"
-          "CMA"
         ];
       })
       {

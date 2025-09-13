@@ -2,11 +2,12 @@
 {
   pkgs,
 }:
-# TODO: Hmm, this implicitly depends on the devShell. I'd like to just make this
-# derivation explicitly aware of the tools from the devShell but as I found out
-# this is pretty awkward. What do I do...?
+let
+  fragments = ./kconfigs;
+in
 pkgs.writeShellApplication {
   name = "lk-kconfig";
   runtimeInputs = [ pkgs.gnugrep ];
+  runtimeEnv = { LK_KCONFIG_FRAGMENTS_DIR = fragments; };
   text = builtins.readFile ./lk-kconfig.bash;
 }

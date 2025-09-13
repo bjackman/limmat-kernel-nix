@@ -1,0 +1,2 @@
+# Stuff for running kselftests
+GUP_TEST=y

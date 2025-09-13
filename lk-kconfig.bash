@@ -1,20 +1,30 @@
-# Stupidly verbose wrapper for configuring kernel and checking configs are set.
+AVAIL_FRAGS=$(find "$LK_KCONFIG_FRAGMENTS_DIR/"* -printf '%f ')
+FRAG_NAMES="base vm-boot"
 
 usage() {
     cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
 
+Simple wrapper for Kconfig setup with some canned configs. It wraps
+merge_config.sh and is intended to then add the feature of raising a hard error
+if configs that are supposed to be enabled didn't, due to dependencies. But I
+got bored before implementing that bit.
+
+!!! This will overwrite your .config !!!
+
 Options:
-    -b, --base NAME      Name of base config targets, space-separated. Default
-                         is 'defconfig kvm_guest.config'.
-    -e, --enable CONFIG  Config that must be enabled in final config.
-                         Repeatable. You can omit the CONFIG_ prefix.
+    -f, --frags FRAGS    Space-separated list of kconfig fragments to merge.
+                         Available fragments are: $AVAIL_FRAGS
+                         You can view their contents in $LK_KCONFIG_FRAGMENTS_DIR
+                         Default: $FRAG_NAMES
+    -e, --enable CONFIG  Space-separated list of extra configs to enable.
+                         You can omit the CONFIG_ prefix.
     -h, --help           Display this help message and exit.
 
 EOF
 }
 
-PARSED_ARGUMENTS=$(getopt -o e:b:h --long enable:,base:,help -- "$@")
+PARSED_ARGUMENTS=$(getopt -o e:f:h --long enable:,frags:,help -- "$@")
 
 # shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
@@ -24,19 +34,16 @@ if [ $? -ne 0 ]; then
 fi
 eval set -- "$PARSED_ARGUMENTS"
 
-BASE_TARGETS="defconfig kvm_guest.config"
-
-# OVERLAY_FS required for NixOS to boot.
-REQUIRED_KCONFIGS=("OVERLAY_FS")
+ENABLE=
 
 while true; do
     case "$1" in
         -e|--enable)
-            REQUIRED_KCONFIGS+=("$2")
+            ENABLE="$2"
             shift 2
             ;;
-        -b|--base)
-            BASE_TARGETS="$2"
+        -f|--frags)
+            FRAG_NAMES="$2"
             shift 2
             ;;
         --)
@@ -54,25 +61,30 @@ while true; do
     esac
 done
 
-for target in $BASE_TARGETS; do
-    make "$target"
-done
-
-# TODO: Don't hard code this shit
-scripts/config -e GUP_TEST
-scripts/config -e DEBUG_KERNEL -e DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT -e GDB_SCRIPTS
-
-echo "${REQUIRED_KCONFIGS[@]}" | xargs -n 1 printf -- "--enable %s " | xargs scripts/config
-
-make -j olddefconfig
-
-errors=false
-for conf in "${REQUIRED_KCONFIGS[@]}"; do
-    if ! grep -q "$conf=y" .config; then
-    echo "$conf not enabled in final config!"
-    errors=true
+# Convert from a list of fragment names to a list of paths
+FRAGS=
+for frag in $FRAG_NAMES; do
+    new_frag="$LK_KCONFIG_FRAGMENTS_DIR/$frag"
+    if [[ ! -e "$new_frag" ]]; then
+        echo "No fragment $frag in $LK_KCONFIG_FRAGMENTS_DIR"
+        exit 1
     fi
+    FRAGS="$FRAGS $new_frag"
 done
-if $errors; then
-    exit 1
+
+# Set up an initial .config and include the --enable options.
+echo > .config
+if [[ -n "$ENABLE" ]]; then
+    echo "$ENABLE" | xargs -n 1 printf -- "--enable %s " | xargs scripts/config
 fi
+
+# -s means strict mode. This will raise an error if any of the config fragments
+# (including .config, which we just created), directly override each other. But
+# that doesn't take dependencies into account; if the final config doesn't match
+# someting you requested then it just spits out an error and succeeds anyway.
+#
+# -n means to do something like "make oldnoconfig" instead of "olddefconfig" -
+# i.e. it fills in the gaps with =n isntead of the default setting. This is a
+# kinda opinionated option for this script to set, maybe it should be optional.
+# shellcheck disable=SC2086
+scripts/kconfig/merge_config.sh -s -n $FRAGS

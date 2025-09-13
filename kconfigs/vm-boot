@@ -1,0 +1,93 @@
+# This is an attempt to list the bare minimum set of options too boot a NixOS
+# VM (on x86) while minimizing compile time. It should have just about the
+# drivers that are required to do that, and I've kinda tried to strip out
+# everything else, but there are probably some things in here that aren't needed
+# - either because they really aren't needed, or because they get selected
+# automatically by some other option.
+#
+# I've tried to leave in the basic userspace APIs such that most syscalls should
+# at least exist. But the big exceptions are:
+#  - Networking
+#  - Cgroup controllers (the cgroups framework itself is present, otherwise
+#    NixOS's systemd falls over)
+#  - namespaces
+CONFIG_64BIT=y
+CONFIG_ACPI=y
+CONFIG_ADVISE_SYSCALLS=y
+CONFIG_AIO=y
+CONFIG_BINFMT_ELF=y
+CONFIG_BINFMT_SCRIPT=y
+CONFIG_BLK_DEV_INITRD=y
+CONFIG_BLOCK=y
+CONFIG_CGROUPS=y
+CONFIG_DEVMEM=y
+CONFIG_DEVPORT=y
+CONFIG_DEVTMPFS=y
+CONFIG_DNOTIFY=y
+CONFIG_EPOLL=y
+CONFIG_EVENTFD=y
+CONFIG_FHANDLE=y
+CONFIG_FILE_LOCKING=y
+CONFIG_FUTEX=y
+CONFIG_INOTIFY_USER=y
+CONFIG_NET=y
+CONFIG_KERNEL_GZIP=y
+CONFIG_MEMBARRIER=y
+CONFIG_MEMFD_CREATE=y
+CONFIG_MULTIUSER=y
+CONFIG_OVERLAY_FS=y
+CONFIG_PCI=y
+CONFIG_POSIX_TIMERS=y
+CONFIG_PRINTK=y
+CONFIG_PROC_FS=y
+CONFIG_SECRETMEM=y
+CONFIG_SHMEM=y
+CONFIG_SIGNALFD=y
+CONFIG_SMP=y
+CONFIG_STACKTRACE=y
+CONFIG_SYSFS=y
+CONFIG_TIMERFD=y
+CONFIG_TTY=y
+CONFIG_VHOST_MENU=y
+CONFIG_VIRTIO_MENU=y
+CONFIG_9P_FS=y
+CONFIG_ACPI_AC=y
+CONFIG_ACPI_PROCESSOR=y
+CONFIG_BLK_DEV=y
+CONFIG_BUFFER_HEAD=y
+CONFIG_DEVTMPFS_MOUNT=y
+CONFIG_EXT4_FS=y
+CONFIG_EXT4_FS_POSIX_ACL=y
+CONFIG_FSNOTIFY=y
+CONFIG_FS_POSIX_ACL=y
+CONFIG_FS_STACK=y
+CONFIG_KERNFS=y
+CONFIG_NETFS_SUPPORT=y
+CONFIG_NETWORK_FILESYSTEMS=y
+CONFIG_NET_9P=y
+CONFIG_NET_9P_FD=y
+CONFIG_NET_9P_VIRTIO=y
+CONFIG_PRINTK_TIME=y
+CONFIG_PROC_PAGE_MONITOR=y
+CONFIG_PROC_PID_ARCH_STATUS=y
+CONFIG_PROC_SYSCTL=y
+CONFIG_RD_ZSTD=y
+CONFIG_SCSI=y
+CONFIG_SERIAL_8250=y
+CONFIG_SERIAL_8250_CONSOLE=y
+CONFIG_SERIAL_CORE=y
+CONFIG_SERIAL_CORE_CONSOLE=y
+CONFIG_SERIAL_EARLYCON=y
+CONFIG_TMPFS=y
+CONFIG_UNIX=y
+CONFIG_VIRTIO=y
+CONFIG_VIRTIO_BLK=y
+CONFIG_VIRTIO_CONSOLE=y
+CONFIG_VIRTIO_PCI=y
+CONFIG_X86_64=y
+CONFIG_X86_64_SMP=y
+CONFIG_X86_IO_APIC=y
+CONFIG_X86_LOCAL_APIC=y
+# Without this, NixOS's autologin doesn't work (Might be that user login is
+# completely broken, haven't tested).
+CONFIG_TMPFS_POSIX_ACL=y
