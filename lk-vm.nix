@@ -56,6 +56,11 @@ let
             "debug"
             "loglevel=7"
           ];
+          # Tell stage-1 not to bother trying to load the virtio modules since
+          # we're using a custom kernel, the user has to take care of building
+          # those in. We need mkForce because qemu-guest.nix doesn't respect
+          # boot.inirtd.includeDefaultModules.
+          boot.initrd.kernelModules = lib.mkForce [ ];
 
           # As an easy way to be able to run it from the kernel cmdline, just
           # encode kselftests into a systemd service. You can then run it with
