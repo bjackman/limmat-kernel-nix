@@ -95,7 +95,7 @@ let
           services.resolved.enable = false;
           systemd.network = {
             enable = true;
-            networks = {};
+            networks = { };
           };
 
           # Not sure what this is but it seems irrelevant to this usecase.
