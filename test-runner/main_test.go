@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -193,7 +194,8 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 				t.Fatal(err)
 			}
 
-			cmd := exec.Command("go", "run", ".", "-test-config", tmpfile.Name(), "-test-identifiers", tc.testIdentifiers)
+			args := append([]string{"run", ".", "-test-config", tmpfile.Name()}, strings.Fields(tc.testIdentifiers)...)
+			cmd := exec.Command("go", args...)
 			output, err := cmd.CombinedOutput()
 
 			if tc.expectedExitCode == 0 {

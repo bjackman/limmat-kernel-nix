@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"test-runner/test_conf"
 )
@@ -25,17 +24,16 @@ var ErrTestFailed = fmt.Errorf("one or more tests failed")
 
 func doMain() error {
 	var testConfigFile string
-	var testIdentifiers string
 	flag.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")
-	flag.StringVar(&testIdentifiers, "test-identifiers", "", "Comma-separated list of test identifiers")
 	flag.Parse()
 
 	if testConfigFile == "" {
 		return fmt.Errorf("--test-config flag is required")
 	}
 
-	if testIdentifiers == "" {
-		return fmt.Errorf("--test-identifiers flag is required")
+	testIdentifiers := flag.Args()
+	if len(testIdentifiers) == 0 {
+		return fmt.Errorf("at least one test identifier is required")
 	}
 
 	tests, err := test_conf.Parse(testConfigFile)
@@ -44,7 +42,7 @@ func doMain() error {
 	}
 
 	requestedTests := make(map[string]test_conf.Test)
-	for _, pattern := range strings.Split(testIdentifiers, ",") {
+	for _, pattern := range testIdentifiers {
 		matched := false
 		for testID, test := range tests {
 			match, err := filepath.Match(pattern, testID)
