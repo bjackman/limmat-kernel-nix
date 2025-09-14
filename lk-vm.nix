@@ -70,7 +70,8 @@ let
             script = ''
               # Writing the value v to the isa-debug-exit port will cause QEMU to
               # immediately exit with the exit code `v << 1 | 1`.
-              ${ktests}/bin/ktests --test-identifiers vmtests.mmap || ${pkgs.ioport} ${qemuExitPortHex} $(( $? - 1 ))
+              ${ktests}/bin/ktests --test-identifiers vmtests.* \
+                || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))
             '';
             serviceConfig = {
               Type = "oneshot";
