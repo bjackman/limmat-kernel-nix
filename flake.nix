@@ -63,12 +63,24 @@
           kselftests = pkgs.callPackage ./kselftests.nix {
             kernelSrc = kernel;
           };
+          # Little tool for running tests.
+          test-runner = pkgs.buildGoModule {
+            pname = "test-runner";
+            version = "0.1.0";
+            src = ./test-runner;
+            vendorHash = "sha256-uPqabZgQGQulf+F3BvMLhv4O0h5jOq12F7K60u5xjtA=";
+          };
+          # Tool plus a config to run some kernel tests.
+          ktests = pkgs.callPackage ./ktests.nix {
+            inherit kselftests test-runner;
+          };
 
           lk-vm = pkgs.callPackage ./lk-vm.nix {
             nixosSystem = nixpkgs.lib.nixosSystem;
             inherit kselftests;
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
+
         };
 
         # Because of the hackery involved in this system, where we use `nix
