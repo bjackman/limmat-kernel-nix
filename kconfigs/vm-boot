@@ -91,3 +91,6 @@ CONFIG_X86_LOCAL_APIC=y
 # Without this, NixOS's autologin doesn't work (Might be that user login is
 # completely broken, haven't tested).
 CONFIG_TMPFS_POSIX_ACL=y
+# Needed for the ioport hackery to shut down the VM and report the test exit
+# code to the host.
+CONFIG_X86_IOPL_IOPERM=y
