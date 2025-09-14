@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//nix/store/**)",
+      "Bash(go test:*)",
+      "Bash(nix build:*)",
+      "Bash(go build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
