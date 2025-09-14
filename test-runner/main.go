@@ -64,14 +64,14 @@ func doMain() error {
 	results := make(map[string]TestResult)
 	failures := false
 	var testErr error
-	
+
 	// Sort test IDs for deterministic execution order
 	var testIDs []string
 	for testID := range requestedTests {
 		testIDs = append(testIDs, testID)
 	}
 	sort.Strings(testIDs)
-	
+
 	for _, testID := range testIDs {
 		test := requestedTests[testID]
 		if len(test.Command) == 0 {
