@@ -4,7 +4,8 @@
       "Read(//nix/store/**)",
       "Bash(go test:*)",
       "Bash(nix build:*)",
-      "Bash(go build:*)"
+      "Bash(go build:*)",
+      "Bash(./test-runner:*)"
     ],
     "deny": [],
     "ask": []
