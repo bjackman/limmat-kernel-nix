@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"test-runner/test_conf"
 )
@@ -22,9 +23,35 @@ var (
 
 var ErrTestFailed = fmt.Errorf("one or more tests failed")
 
+// stringSliceFlag implements flag.Value for collecting multiple --skip-tag values
+type stringSliceFlag []string
+
+func (s *stringSliceFlag) String() string {
+	return strings.Join(*s, ",")
+}
+
+func (s *stringSliceFlag) Set(value string) error {
+	*s = append(*s, value)
+	return nil
+}
+
+// shouldSkipTest checks if a test should be skipped based on its tags
+func shouldSkipTest(test test_conf.Test, skipTags []string) bool {
+	for _, skipTag := range skipTags {
+		for _, testTag := range test.Tags {
+			if testTag == skipTag {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func doMain() error {
 	var testConfigFile string
+	var skipTags stringSliceFlag
 	flag.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")
+	flag.Var(&skipTags, "skip-tag", "Skip tests with this tag (repeatable)")
 	flag.Parse()
 
 	if testConfigFile == "" {
@@ -50,8 +77,10 @@ func doMain() error {
 				return fmt.Errorf("invalid glob pattern %s: %v", pattern, err)
 			}
 			if match {
-				requestedTests[testID] = test
 				matched = true
+				if !shouldSkipTest(test, skipTags) {
+					requestedTests[testID] = test
+				}
 			}
 		}
 		if !matched {

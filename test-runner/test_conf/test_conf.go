@@ -9,6 +9,7 @@ import (
 type Test struct {
 	IsTest  bool     `json:"__is_test"`
 	Command []string `json:"command"`
+	Tags    []string `json:"tags,omitempty"`
 }
 
 func Parse(testConfigFile string) (map[string]Test, error) {

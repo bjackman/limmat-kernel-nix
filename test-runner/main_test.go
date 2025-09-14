@@ -14,6 +14,7 @@ func TestMain(t *testing.T) {
 		name             string
 		jsonContent      string
 		testIdentifiers  string
+		skipTags         []string
 		expectedOutput   string
 		expectedExitCode int
 	}{
@@ -177,6 +178,63 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 			expectedOutput:   "Error: invalid glob pattern foo[: syntax error in pattern\nexit status 127\n",
 			expectedExitCode: 1,
 		},
+		{
+			name: "skip single tag",
+			jsonContent: `{
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"],
+						"tags": ["slow"]
+					},
+					"baz": {
+						"__is_test": true,
+						"command": ["echo", "world"]
+					}
+				}
+			}`,
+			testIdentifiers: "foo.*",
+			skipTags:        []string{"slow"},
+			expectedOutput: `world
+
+=== Test Results Summary ===
+foo.baz                        PASS
+
+Total: 1, Passed: 1, Failed: 0, Error: 0
+`,
+			expectedExitCode: 0,
+		},
+		{
+			name: "skip multiple tags",
+			jsonContent: `{
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"],
+						"tags": ["slow"]
+					},
+					"baz": {
+						"__is_test": true,
+						"command": ["echo", "world"],
+						"tags": ["flaky"]
+					},
+					"qux": {
+						"__is_test": true,
+						"command": ["echo", "test"]
+					}
+				}
+			}`,
+			testIdentifiers: "foo.*",
+			skipTags:        []string{"slow", "flaky"},
+			expectedOutput: `test
+
+=== Test Results Summary ===
+foo.qux                        PASS
+
+Total: 1, Passed: 1, Failed: 0, Error: 0
+`,
+			expectedExitCode: 0,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -194,7 +252,11 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 				t.Fatal(err)
 			}
 
-			args := append([]string{"run", ".", "-test-config", tmpfile.Name()}, strings.Fields(tc.testIdentifiers)...)
+			args := []string{"run", ".", "-test-config", tmpfile.Name()}
+			for _, tag := range tc.skipTags {
+				args = append(args, "--skip-tag", tag)
+			}
+			args = append(args, strings.Fields(tc.testIdentifiers)...)
 			cmd := exec.Command("go", args...)
 			output, err := cmd.CombinedOutput()
 

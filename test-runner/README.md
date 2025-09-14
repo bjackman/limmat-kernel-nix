@@ -25,3 +25,41 @@ test-runner --test-config tests.json suite.test
 
 You can specify multiple test identifiers as positional arguments. Globs are
 supported.
+
+## Test Tags
+
+Tests can be tagged for categorization and selective execution:
+
+```json
+{
+    "suite": {
+        "fast_test": {
+            "__is_test": true,
+            "command": ["echo", "quick test"]
+        },
+        "slow_test": {
+            "__is_test": true,
+            "command": ["sleep", "5"],
+            "tags": ["slow"]
+        },
+        "flaky_test": {
+            "__is_test": true,
+            "command": ["echo", "unreliable test"],
+            "tags": ["slow", "flaky"]
+        }
+    }
+}
+```
+
+Skip tests with specific tags using `--skip-tag` (repeatable):
+
+```sh
+# Skip all slow tests
+test-runner --test-config tests.json --skip-tag slow suite.*
+
+# Skip multiple types of tests
+test-runner --test-config tests.json --skip-tag slow --skip-tag flaky suite.*
+
+# Mix with specific test selection
+test-runner --test-config tests.json --skip-tag flaky suite.fast_test suite.slow_test
+```
