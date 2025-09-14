@@ -17,14 +17,16 @@ let
   };
 
   # Helper function to create a vmtest for a specific test type
-  mkVmtest = testType: mkTest (writeShellApplication {
-    name = "vmtests-${testType}";
-    runtimeInputs = [ kselftests ];
-    text = ''
-      cd ${kselftests}/bin/mm
-      ./run_vmtests.sh -t ${testType}
-    '';
-  });
+  mkVmtest =
+    testType:
+    mkTest (writeShellApplication {
+      name = "vmtests-${testType}";
+      runtimeInputs = [ kselftests ];
+      text = ''
+        cd ${kselftests}/bin/mm
+        ./run_vmtests.sh -t ${testType}
+      '';
+    });
 
   tests = {
     # run_vmtests.sh is the wrapper script for the mm selftests. You can run the
