@@ -1,4 +1,5 @@
 {
+  pkgs,
   writeShellApplication,
   writeText,
   makeWrapper,
@@ -21,7 +22,15 @@ let
     testType:
     mkTest (writeShellApplication {
       name = "vmtests-${testType}";
-      runtimeInputs = [ kselftests ];
+      runtimeInputs = [
+        kselftests
+      ]
+      ++
+        # run_vmtests.sh deps:
+        (with pkgs; [
+          bash
+          gawk
+        ]);
       text = ''
         cd ${kselftests}/bin/mm
         ./run_vmtests.sh -t ${testType}
