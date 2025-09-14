@@ -45,7 +45,7 @@ func TestMain(t *testing.T) {
 				}
 			}`,
 			testIdentifiers:  "foo.baz",
-			expectedOutput:   "Error: test not found: foo.baz\nexit status 127\n",
+			expectedOutput:   "Error: no tests match pattern: foo.baz\nexit status 127\n",
 			expectedExitCode: 1,
 		},
 		{
@@ -74,6 +74,70 @@ func TestMain(t *testing.T) {
 			}`,
 			testIdentifiers:  "foo.bar",
 			expectedOutput:   "exit status 1\n",
+			expectedExitCode: 1,
+		},
+		{
+			name: "glob pattern matches multiple tests",
+			jsonContent: `{
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"]
+					},
+					"baz": {
+						"__is_test": true,
+						"command": ["echo", "world"]
+					}
+				}
+			}`,
+			testIdentifiers:  "foo.*",
+			expectedOutput:   "hello\nworld\n",
+			expectedExitCode: 0,
+		},
+		{
+			name: "glob pattern matches single test",
+			jsonContent: `{
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"]
+					},
+					"baz": {
+						"__is_test": true,
+						"command": ["echo", "world"]
+					}
+				}
+			}`,
+			testIdentifiers:  "foo.ba?",
+			expectedOutput:   "hello\nworld\n",
+			expectedExitCode: 0,
+		},
+		{
+			name: "no tests match glob pattern",
+			jsonContent: `{
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"]
+					}
+				}
+			}`,
+			testIdentifiers:  "nonexistent.*",
+			expectedOutput:   "Error: no tests match pattern: nonexistent.*\nexit status 127\n",
+			expectedExitCode: 1,
+		},
+		{
+			name: "invalid glob pattern",
+			jsonContent: `{
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"]
+					}
+				}
+			}`,
+			testIdentifiers:  "foo[",
+			expectedOutput:   "Error: invalid glob pattern foo[: syntax error in pattern\nexit status 127\n",
 			expectedExitCode: 1,
 		},
 	}

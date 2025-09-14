@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"test-runner/test_conf"
@@ -42,18 +44,36 @@ func doMain() error {
 	}
 
 	requestedTests := make(map[string]test_conf.Test)
-	for _, testID := range strings.Split(testIdentifiers, ",") {
-		test, ok := tests[testID]
-		if !ok {
-			return fmt.Errorf("test not found: %s", testID)
+	for _, pattern := range strings.Split(testIdentifiers, ",") {
+		matched := false
+		for testID, test := range tests {
+			match, err := filepath.Match(pattern, testID)
+			if err != nil {
+				return fmt.Errorf("invalid glob pattern %s: %v", pattern, err)
+			}
+			if match {
+				requestedTests[testID] = test
+				matched = true
+			}
 		}
-		requestedTests[testID] = test
+		if !matched {
+			return fmt.Errorf("no tests match pattern: %s", pattern)
+		}
 	}
 
 	results := make(map[string]TestResult)
 	failures := false
 	var testErr error
-	for testID, test := range requestedTests {
+	
+	// Sort test IDs for deterministic execution order
+	var testIDs []string
+	for testID := range requestedTests {
+		testIDs = append(testIDs, testID)
+	}
+	sort.Strings(testIDs)
+	
+	for _, testID := range testIDs {
+		test := requestedTests[testID]
 		if len(test.Command) == 0 {
 			results[testID] = TestError
 			fmt.Printf("Error running %s: empty command\n", testID)
