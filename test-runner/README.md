@@ -23,8 +23,5 @@ That is, an arbitrarily nested structure, where the leaves are marked with
 test-runner --test-config tests.json suite.test
 ```
 
-You can specify multiple test identifiers as positional arguments:
-
-```sh
-test-runner --test-config tests.json suite.test1 suite.test2
-```
+You can specify multiple test identifiers as positional arguments. Globs are
+supported.

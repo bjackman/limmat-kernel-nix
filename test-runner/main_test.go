@@ -31,7 +31,7 @@ func TestMain(t *testing.T) {
 					}
 				}
 			}`,
-			testIdentifiers:  "foo.bar,foo.baz",
+			testIdentifiers: "foo.bar foo.baz",
 			expectedOutput: `hello
 world
 
@@ -67,7 +67,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 					}
 				}
 			}`,
-			testIdentifiers:  "foo.bar",
+			testIdentifiers: "foo.bar",
 			expectedOutput: `
 === Test Results Summary ===
 foo.bar                        FAIL
@@ -87,7 +87,7 @@ exit status 1
 					}
 				}
 			}`,
-			testIdentifiers:  "foo.bar",
+			testIdentifiers: "foo.bar",
 			expectedOutput: `
 === Test Results Summary ===
 foo.bar                        FAIL
@@ -111,7 +111,7 @@ exit status 1
 					}
 				}
 			}`,
-			testIdentifiers:  "foo.*",
+			testIdentifiers: "foo.*",
 			expectedOutput: `hello
 world
 
@@ -137,7 +137,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 					}
 				}
 			}`,
-			testIdentifiers:  "foo.ba?",
+			testIdentifiers: "foo.ba?",
 			expectedOutput: `hello
 world
 
