@@ -46,14 +46,23 @@ let
     # just split it up into separate tests and always run a single sub-suite.
     # This is kinda wasteful because it means we run the setup/teardown more
     # often than necessary.
+    # Note this is an incomplete list of the tests.
     vmtests = {
-      # Note this is an incomplete list of the tests.
       mmap = mkVmtest "mmap";
+      # TODO: This fails because mkstemp()/unlink() run into a read-only
+      # filesystem.
       gup_test = mkVmtest "gup_test";
+      # TODO: This fails because /proc/sys/vm/compact_unevictable_allowed is
+      # missing.
       compaction = mkVmtest "compaction";
+      # TODO: This needs CONFIG_TEST_VMALLOC=m in the kernel.
       vmalloc = mkVmtest "vmalloc";
       cow = mkVmtest "cow";
+      # TODO: This fails because of numa_available missing.
       migration = mkVmtest "migration";
+      # TODO: This fails because of "You need to compile page_frag_test module"
+      # There seems to be a foible of run_vmtests.sh where it returns an error
+      # when all tests are skipped.
       page_frag = mkVmtest "page_frag";
     };
   };
