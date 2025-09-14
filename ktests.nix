@@ -16,6 +16,16 @@ let
     command = [ "${drv}/bin/${drv.pname or drv.name}" ];
   };
 
+  # Helper function to create a vmtest for a specific test type
+  mkVmtest = testType: mkTest (writeShellApplication {
+    name = "vmtests-${testType}";
+    runtimeInputs = [ kselftests ];
+    text = ''
+      cd ${kselftests}/bin/mm
+      ./run_vmtests.sh -t ${testType}
+    '';
+  });
+
   tests = {
     # run_vmtests.sh is the wrapper script for the mm selftests. You can run the
     # whole thing via kselftests' crappy test runner but lots of the tests are
@@ -26,15 +36,14 @@ let
     # This is kinda wasteful because it means we run the setup/teardown more
     # often than necessary.
     vmtests = {
-      mmap = mkTest (writeShellApplication {
-        name = "vmtests-mmap";
-        runtimeInputs = [ kselftests ];
-        text = ''
-          # run_vmtests.sh assumes it's being run from the mm directory.
-          cd ${kselftests}/bin/mm
-          ./run_vmtests.sh -t mmap
-        '';
-      });
+      # Note this is an incomplete list of the tests.
+      mmap = mkVmtest "mmap";
+      gup_test = mkVmtest "gup_test";
+      compaction = mkVmtest "compaction";
+      vmalloc = mkVmtest "vmalloc";
+      cow = mkVmtest "cow";
+      migration = mkVmtest "migration";
+      page_frag = mkVmtest "page_frag";
     };
   };
 
