@@ -104,8 +104,9 @@ let
 
           # Not sure what this is but it seems irrelevant to this usecase.
           # Disabling it avoids some log spam and also seems to shave a couple
-          # of hundred milliseconds off boot.
-          security.enableWrappers = false;
+          # of hundred milliseconds off boot. BUT it breaks interactive login so
+          # leave it enabled.
+          security.enableWrappers = true;
 
           # Don't bother storing logs to disk, that seems like it will just
           # occasionally lead to unnecessary slowdowns for log rotation and
