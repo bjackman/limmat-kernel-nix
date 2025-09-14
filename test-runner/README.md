@@ -1,3 +1,7 @@
+
+WARNING: This tool is almost entirely vibe-coded. Some of the test code has
+never been read by a human. The actual code has been read but not carefully.
+
 Simple single-node test runner. Runs test commands and aggregates results. This
 runs locally on the target machine, so if the machine is broken it will just get
 stuck. It basically serves to smooth over crap/inconsistent test interfaces, it
