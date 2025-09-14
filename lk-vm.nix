@@ -9,8 +9,8 @@
   # configuration. It is not actually a part of nixpkgs itself but one of the
   # nixpkgs flakes' `lib` outputs so it needs to be passed here explicitly.
   nixosSystem,
-  # kselftests package to install in the guest.
-  kselftests,
+  # ktests package to install in the guest.
+  ktests,
 }:
 let
   hostName = "testvm";
@@ -49,7 +49,7 @@ let
           };
           system.stateVersion = "25.05";
           services.getty.autologinUser = "root";
-          environment.systemPackages = [ kselftests ];
+          environment.systemPackages = [ ktests ];
           boot.kernelParams = [
             "nokaslr"
             "earlyprintk=serial"
@@ -63,22 +63,14 @@ let
           boot.initrd.kernelModules = lib.mkForce [ ];
 
           # As an easy way to be able to run it from the kernel cmdline, just
-          # encode kselftests into a systemd service. You can then run it with
+          # encode ktests into a systemd service. You can then run it with
           # systemd.unit=kselftests.service.
           systemd.services.kselftests = {
             path = [ pkgs.which ];
-            environment = {
-              # TODO: Make this more flexible somehow.
-              # Note that this kselftests thing doesn't really work. The -t
-              # argument to run_vmtests.sh is a string with spaces in it, AFAIK
-              # there's no way to pass that via this environment variable.
-              # We need a custom script to wrap kselftests I think.
-              KSELFTEST_RUN_VMTESTS_SH_ARGS = "-t mmap";
-            };
             script = ''
               # Writing the value v to the isa-debug-exit port will cause QEMU to
               # immediately exit with the exit code `v << 1 | 1`.
-              ${kselftests}/bin/run_kselftest.sh || ${pkgs.ioport} ${qemuExitPortHex} $(( $? - 1 ))
+              ${ktests}/bin/ktests --test-identifiers vmtests.mmap || ${pkgs.ioport} ${qemuExitPortHex} $(( $? - 1 ))
             '';
             serviceConfig = {
               Type = "oneshot";
