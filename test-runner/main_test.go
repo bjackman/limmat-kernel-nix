@@ -31,7 +31,15 @@ func TestMain(t *testing.T) {
 				}
 			}`,
 			testIdentifiers:  "foo.bar,foo.baz",
-			expectedOutput:   "hello\nworld\n",
+			expectedOutput: `hello
+world
+
+=== Test Results Summary ===
+foo.bar                        PASS
+foo.baz                        PASS
+
+Total: 2, Passed: 2, Failed: 0, Error: 0
+`,
 			expectedExitCode: 0,
 		},
 		{
@@ -59,7 +67,13 @@ func TestMain(t *testing.T) {
 				}
 			}`,
 			testIdentifiers:  "foo.bar",
-			expectedOutput:   "exit status 1\n",
+			expectedOutput: `
+=== Test Results Summary ===
+foo.bar                        FAIL
+
+Total: 1, Passed: 0, Failed: 1, Error: 0
+exit status 1
+`,
 			expectedExitCode: 1,
 		},
 		{
@@ -73,7 +87,13 @@ func TestMain(t *testing.T) {
 				}
 			}`,
 			testIdentifiers:  "foo.bar",
-			expectedOutput:   "exit status 1\n",
+			expectedOutput: `
+=== Test Results Summary ===
+foo.bar                        FAIL
+
+Total: 1, Passed: 0, Failed: 1, Error: 0
+exit status 1
+`,
 			expectedExitCode: 1,
 		},
 		{
@@ -91,7 +111,15 @@ func TestMain(t *testing.T) {
 				}
 			}`,
 			testIdentifiers:  "foo.*",
-			expectedOutput:   "hello\nworld\n",
+			expectedOutput: `hello
+world
+
+=== Test Results Summary ===
+foo.bar                        PASS
+foo.baz                        PASS
+
+Total: 2, Passed: 2, Failed: 0, Error: 0
+`,
 			expectedExitCode: 0,
 		},
 		{
@@ -109,7 +137,15 @@ func TestMain(t *testing.T) {
 				}
 			}`,
 			testIdentifiers:  "foo.ba?",
-			expectedOutput:   "hello\nworld\n",
+			expectedOutput: `hello
+world
+
+=== Test Results Summary ===
+foo.bar                        PASS
+foo.baz                        PASS
+
+Total: 2, Passed: 2, Failed: 0, Error: 0
+`,
 			expectedExitCode: 0,
 		},
 		{

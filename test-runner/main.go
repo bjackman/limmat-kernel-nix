@@ -97,8 +97,30 @@ func doMain() error {
 					testErr = fmt.Errorf("error running %s: %v", testID, err)
 				}
 			}
+		} else {
+			results[testID] = TestPassed
 		}
 	}
+
+	fmt.Println("\n=== Test Results Summary ===")
+	passedCount := 0
+	failedCount := 0
+	errorCount := 0
+	for _, testID := range testIDs {
+		result := results[testID]
+		fmt.Printf("%-30s %s\n", testID, result)
+
+		switch result {
+		case TestPassed:
+			passedCount++
+		case TestFailed:
+			failedCount++
+		case TestError:
+			errorCount++
+		}
+	}
+	fmt.Printf("\nTotal: %d, Passed: %d, Failed: %d, Error: %d\n",
+		len(testIDs), passedCount, failedCount, errorCount)
 
 	if testErr != nil {
 		return testErr
