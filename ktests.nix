@@ -38,6 +38,9 @@ let
     });
 
   tests = {
+    # The lk-broken tag means it doesn't work in the vm provided by lk-vm (with
+    # the kconfig provided by `lk-kconfig -f "base vm-boot kselftests`).
+
     # run_vmtests.sh is the wrapper script for the mm selftests. You can run the
     # whole thing via kselftests' crappy test runner but lots of the tests are
     # broken/flaky so you really only wanna run a subset. To do that via
@@ -51,19 +54,19 @@ let
       mmap = mkVmtest "mmap";
       # TODO: This fails because mkstemp()/unlink() run into a read-only
       # filesystem.
-      gup_test = mkVmtest "gup_test";
+      gup_test = (mkVmtest "gup_test") // { tags = [ "lk-broken" ]; };
       # TODO: This fails because /proc/sys/vm/compact_unevictable_allowed is
       # missing.
-      compaction = mkVmtest "compaction";
+      compaction = mkVmtest "compaction" // { tags = [ "lk-broken" ]; };
       # TODO: This needs CONFIG_TEST_VMALLOC=m in the kernel.
-      vmalloc = mkVmtest "vmalloc";
+      vmalloc = mkVmtest "vmalloc" // { tags = [ "lk-broken" ]; };
       cow = mkVmtest "cow";
       # TODO: This fails because of numa_available missing.
-      migration = mkVmtest "migration";
+      migration = mkVmtest "migration" // { tags = [ "lk-broken" ]; };
       # TODO: This fails because of "You need to compile page_frag_test module"
       # There seems to be a foible of run_vmtests.sh where it returns an error
       # when all tests are skipped.
-      page_frag = mkVmtest "page_frag";
+      page_frag = mkVmtest "page_frag" // { tags = [ "lk-broken" ]; };
     };
   };
 

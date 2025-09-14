@@ -70,7 +70,7 @@ let
             script = ''
               # Writing the value v to the isa-debug-exit port will cause QEMU to
               # immediately exit with the exit code `v << 1 | 1`.
-              ${ktests}/bin/ktests vmtests.* \
+              ${ktests}/bin/ktests --skip-tag lk-broken vmtests.* \
                 || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))
             '';
             serviceConfig = {
