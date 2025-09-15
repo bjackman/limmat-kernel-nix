@@ -1,4 +1,7 @@
 # Stuff to make debugging easier
+# Note there is also a debug.config in the kernel source, you can just run `make
+# debug.config`. That enables almost everything including KASAN, this is a much
+# more lightweight option.
 CONFIG_DEBUG_KERNEL=y
 CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y
 CONFIG_GDB_SCRIPTS=y
