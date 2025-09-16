@@ -113,9 +113,7 @@ in
           "base"
           "vm-boot"
           "kselftests"
-        ];
-        extraConfigs = [
-          "MITIGATION_ADDRESS_SPACE_ISOLATION"
+          "asi"
         ];
       })
       {
