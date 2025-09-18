@@ -200,6 +200,25 @@ in
           text = "python ${./checkpatch.py}";
         };
       }
+      {
+        name = "todo";
+        requires_worktree = false;
+        command = mkTestScript {
+          name = "checkpatch";
+          text = ''
+            set -ux +e
+
+            git show "$LIMMAT_COMMIT" | grep TODO
+            status=$?
+            if [[ "$status" == 1 ]]; then
+              exit 0  # no matches
+            elif [[ "$status" == 0 ]]; then
+              exit 1  # matches
+            fi
+            # error
+          '';
+        };
+      }
     ];
   };
 }
