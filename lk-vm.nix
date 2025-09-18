@@ -70,7 +70,7 @@ let
             script = ''
               # Writing the value v to the isa-debug-exit port will cause QEMU to
               # immediately exit with the exit code `v << 1 | 1`.
-              ${ktests}/bin/ktests --skip-tag lk-broken vmtests.* \
+              ${ktests}/bin/ktests $KTESTS_ARGS \
                 || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))
             '';
             serviceConfig = {
@@ -129,16 +129,20 @@ pkgs.writeShellApplication {
     Usage: $(basename "$0") [OPTIONS]
 
     Options:
-      -t, --tree TREE     Optional path to a kernel tree.
-      -k, --kernel PATH   Specify the path to the kernel image. If you set
-                          --tree, defaults to the x86 bzImage in that treee.
-      -c, --cmdline ARGS  Args to append to kernel cmdline. Single string.
-      -d, --debug         Enable GDB stub in QEMU. Connect with "target
-                          remote localhost:1234" in GDB.
-      -s, --ktests        Run a hardcoded set of ktests then shutdown. QEMU
-                          exit code reflects test result.
-      -b, --shutdown      Just boot and then immediately shut down again.
-      -h, --help          Display this help message and exit.
+      -t, --tree TREE      Optional path to a kernel tree.
+      -k, --kernel PATH    Specify the path to the kernel image. If you set
+                           --tree, defaults to the x86 bzImage in that treee.
+      -c, --cmdline ARGS   Args to append to kernel cmdline. Single string.
+      -d, --debug          Enable GDB stub in QEMU. Connect with "target
+                           remote localhost:1234" in GDB.
+      -s, --ktests [ARGS]  Run a tests then shutdown. QEMU exit code reflects
+                           test result. Optional arg is shell-expanded into
+                           arguments for the ktests tool.
+                           Note that this is parsed by GNU getopt, you can't
+                           parse the arg like "-s foo" it needs to be "-sfoo"
+                           or "--ktests=foo".
+      -b, --shutdown       Just boot and then immediately shut down again.
+      -h, --help           Display this help message and exit.
 
     EOF
     }
@@ -152,9 +156,11 @@ pkgs.writeShellApplication {
     KTESTS=false
     SHUTDOWN=false
 
+    KTESTS_ARGS="--skip-tag lg-broken vmtests.*"
+
     PARSED_ARGUMENTS=$(
-      getopt -o t:k:c:dsbh \
-        --long tree:,kernel:,cmdline:,debug,ktests,shutdown,help -- "$@")
+      getopt -o t:k:c:ds::bh \
+        --long tree:,kernel:,cmdline:,debug,ktests::,shutdown,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -184,7 +190,10 @@ pkgs.writeShellApplication {
               ;;
             -s|--ktests)
               KTESTS=true
-              shift
+              if [[ -n "$2" ]]; then
+                KTESTS_ARGS="$2"
+              fi
+              shift 2
               ;;
             -b|--shutdown)
               SHUTDOWN=true
@@ -221,7 +230,7 @@ pkgs.writeShellApplication {
     fi
 
     if "$KTESTS"; then
-      CMDLINE="$CMDLINE systemd.unit=ktests.service"
+      CMDLINE="$CMDLINE systemd.unit=ktests.service systemd.setenv=KTESTS_ARGS=\"$KTESTS_ARGS\""
     elif "$SHUTDOWN"; then
       # I dunno why the systemd.unit= is needed here, possibly as NixOS bug,
       # based on the systemd manual I expect setting systemd.run should
