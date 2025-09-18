@@ -64,8 +64,8 @@ let
 
           # As an easy way to be able to run it from the kernel cmdline, just
           # encode ktests into a systemd service. You can then run it with
-          # systemd.unit=kselftests.service.
-          systemd.services.kselftests = {
+          # systemd.unit=ktests.service.
+          systemd.services.ktests = {
             path = [ pkgs.which ];
             script = ''
               # Writing the value v to the isa-debug-exit port will cause QEMU to
@@ -135,7 +135,7 @@ pkgs.writeShellApplication {
       -c, --cmdline ARGS  Args to append to kernel cmdline. Single string.
       -d, --debug         Enable GDB stub in QEMU. Connect with "target
                           remote localhost:1234" in GDB.
-      -s, --kselftests    Run a hardcoded set of kselftests then shutdown. QEMU
+      -s, --ktests        Run a hardcoded set of ktests then shutdown. QEMU
                           exit code reflects test result.
       -b, --shutdown      Just boot and then immediately shut down again.
       -h, --help          Display this help message and exit.
@@ -149,12 +149,12 @@ pkgs.writeShellApplication {
     KERNEL_PATH=
     CMDLINE=
     QEMU_OPTS=
-    KSELFTESTS=false
+    KTESTS=false
     SHUTDOWN=false
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:dsbh \
-        --long tree:,kernel:,cmdline:,debug,kselftests,shutdown,help -- "$@")
+        --long tree:,kernel:,cmdline:,debug,ktests,shutdown,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -182,8 +182,8 @@ pkgs.writeShellApplication {
               QEMU_OPTS="-s -S"
               shift
               ;;
-            -s|--kselftests)
-              KSELFTESTS=true
+            -s|--ktests)
+              KTESTS=true
               shift
               ;;
             -b|--shutdown)
@@ -220,8 +220,8 @@ pkgs.writeShellApplication {
       trap 'rmdir $KERNEL_TREE' EXIT
     fi
 
-    if "$KSELFTESTS"; then
-      CMDLINE="$CMDLINE systemd.unit=kselftests.service"
+    if "$KTESTS"; then
+      CMDLINE="$CMDLINE systemd.unit=ktests.service"
     elif "$SHUTDOWN"; then
       # I dunno why the systemd.unit= is needed here, possibly as NixOS bug,
       # based on the systemd manual I expect setting systemd.run should
