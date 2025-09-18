@@ -54,19 +54,29 @@ let
       mmap = mkVmtest "mmap";
       # TODO: This fails because mkstemp()/unlink() run into a read-only
       # filesystem.
-      gup_test = (mkVmtest "gup_test") // { tags = [ "lk-broken" ]; };
+      gup_test = (mkVmtest "gup_test") // {
+        tags = [ "lk-broken" ];
+      };
       # TODO: This fails because /proc/sys/vm/compact_unevictable_allowed is
       # missing.
-      compaction = mkVmtest "compaction" // { tags = [ "lk-broken" ]; };
+      compaction = mkVmtest "compaction" // {
+        tags = [ "lk-broken" ];
+      };
       # TODO: This needs CONFIG_TEST_VMALLOC=m in the kernel.
-      vmalloc = mkVmtest "vmalloc" // { tags = [ "lk-broken" ]; };
+      vmalloc = mkVmtest "vmalloc" // {
+        tags = [ "lk-broken" ];
+      };
       cow = mkVmtest "cow";
       # TODO: This fails because of numa_available missing.
-      migration = mkVmtest "migration" // { tags = [ "lk-broken" ]; };
+      migration = mkVmtest "migration" // {
+        tags = [ "lk-broken" ];
+      };
       # TODO: This fails because of "You need to compile page_frag_test module"
       # There seems to be a foible of run_vmtests.sh where it returns an error
       # when all tests are skipped.
-      page_frag = mkVmtest "page_frag" // { tags = [ "lk-broken" ]; };
+      page_frag = mkVmtest "page_frag" // {
+        tags = [ "lk-broken" ];
+      };
     };
   };
 
