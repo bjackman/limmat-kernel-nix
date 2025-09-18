@@ -14,7 +14,14 @@
 let
   # For simplicity, all the scripts just have a common set of runtimeInputs.
   # This will also be exported in order to expose that stuff to the devShell.
-  runtimeInputs = [ pkgs.ccache ];
+  runtimeInputs = (with pkgs; [
+    ccache
+    # checkpatch.py deps:
+    python3
+    perl
+    git
+    codespell
+  ]);
   # Helper to generate a script with the runtimeInputs in its environment.
   # Outputs the full path of the script itself, not the overall derivation.
   mkTestScript =
@@ -185,6 +192,13 @@ in
           tools/testing/kunit/kunit.py run --arch=x86_64 \
             --kunitconfig=arch/x86/mm/.kunitconfig --kernel_args asi=on
         '';
+      }
+      {
+        name = "checkpatch";
+        command = mkTestScript {
+          name = "checkpatch";
+          text = "python ${./checkpatch.py}";
+        };
       }
     ];
   };
