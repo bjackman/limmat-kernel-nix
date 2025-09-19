@@ -77,7 +77,7 @@ let
       thp = mkVmtest "thp" // {
         # TODO: No idea why this is failing
         tags = [ "lk-broken" ];
-      }
+      };
       hugetlb = mkVmtest "hugetlb"// {
         # TODO:
         #  - missing userfaultfd.
