@@ -94,3 +94,13 @@ CONFIG_TMPFS_POSIX_ACL=y
 # Needed for the ioport hackery to shut down the VM and report the test exit
 # code to the host.
 CONFIG_X86_IOPL_IOPERM=y
+
+# Some tests expect swap to exist. I couldn't get storage swap to work (no idea
+# why, just silently didn't set it up) so we're using zswap. That needs to be
+# configured in NixOS, so we do that unconditionally in lk-vm to keep things
+# simple, hence we need to enable swap in the base config.
+CONFIG_ZRAM=y
+CONFIG_ZRAM_BACKEND_ZSTD=y
+CONFIG_SWAP=y
+CONFIG_ZSWAP=y
+CONFIG_ZSWAP_DEFAULT_ON=y

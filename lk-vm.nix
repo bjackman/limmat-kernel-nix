@@ -81,6 +81,10 @@ let
             onSuccess = [ "poweroff.target" ];
           };
 
+          # Some mmtests fail if the system doesn't have swap. I don't wanna
+          # configure proper swap but let's try zswap.
+          zramSwap.enable = true;
+
           # Disable all networking stuff. The goal here was to speed up boot, it
           # doesn't seem to have a measurable effect but at least it avoids
           # having annoying errors in the logs.
