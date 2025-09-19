@@ -156,7 +156,7 @@ pkgs.writeShellApplication {
     KTESTS=false
     SHUTDOWN=false
 
-    KTESTS_ARGS="--skip-tag lg-broken vmtests.*"
+    KTESTS_ARGS="--skip-tag lk-broken vmtests.*"
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:ds::bh \
