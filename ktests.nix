@@ -57,11 +57,7 @@ let
       gup_test = (mkVmtest "gup_test") // {
         tags = [ "lk-broken" ];
       };
-      # TODO: This fails because /proc/sys/vm/compact_unevictable_allowed is
-      # missing.
-      compaction = mkVmtest "compaction" // {
-        tags = [ "lk-broken" ];
-      };
+      compaction = mkVmtest "compaction";
       # TODO: This needs CONFIG_TEST_VMALLOC=m in the kernel.
       vmalloc = mkVmtest "vmalloc" // {
         tags = [ "lk-broken" ];
