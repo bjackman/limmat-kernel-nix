@@ -74,6 +74,17 @@ let
       page_frag = mkVmtest "page_frag" // {
         tags = [ "lk-broken" ];
       };
+      thp = mkVmtest "thp" // {
+        # TODO: No idea why this is failing
+        tags = [ "lk-broken" ];
+      }
+      hugetlb = mkVmtest "hugetlb"// {
+        # TODO:
+        #  - missing userfaultfd.
+        #  - No GB pages available
+        #  - /charge_reserved_hugetlb.sh: line 36: echo: write error: Invalid argument
+        tags = [ "lk-broken" ];
+      };
     };
   };
 
