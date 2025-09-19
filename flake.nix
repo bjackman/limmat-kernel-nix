@@ -117,6 +117,7 @@
               liburcu
 
               limmat
+              b4
             ])
             ++ (with self.packages."${system}"; [
               lk-vm
