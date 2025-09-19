@@ -14,14 +14,17 @@
 let
   # For simplicity, all the scripts just have a common set of runtimeInputs.
   # This will also be exported in order to expose that stuff to the devShell.
-  runtimeInputs = (with pkgs; [
-    ccache
-    # checkpatch.py deps:
-    python3
-    perl
-    git
-    codespell
-  ]);
+  runtimeInputs = (
+    with pkgs;
+    [
+      ccache
+      # checkpatch.py deps:
+      python3
+      perl
+      git
+      codespell
+    ]
+  );
   # Helper to generate a script with the runtimeInputs in its environment.
   # Outputs the full path of the script itself, not the overall derivation.
   mkTestScript =

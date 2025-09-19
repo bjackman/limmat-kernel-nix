@@ -102,7 +102,10 @@
         };
 
         devShells.kernel = pkgs.mkShell {
-          inputsFrom = [ refKernel self.packages."${system}".kselftests ];
+          inputsFrom = [
+            refKernel
+            self.packages."${system}".kselftests
+          ];
           packages =
             (with pkgs; [
               ccache

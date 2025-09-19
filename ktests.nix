@@ -74,7 +74,7 @@ let
         # TODO: No idea why this is failing
         tags = [ "lk-broken" ];
       };
-      hugetlb = mkVmtest "hugetlb"// {
+      hugetlb = mkVmtest "hugetlb" // {
         # TODO:
         #  - missing userfaultfd.
         #  - No GB pages available
