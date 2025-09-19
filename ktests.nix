@@ -67,10 +67,7 @@ let
         tags = [ "lk-broken" ];
       };
       cow = mkVmtest "cow";
-      # TODO: This fails because of numa_available missing.
-      migration = mkVmtest "migration" // {
-        tags = [ "lk-broken" ];
-      };
+      migration = mkVmtest "migration";
       # TODO: This fails because of "You need to compile page_frag_test module"
       # There seems to be a foible of run_vmtests.sh where it returns an error
       # when all tests are skipped.
