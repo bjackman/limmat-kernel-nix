@@ -71,7 +71,9 @@ let
         tags = [ "lk-broken" ];
       };
       thp = mkVmtest "thp" // {
-        # TODO: No idea why this is failing
+        # TODO: There is a bug in split_huge_page_test, the ksft_set_plan() call
+        # is broken under my configuratoin leading to:
+        # Planned tests != run tests (62 != 10)
         tags = [ "lk-broken" ];
       };
       hugetlb = mkVmtest "hugetlb" // {
