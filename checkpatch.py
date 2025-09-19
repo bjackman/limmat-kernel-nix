@@ -54,4 +54,7 @@ cmd = [
     f"--ignore={','.join(ignore)}", "--codespell", LIMMAT_COMMIT
 ]
 
-subprocess.run(cmd, check=True)
+try:
+    subprocess.run(cmd, check=True)
+except subprocess.CalledProcessError:
+    exit(1)
