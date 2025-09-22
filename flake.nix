@@ -121,6 +121,7 @@
 
               limmat
               b4
+              codespell
             ])
             ++ (with self.packages."${system}"; [
               lk-vm
