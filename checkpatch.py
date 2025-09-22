@@ -42,7 +42,11 @@ ignore = [
     "COMPLEX_MACRO",          # yeah yeah yeah
     "LONG_LINE",              # yeah yeah yeah
     "EXPORT_SYMBOL",          # noisy
-    "EMBEDDED_FUNCTION_NAME"  # noisy
+    "EMBEDDED_FUNCTION_NAME", # noisy
+    # Will let b4 prep --check identify this for me at the last minute. For now
+    # it's useful to have this so I can upload changes to Gerrit for internal
+    # review at Google
+    "GERRIT_CHANGE_ID"
 ]
 
 # Ignore more stuff on Google prodkernel trees.
