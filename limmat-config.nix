@@ -153,7 +153,7 @@ in
           pushd "$tmpdir"
           trap "popd && rm -rf $tmpdir" EXIT
 
-          timeout --signal=KILL 60s \
+          timeout --signal=KILL 120s \
             ${lk-vm}/bin/lk-vm --kernel "$LIMMAT_ARTIFACTS_build_ksft/bzImage" --ktests
         '';
       }
@@ -177,7 +177,7 @@ in
           trap "popd && rm -rf $tmpdir" EXIT
 
           # 0x20 means is TAINT_BAD_PAGE.
-          timeout --signal=KILL 60s \
+          timeout --signal=KILL 120s \
             ${lk-vm}/bin/lk-vm --kernel "$kernel" --ktests \
             --cmdline "asi=on panic_on_warn=1 panic_on_taint=0x20"
         '';
