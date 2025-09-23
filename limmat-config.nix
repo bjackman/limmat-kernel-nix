@@ -189,14 +189,14 @@ in
         command = ''
           set -eux
 
-          kunitconfig=arch/x86/mm/.kunitconfig
-          if [[ ! -e "$kunitconfig" ]]; then
-            exit 0
-          fi
-
-          make mrproper
-          tools/testing/kunit/kunit.py run --arch=x86_64 \
-            --kunitconfig=arch/x86/mm/.kunitconfig --kernel_args asi=on
+          for kunitconfig in arch/x86/mm/.kunitconfig arch/x86/.kunitconfig; do
+            if [[ -e "$kunitconfig" ]]; then
+              make mrproper
+              tools/testing/kunit/kunit.py run --arch=x86_64 \
+                --kunitconfig "$kunitconfig" --kernel_args asi=on
+              grep ADDRESS_SPACE_ISOLATION .kunit/.config
+            fi
+          done
         '';
       }
       {
