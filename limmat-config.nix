@@ -20,7 +20,12 @@ let
       ccache
       # checkpatch.py needs python. checkatch.pl calls spdxcheck.py which uses
       # ply and gitpython.
-      (python3.withPackages (py-pkgs: with py-pkgs; [ ply gitpython ]))
+      (python3.withPackages (
+        py-pkgs: with py-pkgs; [
+          ply
+          gitpython
+        ]
+      ))
       perl
       git
       codespell
