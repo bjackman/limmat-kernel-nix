@@ -26,26 +26,34 @@ let
       [
         {
           networking.hostName = hostName;
-          virtualisation.vmVariant.virtualisation = {
-            graphics = false;
-            # This BIOS doesn't mess up the terminal and is apparently faster.
-            qemu.options = [
-              "-bios"
-              "qboot.rom"
-              "-device"
-              "isa-debug-exit,iobase=${qemuExitPortHex},iosize=0x04"
-            ];
-            # Tell the VM runner script that it should mount a directory on the
-            # host, named in the environment variable, to /mnt/kernel. That
-            # variable must point to a directory. This is coupled with the script
-            # content below.
-            sharedDirectories = {
-              kernel-tree = {
-                source = "$KERNEL_TREE";
-                target = "/mnt/kernel";
+          virtualisation.vmVariant = {
+            virtualisation = {
+              graphics = false;
+              # This BIOS doesn't mess up the terminal and is apparently faster.
+              qemu.options = [
+                "-bios"
+                "qboot.rom"
+                "-device"
+                "isa-debug-exit,iobase=${qemuExitPortHex},iosize=0x04"
+              ];
+              # Tell the VM runner script that it should mount a directory on the
+              # host, named in the environment variable, to /mnt/kernel. That
+              # variable must point to a directory. This is coupled with the script
+              # content below.
+              sharedDirectories = {
+                kernel-tree = {
+                  source = "$KERNEL_TREE";
+                  target = "/mnt/kernel";
+                };
               };
+              # Attempt to ensure there's space left over in the rootfs (which
+              # may be where /tmp is).
+              diskSize = 2 * 1024; # Megabytes
             };
-            memorySize = 4 * 1024; # Megabytes
+
+            # mm selftests are hard-coded to put stuff in /tmp which has very
+            # little space on a NixOS VM, unless it's a tmpfs.
+            boot.tmp.useTmpfs = true;
           };
           system.stateVersion = "25.05";
           services.getty.autologinUser = "root";
@@ -59,6 +67,9 @@ let
             # failing when I'm running lots of QEMU instances at once. Disabling
             # this seems to work around it...
             "noapic"
+            # Suggested by the error message of mm hugetlb selftests:
+            "hugepagesz=1G"
+            "hugepages=4"
           ];
           # Tell stage-1 not to bother trying to load the virtio modules since
           # we're using a custom kernel, the user has to take care of building

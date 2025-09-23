@@ -26,10 +26,16 @@ let
         kselftests
       ]
       ++
-        # run_vmtests.sh deps:
         (with pkgs; [
+          # run_vmtests.sh deps:
           bash
           gawk
+          # General stuff for all the scripts (too hard to track all
+          # dependencies)
+          killall
+          mount
+          umount
+          procps
         ]);
       text = ''
         cd ${kselftests}/bin/mm
@@ -76,13 +82,7 @@ let
         # Planned tests != run tests (62 != 10)
         tags = [ "lk-broken" ];
       };
-      hugetlb = mkVmtest "hugetlb" // {
-        # TODO:
-        #  - missing userfaultfd.
-        #  - No GB pages available
-        #  - /charge_reserved_hugetlb.sh: line 36: echo: write error: Invalid argument
-        tags = [ "lk-broken" ];
-      };
+      hugetlb = mkVmtest "hugetlb";
     };
   };
 
