@@ -122,6 +122,7 @@ in
           "base"
           "vm-boot"
           "kselftests"
+          "debug"
         ];
       })
       (mkBuild {
@@ -131,6 +132,7 @@ in
           "base"
           "vm-boot"
           "kselftests"
+          "debug"
           "asi"
         ];
       })
