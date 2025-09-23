@@ -101,8 +101,7 @@ in
   config = {
     num_worktrees = 8;
     resources = [
-      # When I run lots of QEMUs I sometimes see the guest complain that the
-      # IOAPIC is broken. Trying throttling to 1 at a time...
+      # Don't run too many QEMUs at once.
       {
         name = "qemu_throttle";
         count = 1;
@@ -159,7 +158,7 @@ in
           trap "popd && rm -rf $tmpdir" EXIT
 
           timeout --signal=KILL 120s \
-            ${lk-vm}/bin/lk-vm --kernel "$LIMMAT_ARTIFACTS_build_ksft/bzImage" --ktests
+            ${lk-vm}/bin/lk-vm --kern "$LIMMAT_ARTIFACTS_build_ksft/bzImage" --ktests
         '';
       }
       {

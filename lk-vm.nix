@@ -55,6 +55,10 @@ let
             "earlyprintk=serial"
             "debug"
             "loglevel=7"
+            # There seems to be a bug in the kernel or QEMU which leads to boot
+            # failing when I'm running lots of QEMU instances at once. Disabling
+            # this seems to work around it...
+            "noapic"
           ];
           # Tell stage-1 not to bother trying to load the virtio modules since
           # we're using a custom kernel, the user has to take care of building
