@@ -82,15 +82,16 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1758471315,
-        "narHash": "sha256-f9Twix4xPoCdDWLLxB4h+HWgNELQJWdQzuhLOtQdXy8=",
+        "lastModified": 1758471400,
+        "narHash": "sha256-zyNOe85IPnUSgM7I+b4/Dq7j+uW4aArmKqPpwSGmWjI=",
         "owner": "bjackman",
         "repo": "limmat",
-        "rev": "a9e1fa5e94fe2c31e08ceedab6b5d900e5e49c62",
+        "rev": "65e9e895912e2ef54a5bbda10df983fef500b793",
         "type": "github"
       },
       "original": {
         "owner": "bjackman",
+        "ref": "cache-notes-v2",
         "repo": "limmat",
         "type": "github"
       }

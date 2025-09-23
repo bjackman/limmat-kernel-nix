@@ -10,13 +10,17 @@ if LIMMAT_COMMIT is None:
     # Probably you are running this script manually, it's designed to be run by
     # Limmat. You can test it by just setting the env var though.
     raise RuntimeError("LIMMAT_COMMIT missing from env")
+LIMMAT_NOTES_OBJECT = os.getenv("LIMMAT_NOTES_OBJECT")
 
-def log_n1(format):
+def git(*args):
     result = subprocess.run(
-        ["git", "log", "-n1", "--format=" + format, LIMMAT_COMMIT],
+        ["git"] + list(args),
         capture_output=True, text=True, check=True,
     )
     return result.stdout.strip()
+
+def log_n1(format):
+    return git("log", "-n1", "--format=" + format, LIMMAT_COMMIT)
 
 # Linus doesn't sign off his release commits lol.
 author = log_n1("%an")
@@ -29,6 +33,32 @@ raw_msg = log_n1("%B")
 if "\n--- b4-submit-tracking ---\n" in raw_msg:
     print("Ignoring b4-submit-tracking patch")
     exit(0)
+
+# This lets you run `git notes --ref limmat edit $COMMIT` and write something
+# like checkpatch-ignore=FOO,BAR in there to ignore FOO and BAR for that commit
+# without modifying the commit. This is coupled with the by_commit_with_notes
+# setting on the Limmat job definition.
+def ignores_from_notes() -> list[str]:
+    if LIMMAT_NOTES_OBJECT is None:
+        return []
+    note = git("cat-file", "-p", LIMMAT_NOTES_OBJECT)
+    ret = []
+    for line in note.splitlines():
+        if not line.strip():
+            continue
+        parts = line.split("=")
+        if len(parts) != 2:
+            print(f"Ignoring malformed line in limmat commit notes: {line}")
+            continue
+        k, v = parts
+        if k != "checkpatch-ignore":
+            print(f"Ignoring unknown setting {k!r} in limmat commit notes.")
+            continue
+
+        for item in v.split(","):
+            ret.append(item.strip())
+
+    return ret
 
 ignore = [
     "FILE_PATH_CHANGES",      # Annoying
@@ -47,7 +77,7 @@ ignore = [
     # it's useful to have this so I can upload changes to Gerrit for internal
     # review at Google
     "GERRIT_CHANGE_ID"
-]
+] + ignores_from_notes()
 
 # Ignore more stuff on Google prodkernel trees.
 if os.path.exists("./gconfigs"):

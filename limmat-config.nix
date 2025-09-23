@@ -219,6 +219,7 @@ in
       }
       {
         name = "checkpatch";
+        cache = "by_commit_with_notes";
         command = mkTestScript {
           name = "checkpatch";
           text = "python ${./checkpatch.py}";

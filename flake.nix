@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-25.05";
-    limmat.url = "github:bjackman/limmat";
+    limmat.url = "github:bjackman/limmat?ref=cache-notes-v2";
     flake-utils.url = "github:numtide/flake-utils";
     kernel = {
       url = "github:torvalds/linux";
