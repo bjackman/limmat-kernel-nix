@@ -6,11 +6,6 @@
   lk-vm,
   lk-kconfig,
 }:
-# In a former life I tried to define this all hermetically so that all the
-# dependencies were captured and the configuration's hash would change whenever
-# I modified anything.
-# For now I've given up on that, and this just assumes you are running it from
-# the devShell defined in the top of this repo.
 let
   # For simplicity, all the scripts just have a common set of runtimeInputs.
   # This will also be exported in order to expose that stuff to the devShell.
