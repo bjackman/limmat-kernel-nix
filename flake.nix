@@ -31,7 +31,7 @@
           (pkgs.callPackage ./limmat-config.nix {
             lk-vm = self.packages."${system}".lk-vm;
             lk-kconfig = self.packages."${system}".lk-kconfig;
-          }).config;
+          });
         format = pkgs.formats.toml { };
       in
       {
@@ -39,7 +39,7 @@
         checks.default = pkgs.callPackage ./check-nix-fmt.nix { };
 
         packages = rec {
-          limmatTOML = format.generate "limmat.toml" limmatConfig;
+          limmatTOML = format.generate "limmat.toml" limmatConfig.config;
 
           # Mostly for convenient testing, export a version of Limmat with the
           # config from this repo hard-coded into it. Usually you'll instead
@@ -126,7 +126,8 @@
             ++ (with self.packages."${system}"; [
               lk-vm
               lk-kconfig
-            ]);
+            ])
+            ++ limmatConfig.runtimeInputs;
           LIMMAT_CONFIG = self.packages."${system}".limmatTOML;
           MY_ENV = "foo";
         };
