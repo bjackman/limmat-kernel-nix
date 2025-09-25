@@ -25,18 +25,17 @@ let
       runtimeInputs = [
         kselftests
       ]
-      ++
-        (with pkgs; [
-          # run_vmtests.sh deps:
-          bash
-          gawk
-          # General stuff for all the scripts (too hard to track all
-          # dependencies)
-          killall
-          mount
-          umount
-          procps
-        ]);
+      ++ (with pkgs; [
+        # run_vmtests.sh deps:
+        bash
+        gawk
+        # General stuff for all the scripts (too hard to track all
+        # dependencies)
+        killall
+        mount
+        umount
+        procps
+      ]);
       text = ''
         cd ${kselftests}/bin/mm
         ./run_vmtests.sh -t ${testType}

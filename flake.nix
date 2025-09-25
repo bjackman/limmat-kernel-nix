@@ -27,11 +27,12 @@
         # This package will be used for golden testing, and also to grab the
         # toolchains etc for the devShell.
         refKernel = pkgs.linuxPackages.kernel;
-        limmatConfig =
-          (pkgs.callPackage ./limmat-config.nix {
+        limmatConfig = (
+          pkgs.callPackage ./limmat-config.nix {
             lk-vm = self.packages."${system}".lk-vm;
             lk-kconfig = self.packages."${system}".lk-kconfig;
-          });
+          }
+        );
         format = pkgs.formats.toml { };
       in
       {
