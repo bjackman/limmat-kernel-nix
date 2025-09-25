@@ -4,3 +4,6 @@ CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION=y
 # and !THP. Testing with THP seems a bit more valuable for minimal cost so let's
 # enable that.
 CONFIG_TRANSPARENT_HUGEPAGE=y
+# Similar for CMA - better test with this enabled since we can probably break
+# it.
+CONFIG_CMA=y
