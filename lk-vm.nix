@@ -83,9 +83,12 @@ let
           systemd.services.ktests = {
             path = [ pkgs.which ];
             script = ''
+              # Convert the KTESTS_ARGS to an array so it can be expanded
+              # without glob expansion.
+              IFS=' ' read -r -a args <<< "$KTESTS_ARGS"
               # Writing the value v to the isa-debug-exit port will cause QEMU to
               # immediately exit with the exit code `v << 1 | 1`.
-              ${ktests}/bin/ktests $KTESTS_ARGS \
+              ${ktests}/bin/ktests "''${args[@]}" \
                 || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))
             '';
             serviceConfig = {
@@ -175,7 +178,7 @@ pkgs.writeShellApplication {
     KTESTS=false
     SHUTDOWN=false
 
-    KTESTS_ARGS="--skip-tag lk-broken *"
+    KTESTS_ARGS=("--skip-tag" "lk-broken" "*")
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:ds::bh \
@@ -210,7 +213,9 @@ pkgs.writeShellApplication {
             -s|--ktests)
               KTESTS=true
               if [[ -n "$2" ]]; then
-                KTESTS_ARGS="$2"
+               # Split the args into an array. This lets us expand it into args
+               # later without glob expansion happening.
+                IFS=' ' read -r -a KTESTS_ARGS <<< "$2"
               fi
               shift 2
               ;;
@@ -249,7 +254,7 @@ pkgs.writeShellApplication {
     fi
 
     if "$KTESTS"; then
-      CMDLINE="$CMDLINE systemd.unit=ktests.service systemd.setenv=KTESTS_ARGS=\"$KTESTS_ARGS\""
+      CMDLINE="$CMDLINE systemd.unit=ktests.service systemd.setenv=KTESTS_ARGS=\"''${KTESTS_ARGS[*]}\""
     elif "$SHUTDOWN"; then
       # I dunno why the systemd.unit= is needed here, possibly as NixOS bug,
       # based on the systemd manual I expect setting systemd.run should
