@@ -45,6 +45,7 @@ let
   tests = {
     # The lk-broken tag means it doesn't work in the vm provided by lk-vm (with
     # the kconfig provided by `lk-kconfig -f "base vm-boot kselftests`).
+    # The slow tag means it's too slow for me to want to run it on every commit.
 
     # run_vmtests.sh is the wrapper script for the mm selftests. You can run the
     # whole thing via kselftests' crappy test runner but lots of the tests are
@@ -81,7 +82,9 @@ let
         # Planned tests != run tests (62 != 10)
         tags = [ "lk-broken" ];
       };
-      hugetlb = mkVmtest "hugetlb";
+      hugetlb = mkVmtest "hugetlb" // {
+        tags = [ "slow" ];
+      };
     };
   };
 

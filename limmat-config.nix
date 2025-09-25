@@ -153,7 +153,8 @@ in
           trap "popd && rm -rf $tmpdir" EXIT
 
           timeout --signal=KILL 300s \
-            ${lk-vm}/bin/lk-vm --kern "$LIMMAT_ARTIFACTS_build_ksft/bzImage" --ktests
+            ${lk-vm}/bin/lk-vm --kern "$LIMMAT_ARTIFACTS_build_ksft/bzImage" \
+            --ktests="--skip-tag lk-broken --skip-tag slow *"
         '';
       }
       {
