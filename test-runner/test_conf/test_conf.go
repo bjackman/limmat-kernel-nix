@@ -25,12 +25,12 @@ func Parse(testConfigFile string) (map[string]Test, error) {
 	}
 
 	tests := make(map[string]Test)
-	flatten("", data, tests)
+	flatten("", data, tests, []string{})
 
 	return tests, nil
 }
 
-func flatten(prefix string, node interface{}, tests map[string]Test) {
+func flatten(prefix string, node interface{}, tests map[string]Test, tags []string) {
 	nodeAsMap, ok := node.(map[string]interface{})
 	if !ok {
 		return
@@ -42,10 +42,18 @@ func flatten(prefix string, node interface{}, tests map[string]Test) {
 		return
 	}
 	var test Test
-	if err := json.Unmarshal(childBytes, &test); err == nil && test.IsTest {
-		if prefix != "" {
-			tests[prefix] = test
+	if err := json.Unmarshal(childBytes, &test); err == nil {
+		if test.IsTest {
+			if prefix != "" {
+				test.Tags = append(test.Tags, tags...)
+				tests[prefix] = test
+			}
 		}
+	}
+
+	currentTags := tags
+	if test.Tags != nil {
+		currentTags = append(currentTags, test.Tags...)
 	}
 
 	for key, childNode := range nodeAsMap {
@@ -53,6 +61,6 @@ func flatten(prefix string, node interface{}, tests map[string]Test) {
 		if prefix != "" {
 			newPrefix = prefix + "." + key
 		}
-		flatten(newPrefix, childNode, tests)
+		flatten(newPrefix, childNode, tests, currentTags)
 	}
 }

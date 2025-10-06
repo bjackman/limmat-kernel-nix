@@ -44,6 +44,26 @@ func TestParse(t *testing.T) {
 			expected: map[string]Test{},
 		},
 		{
+			name: "tag inheritance",
+			jsonContent: `{
+				"foo": {
+					"tags": ["suite-tag"],
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"],
+						"tags": ["test-tag"]
+					}
+				}
+			}`,
+			expected: map[string]Test{
+				"foo.bar": {
+					IsTest:  true,
+					Command: []string{"echo", "hello"},
+					Tags:    []string{"test-tag", "suite-tag"},
+				},
+			},
+		},
+		{
 			name: "invalid json",
 			jsonContent: `{
 				"foo": {

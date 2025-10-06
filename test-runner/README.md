@@ -37,6 +37,7 @@ Tests can be tagged for categorization and selective execution:
 ```json
 {
     "suite": {
+        "tags": ["applied_to_whole_suite"],
         "fast_test": {
             "__is_test": true,
             "command": ["echo", "quick test"]
