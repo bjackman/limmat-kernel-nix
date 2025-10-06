@@ -83,7 +83,9 @@ let
         tags = [ "lk-broken" ];
       };
       hugetlb = mkVmtest "hugetlb" // {
-        tags = [ "slow" ];
+        # Broken during 6.18 merge window
+        # https://lore.kernel.org/all/20250926033255.10930-1-kartikey406@gmail.com/T/#u
+        tags = [ "slow" "lk-broken" ];
       };
     };
   };
