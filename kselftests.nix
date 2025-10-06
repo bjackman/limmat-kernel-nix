@@ -35,12 +35,14 @@ stdenv.mkDerivation {
   preBuild = ''
     make -j$NIX_BUILD_CORES headers
     set -x
+    # Need to set this in shell code, there's no way to pass flags with spaces
+    # otherwise lmao i don fuken no m8 wo'eva
+    makeFlagsArray+=("TARGETS=mm kvm") # TODO build the rest oo
   '';
   # Note these flags get re-used for both the buildPhase and the configurePhase.
   makeFlags = [
     "-C"
     "tools/testing/selftests"
-    "TARGETS=mm" # TODO: Build the others too once that works
     "EXTRA_CFLAGS=-Wno-error=unused-result"
     # I'm not entirely sure how that $(out) thing works, I copied it from
     # something I saw in the nixpkgs manual. We wanna set KSFT_INSTALL_PATH to
