@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -47,7 +49,65 @@ func shouldSkipTest(test test_conf.Test, skipTags []string) bool {
 	return false
 }
 
+func parseKselftestList(filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("opening file: %w", err)
+	}
+	defer file.Close()
+
+	// I'm guessing kselftests are always exactly 2-levels deep. Haven't checked lol
+	tests := make(map[string]map[string]*test_conf.Test)
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+		suiteName, testName, ok := strings.Cut(line, ":")
+		if !ok {
+			return fmt.Errorf("can't parse suite:name line from %s: %q", filePath, line)
+		}
+		if _, ok := tests[suiteName]; !ok {
+			tests[suiteName] = make(map[string]*test_conf.Test)
+		}
+		suite := tests[suiteName]
+		if _, ok := suite[testName]; ok {
+			return fmt.Errorf("duplicate test %s:%s (suite %q test %q)",
+				suiteName, testName, suiteName, testName)
+		}
+		suite[testName] = &test_conf.Test{
+			IsTest:  true,
+			Command: []string{"run_kselftest.sh", "-t", line},
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("reading file: %w", err)
+	}
+
+	out, err := json.MarshalIndent(tests, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshaling to json: %w", err)
+	}
+	fmt.Println(string(out))
+	return nil
+}
+
 func doMain() error {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "parse-kselftest-list":
+			if len(os.Args) != 3 {
+				return fmt.Errorf("usage: test-runner parse-kselftest-list <file>")
+			}
+			return parseKselftestList(os.Args[2])
+		case "help", "-h", "--help":
+			fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] <test-id-glob>...")
+			fmt.Println("       test-runner parse-kselftest-list <file>")
+			return nil
+		}
+	}
 	var testConfigFile string
 	var skipTags stringSliceFlag
 	flag.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")

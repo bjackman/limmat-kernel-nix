@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"strings"
@@ -8,6 +9,66 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 )
+
+func TestParseKselftestList(t *testing.T) {
+	kselftestList := `kvm:guest_memfd_test
+futex:functional`
+	expectedJSON := `{
+  "futex": {
+    "functional": {
+      "__is_test": true,
+      "command": [
+        "run_kselftest.sh",
+        "-t",
+        "futex:functional"
+      ]
+    }
+  },
+  "kvm": {
+    "guest_memfd_test": {
+      "__is_test": true,
+      "command": [
+        "run_kselftest.sh",
+        "-t",
+        "kvm:guest_memfd_test"
+      ]
+    }
+  }
+}`
+
+	tmpfile, err := os.CreateTemp("", "kselftest-list.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	if _, err := tmpfile.Write([]byte(kselftestList)); err != nil {
+		t.Fatal(err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := exec.Command("go", "run", ".", "parse-kselftest-list", tmpfile.Name())
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	// Unmarshal both to avoid formatting issues
+	var expected, actual interface{}
+	if err := json.Unmarshal([]byte(expectedJSON), &expected); err != nil {
+		t.Fatalf("failed to unmarshal expected JSON: %v", err)
+	}
+	if err := json.Unmarshal(output, &actual); err != nil {
+		t.Fatalf("failed to unmarshal actual output: %v", err)
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("Output mismatch (-want +got):\n%s", diff)
+	}
+}
 
 func TestMain(t *testing.T) {
 	testCases := []struct {
