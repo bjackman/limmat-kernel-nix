@@ -34,7 +34,6 @@ stdenv.mkDerivation {
   '';
   preBuild = ''
     make -j$NIX_BUILD_CORES headers
-    set -x
     # Need to set this in shell code, there's no way to pass flags with spaces
     # otherwise lmao i don fuken no m8 wo'eva
     makeFlagsArray+=("TARGETS=mm kvm") # TODO build the rest oo
