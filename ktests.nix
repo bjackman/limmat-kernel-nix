@@ -112,8 +112,9 @@ let
       # triply-nested definition. Somehow this leads to a bogus
       # run_kselftests.sh command.
       kvm.nx_huge_pages_test.sh = [ "lk-broken" ];
-      # TODO: Haven't looked into this one yet
-      kvm.set_memory_region_test = [ "lk-broken" ];
+      # I think this one might just be an issue with running in a VM
+      # Stage 2: L2 PT expiry TSC (3291811188) > L2 TSC deadline (3291391488)
+      kvm.vmx_preemption_timer_test = [ "lk-broken" ];
     };
   };
 
