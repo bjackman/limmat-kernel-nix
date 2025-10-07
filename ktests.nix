@@ -30,12 +30,14 @@ let
         # run_vmtests.sh deps:
         bash
         gawk
-        # General stuff for all the scripts (too hard to track all
+        # General stuff for all the mm scripts (too hard to track all
         # dependencies)
         killall
         mount
         umount
         procps
+        # When KVM selftests fail, they use addr2line to print a stacktrace.
+        binutils
       ]);
       text = ''
         cd ${kselftests}/bin/mm
