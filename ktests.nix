@@ -107,8 +107,12 @@ let
       # This test runs a guest with 128GiB of RAM, it's not gonna work in our
       # puny little VM.
       mmu_stress_test.tags = [ "slow" "lk-broken" ];
-      # TODO: Haven't looked into these ones yet
+      # This is just a bug in the vibe-coded test-runner, it squashes the tree
+      # of tests into a flat hashmap with dot separators and thinks this is a
+      # triply-nested definition. Somehow this leads to a bogus
+      # run_kselftests.sh command.
       kvm.nx_huge_pages_test.sh = [ "lk-broken" ];
+      # TODO: Haven't looked into this one yet
       kvm.set_memory_region_test = [ "lk-broken" ];
     };
   };
