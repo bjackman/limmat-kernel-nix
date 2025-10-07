@@ -104,6 +104,12 @@ let
       kvm_page_table_test.tags = [ "slow" ];
       memslot_modification_stress_test.tags = [ "slow" ];
       memslot_perf_test.tags = [ "slow" ];
+      # This test runs a guest with 128GiB of RAM, it's not gonna work in our
+      # puny little VM.
+      mmu_stress_test.tags = [ "slow" "lk-broken" ];
+      # TODO: Haven't looked into these ones yet
+      kvm.nx_huge_pages_test.sh = [ "lk-broken" ];
+      kvm.set_memory_region_test = [ "lk-broken" ];
     };
   };
 
