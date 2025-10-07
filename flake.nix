@@ -78,7 +78,7 @@
 
           lk-vm = pkgs.callPackage ./lk-vm.nix {
             nixosSystem = nixpkgs.lib.nixosSystem;
-            ktests = ktests;
+            inherit ktests kselftests;
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
 

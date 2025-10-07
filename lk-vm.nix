@@ -11,6 +11,8 @@
   nixosSystem,
   # ktests package to install in the guest.
   ktests,
+  # For manual poking around, also put kselftests itself in the PATH.
+  kselftests,
 }:
 let
   hostName = "testvm";
@@ -57,7 +59,7 @@ let
           };
           system.stateVersion = "25.05";
           services.getty.autologinUser = "root";
-          environment.systemPackages = [ ktests ];
+          environment.systemPackages = [ ktests kselftests ];
           boot.kernelParams = [
             "nokaslr"
             "earlyprintk=serial"
