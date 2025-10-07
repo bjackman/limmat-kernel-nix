@@ -123,4 +123,6 @@ let
     '';
   };
 in
-ktests
+# Just hang the config on the derivation as an extra attribute so it can be
+# accessed directly for debugging and stuff.
+ktests // { config = testsConfig; }
