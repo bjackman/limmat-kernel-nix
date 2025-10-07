@@ -30,6 +30,7 @@ func Parse(testConfigFile string) (map[string]Test, error) {
 	return tests, nil
 }
 
+// Er, this was vibe coded and it's fucking garbage, sorry.
 func flatten(prefix string, node interface{}, tests map[string]Test, tags []string) {
 	nodeAsMap, ok := node.(map[string]interface{})
 	if !ok {

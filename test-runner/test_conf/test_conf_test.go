@@ -64,6 +64,39 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name: "sibling tags don't mix",
+			jsonContent: `{
+				"suite-a": {
+					"tags": ["a-tag"],
+					"test-1": {
+						"__is_test": true,
+						"command": ["echo", "hello"],
+						"tags": ["test-tag"]
+					}
+				},
+				"suite-b": {
+					"tags": ["b-tag"],
+					"test-2": {
+						"__is_test": true,
+						"command": ["echo", "hello"],
+						"tags": ["test-tag"]
+					}
+				}
+			}`,
+			expected: map[string]Test{
+				"suite-a.test-1": {
+					IsTest:  true,
+					Command: []string{"echo", "hello"},
+					Tags:    []string{"test-tag", "a-tag"},
+				},
+				"suite-b.test-2": {
+					IsTest:  true,
+					Command: []string{"echo", "hello"},
+					Tags:    []string{"test-tag", "b-tag"},
+				},
+			},
+		},
+		{
 			name: "invalid json",
 			jsonContent: `{
 				"foo": {
