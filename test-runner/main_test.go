@@ -100,8 +100,8 @@ func TestMain(t *testing.T) {
 world
 
 === Test Results Summary ===
-foo.bar                        PASS
-foo.baz                        PASS
+foo.bar                                                      PASS ✔️
+foo.baz                                                      PASS ✔️
 
 Total: 2, Passed: 2, Failed: 0, Error: 0
 `,
@@ -134,7 +134,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 			testIdentifiers: "foo.bar",
 			expectedOutput: `
 === Test Results Summary ===
-foo.bar                        FAIL
+foo.bar                                                      FAIL ❌
 
 Total: 1, Passed: 0, Failed: 1, Error: 0
 exit status 1
@@ -154,7 +154,7 @@ exit status 1
 			testIdentifiers: "foo.bar",
 			expectedOutput: `
 === Test Results Summary ===
-foo.bar                        FAIL
+foo.bar                                                      FAIL ❌
 
 Total: 1, Passed: 0, Failed: 1, Error: 0
 exit status 1
@@ -180,8 +180,8 @@ exit status 1
 world
 
 === Test Results Summary ===
-foo.bar                        PASS
-foo.baz                        PASS
+foo.bar                                                      PASS ✔️
+foo.baz                                                      PASS ✔️
 
 Total: 2, Passed: 2, Failed: 0, Error: 0
 `,
@@ -206,8 +206,8 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 world
 
 === Test Results Summary ===
-foo.bar                        PASS
-foo.baz                        PASS
+foo.bar                                                      PASS ✔️
+foo.baz                                                      PASS ✔️
 
 Total: 2, Passed: 2, Failed: 0, Error: 0
 `,
@@ -261,7 +261,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 			expectedOutput: `world
 
 === Test Results Summary ===
-foo.baz                        PASS
+foo.baz                                                      PASS ✔️
 
 Total: 1, Passed: 1, Failed: 0, Error: 0
 `,
@@ -292,7 +292,7 @@ Total: 1, Passed: 1, Failed: 0, Error: 0
 			expectedOutput: `test
 
 === Test Results Summary ===
-foo.qux                        PASS
+foo.qux                                                      PASS ✔️
 
 Total: 1, Passed: 1, Failed: 0, Error: 0
 `,

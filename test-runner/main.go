@@ -18,9 +18,9 @@ import (
 type TestResult string
 
 var (
-	TestFailed TestResult = "FAIL"
-	TestPassed TestResult = "PASS"
-	TestError  TestResult = "ERR"
+	TestFailed TestResult = "FAIL ❌"
+	TestPassed TestResult = "PASS ✔️"
+	TestError  TestResult = "ERR  🔥"
 )
 
 var ErrTestFailed = fmt.Errorf("one or more tests failed")
@@ -195,7 +195,7 @@ func doMain() error {
 	errorCount := 0
 	for _, testID := range testIDs {
 		result := results[testID]
-		fmt.Printf("%-30s %s\n", testID, result)
+		fmt.Printf("%-60s %s\n", testID, result)
 
 		switch result {
 		case TestPassed:
