@@ -1,4 +1,4 @@
-AVAIL_FRAGS=$(find "$LK_KCONFIG_FRAGMENTS_DIR/"* -printf '%f ')
+AVAIL_FRAGS=$(find "$LK_KCONFIG_FRAGMENTS_DIR/" -type f -printf '%P ')
 FRAG_NAMES="base vm-boot"
 
 usage() {
@@ -15,6 +15,8 @@ Options:
     -f, --frags FRAGS    Space-separated list of kconfig fragments to merge.
                          Available fragments are: $AVAIL_FRAGS
                          You can view their contents in $LK_KCONFIG_FRAGMENTS_DIR
+                         You can pass a directory like kselftests to enable all
+                         fragments in that directory.
                          Default: $FRAG_NAMES
     -e, --enable CONFIG  Space-separated list of extra configs to enable.
                          You can omit the CONFIG_ prefix.
@@ -61,15 +63,25 @@ while true; do
 done
 
 # Convert from a list of fragment names to a list of paths
+set -x
 FRAGS=
 for frag in $FRAG_NAMES; do
     new_frag="$LK_KCONFIG_FRAGMENTS_DIR/$frag"
     if [[ ! -e "$new_frag" ]]; then
         echo "No fragment $frag in $LK_KCONFIG_FRAGMENTS_DIR"
         exit 1
+    elif [[ -d "$new_frag" ]]; then
+      # It's a directory, add all the subfiles to FRAGS.
+      # This silly dance is suggested in https://www.shellcheck.net/wiki/SC2044
+      while IFS= read -r -d '' dir_frag
+      do
+        FRAGS="$FRAGS $dir_frag"
+      done < <(find "$new_frag" -type f -print0)
+    else
+      FRAGS="$FRAGS $new_frag"
     fi
-    FRAGS="$FRAGS $new_frag"
 done
+set +x
 
 # Set up an initial .config and include the --enable options. Save this so we
 # can use it to check the config later.
