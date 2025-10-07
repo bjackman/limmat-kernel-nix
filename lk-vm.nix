@@ -83,7 +83,6 @@ let
           # encode ktests into a systemd service. You can then run it with
           # systemd.unit=ktests.service.
           systemd.services.ktests = {
-            path = [ pkgs.which ];
             script = ''
               # Convert the KTESTS_ARGS to an array so it can be expanded
               # without glob expansion.

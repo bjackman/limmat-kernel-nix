@@ -3,6 +3,7 @@
 # each set of targets we wanna build.
 {
   pkgs,
+  lib,
   stdenv,
   fetchpatch,
 
@@ -63,9 +64,20 @@ stdenv.mkDerivation {
     mkdir -p $out/bin
   '';
 
-  # KVM selftests calladdr2line if there's a failure.
-  postInstall = ''
+  postInstall =
+    let deps = with pkgs; [
+      # So that this can be run as a systemd service (where we don't inherit the
+      # user's PATH), be very exhaustive about dependencies.
+      which
+      coreutils
+      gnugrep
+      gnused
+      # KVM selftests calladdr2line if there's a failure.
+      binutils
+    ];
+  in
+  ''
     wrapProgram $out/bin/run_kselftest.sh \
-      --prefix PATH : "${pkgs.binutils}/bin"
+      --prefix PATH : "${lib.makeBinPath deps}"
   '';
 }
