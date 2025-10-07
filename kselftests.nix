@@ -4,6 +4,7 @@
 {
   pkgs,
   stdenv,
+  fetchpatch,
 
   # Explicit args.
   kernelSrc,
@@ -21,6 +22,12 @@ stdenv.mkDerivation {
     numactl
   ];
   enableParallelBuilding = true;
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/bjackman/linux/commit/a3461dafc4bff0d22b34f4d22de2d06839e533c2.patch";
+      hash = "sha256-PV9yZjrUrSROMVieGBPlfGKBM1i9NZY1nu1viaV5JMw=";
+    })
+  ];
   postPatch = ''
     patchShebangs scripts
   '';
