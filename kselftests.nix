@@ -16,10 +16,12 @@ stdenv.mkDerivation {
     bison
     flex
     rsync
+    makeWrapper
   ];
   buildInputs = with pkgs; [
     libcap
     numactl
+    binutils # For addr2line, see wrapProgram call
   ];
   enableParallelBuilding = true;
   patches = [
@@ -59,5 +61,11 @@ stdenv.mkDerivation {
   ];
   preInstall = ''
     mkdir -p $out/bin
+  '';
+
+  # KVM selftests calladdr2line if there's a failure.
+  postInstall = ''
+    wrapProgram $out/bin/run_kselftest.sh \
+      --prefix PATH : "${pkgs.binutils}/bin"
   '';
 }
