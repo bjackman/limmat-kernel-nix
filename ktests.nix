@@ -111,10 +111,10 @@ let
       # of tests into a flat hashmap with dot separators and thinks this is a
       # triply-nested definition. Somehow this leads to a bogus
       # run_kselftests.sh command.
-      kvm.nx_huge_pages_test.sh = [ "lk-broken" ];
+      nx_huge_pages_test.sh = [ "lk-broken" ];
       # I think this one might just be an issue with running in a VM
       # Stage 2: L2 PT expiry TSC (3291811188) > L2 TSC deadline (3291391488)
-      kvm.vmx_preemption_timer_test = [ "lk-broken" ];
+      vmx_preemption_timer_test = [ "lk-broken" ];
     };
   };
 
