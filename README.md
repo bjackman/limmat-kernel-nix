@@ -18,6 +18,29 @@ by acting as a layer on top of Limmat.
 This works by using all the toolchains and stuff from nixpkgs, and defining the
 config to refer directly to those binaries.
 
+## Tasks and tips
+
+### Modifying kselftests
+
+The kselftests packaged into the VM by default is built from a fixed golden
+kernel source. If you want to modify kselftests you have two options:
+
+- Pass `--override-input kernel $kernel_tree` to whatever nix command is
+  building the kselftsts (probably `nix develop`). This is kinda slow but easy
+  if you just want to run with a modification for a certain time.
+
+- To avoid having a slow Nix command in your dev cycle, you can instead build
+  and run the kselftests manually from your shell:
+
+  - Run `make -C tools/testing/selftests TARGETS="kvm" -sj100
+    EXTRA_CFLAGS=-static` (update `TARGETS` to build other selftests)
+
+  - Boot the VM with `lk-vm`'s `--tree` argument pointing to your kernel tree.
+
+  - In the guest, `cd /mnt/kernel/tools/testing/selftests` and run them from
+    there. This is a live 9pfs share so you can rebuild in the host and re-run
+    without rebooting the guest.
+
 ## TODO
 
 - [x] Make kernel config biz more flexible
