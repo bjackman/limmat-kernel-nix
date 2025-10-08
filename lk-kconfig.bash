@@ -47,10 +47,6 @@ while true; do
             FRAG_NAMES="$2"
             shift 2
             ;;
-        --)
-            shift
-            break
-            ;;
         -h|--help)
             usage
             exit 0
