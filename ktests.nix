@@ -96,6 +96,9 @@ let
   # here we add tags and stuff for the ones we know about. This gets merged into
   # the overal config below.
   kselftestsConfig.kselftests = {
+    # Replaced by the explicit vmtests configuration above.
+    # Note this is also affected by the bug with .sh being in the name.
+    mm."run_vmtests.sh".tags = [ "lk-broken" ];
     kvm = {
       dirty_log_perf_test.tags = [ "slow" ];
       demand_paging_test.tags = [ "slow" ];
