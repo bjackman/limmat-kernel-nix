@@ -120,11 +120,6 @@
               # For building the user-mode tests like tools/testing/vma
               liburcu
 
-              # Handy for building kselftests with EXTRA_CFLAGS=-static so they
-              # can easily be run on NixOS without building them properly via
-              # Nix.
-              glibc.static
-
               limmat
               b4
               codespell
