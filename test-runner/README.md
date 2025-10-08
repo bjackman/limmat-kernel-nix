@@ -69,6 +69,18 @@ test-runner --test-config tests.json --skip-tag slow --skip-tag flaky suite.*
 test-runner --test-config tests.json --skip-tag flaky suite.fast_test suite.slow_test
 ```
 
+Note that tests skipped via `--skip-tag` are skipped silently, that is they do
+NOT show up as `SKIP` in the output.
+
+## Bail on Failure
+
+The `--bail-on-failure` flag stops the test runner immediately after the first
+test failure. All the remaining tests will show up as SKIP.
+
+```sh
+test-runner --test-config tests.json --bail-on-failure suite.*
+```
+
 ## Kselftest Integration
 
 The `parse-kselftest-list` subcommand can be used to generate a test config from

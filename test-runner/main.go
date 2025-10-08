@@ -18,9 +18,10 @@ import (
 type TestResult string
 
 var (
-	TestFailed TestResult = "FAIL ❌"
-	TestPassed TestResult = "PASS ✔️"
-	TestError  TestResult = "ERR  🔥"
+	TestFailed  TestResult = "FAIL ❌"
+	TestPassed  TestResult = "PASS ✔️"
+	TestError   TestResult = "ERR  🔥"
+	TestSkipped TestResult = "SKIP 🫥"
 )
 
 var ErrTestFailed = fmt.Errorf("one or more tests failed")
@@ -103,15 +104,17 @@ func doMain() error {
 			}
 			return parseKselftestList(os.Args[2])
 		case "help", "-h", "--help":
-			fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] <test-id-glob>...")
+			fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] [--bail-on-failure] <test-id-glob>...")
 			fmt.Println("       test-runner parse-kselftest-list <file>")
 			return nil
 		}
 	}
 	var testConfigFile string
 	var skipTags stringSliceFlag
+	var bailOnFailure bool
 	flag.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")
 	flag.Var(&skipTags, "skip-tag", "Skip tests with this tag (repeatable)")
+	flag.BoolVar(&bailOnFailure, "bail-on-failure", false, "Stop running tests after the first failure")
 	flag.Parse()
 
 	if testConfigFile == "" {
@@ -159,7 +162,7 @@ func doMain() error {
 	}
 	sort.Strings(testIDs)
 
-	for _, testID := range testIDs {
+	for i, testID := range testIDs {
 		test := requestedTests[testID]
 		if len(test.Command) == 0 {
 			results[testID] = TestError
@@ -176,6 +179,12 @@ func doMain() error {
 			if _, ok := err.(*exec.ExitError); ok {
 				results[testID] = TestFailed
 				failures = true
+				if bailOnFailure {
+					for j := i + 1; j < len(testIDs); j++ {
+						results[testIDs[j]] = TestSkipped
+					}
+					break
+				}
 			} else {
 				results[testID] = TestError
 				// Save first error, continue other tests
@@ -193,6 +202,7 @@ func doMain() error {
 	passedCount := 0
 	failedCount := 0
 	errorCount := 0
+	skippedCount := 0
 	for _, testID := range testIDs {
 		result := results[testID]
 		fmt.Printf("%-60s %s\n", testID, result)
@@ -204,10 +214,12 @@ func doMain() error {
 			failedCount++
 		case TestError:
 			errorCount++
+		case TestSkipped:
+			skippedCount++
 		}
 	}
-	fmt.Printf("\nTotal: %d, Passed: %d, Failed: %d, Error: %d\n",
-		len(testIDs), passedCount, failedCount, errorCount)
+	fmt.Printf("\nTotal: %d, Passed: %d, Failed: %d, Error: %d, Skipped: %d\n",
+		len(testIDs), passedCount, failedCount, errorCount, skippedCount)
 
 	if testErr != nil {
 		return testErr

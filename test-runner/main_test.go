@@ -78,6 +78,7 @@ func TestMain(t *testing.T) {
 		jsonContent      string
 		testIdentifiers  string
 		skipTags         []string
+		bailOnFailure    bool
 		expectedOutput   string
 		expectedExitCode int
 	}{
@@ -103,11 +104,10 @@ world
 foo.bar                                                      PASS ✔️
 foo.baz                                                      PASS ✔️
 
-Total: 2, Passed: 2, Failed: 0, Error: 0
+Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
 `,
 			expectedExitCode: 0,
-		},
-		{
+		}, {
 			name: "test not found",
 			jsonContent: `{
 				"foo": {
@@ -136,7 +136,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 === Test Results Summary ===
 foo.bar                                                      FAIL ❌
 
-Total: 1, Passed: 0, Failed: 1, Error: 0
+Total: 1, Passed: 0, Failed: 1, Error: 0, Skipped: 0
 exit status 1
 `,
 			expectedExitCode: 1,
@@ -156,7 +156,7 @@ exit status 1
 === Test Results Summary ===
 foo.bar                                                      FAIL ❌
 
-Total: 1, Passed: 0, Failed: 1, Error: 0
+Total: 1, Passed: 0, Failed: 1, Error: 0, Skipped: 0
 exit status 1
 `,
 			expectedExitCode: 1,
@@ -183,7 +183,7 @@ world
 foo.bar                                                      PASS ✔️
 foo.baz                                                      PASS ✔️
 
-Total: 2, Passed: 2, Failed: 0, Error: 0
+Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
 `,
 			expectedExitCode: 0,
 		},
@@ -209,7 +209,7 @@ world
 foo.bar                                                      PASS ✔️
 foo.baz                                                      PASS ✔️
 
-Total: 2, Passed: 2, Failed: 0, Error: 0
+Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
 `,
 			expectedExitCode: 0,
 		},
@@ -263,7 +263,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0
 === Test Results Summary ===
 foo.baz                                                      PASS ✔️
 
-Total: 1, Passed: 1, Failed: 0, Error: 0
+Total: 1, Passed: 1, Failed: 0, Error: 0, Skipped: 0
 `,
 			expectedExitCode: 0,
 		},
@@ -294,9 +294,35 @@ Total: 1, Passed: 1, Failed: 0, Error: 0
 === Test Results Summary ===
 foo.qux                                                      PASS ✔️
 
-Total: 1, Passed: 1, Failed: 0, Error: 0
+Total: 1, Passed: 1, Failed: 0, Error: 0, Skipped: 0
 `,
 			expectedExitCode: 0,
+		},
+		{
+			name: "bail on failure",
+			jsonContent: `{
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["sh", "-c", "exit 1"]
+					},
+					"baz": {
+						"__is_test": true,
+						"command": ["echo", "world"]
+					}
+				}
+			}`,
+			testIdentifiers: "foo.*",
+			bailOnFailure:   true,
+			expectedOutput: `
+=== Test Results Summary ===
+foo.bar                                                      FAIL ❌
+foo.baz                                                      SKIP 🫥
+
+Total: 2, Passed: 0, Failed: 1, Error: 0, Skipped: 1
+exit status 1
+`,
+			expectedExitCode: 1,
 		},
 	}
 
@@ -315,7 +341,10 @@ Total: 1, Passed: 1, Failed: 0, Error: 0
 				t.Fatal(err)
 			}
 
-			args := []string{"run", ".", "-test-config", tmpfile.Name()}
+			args := []string{"run", ".", "--test-config", tmpfile.Name()}
+			if tc.bailOnFailure {
+				args = append(args, "--bail-on-failure")
+			}
 			for _, tag := range tc.skipTags {
 				args = append(args, "--skip-tag", tag)
 			}
