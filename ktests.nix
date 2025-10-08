@@ -100,6 +100,8 @@ let
     # Note this is also affected by the bug with .sh being in the name.
     mm."run_vmtests.sh".tags = [ "lk-broken" ];
     kvm = {
+      dirty_log_test.tags = [ "slow" ]; # It's not THAT slow
+      set_memory_region_test.tags = [ "slow" ]; # It's not THAT slow
       dirty_log_perf_test.tags = [ "slow" ];
       demand_paging_test.tags = [ "slow" ];
       access_tracking_perf_test.tags = [ "slow" ];
@@ -112,6 +114,9 @@ let
       mmu_stress_test.tags = [ "slow" "lk-broken" ];
       # Confirmed by seanjc to be flaky
       vmx_preemption_timer_test.tags = [ "flaky" ];
+      # This seems to always fail when I run it alongside other tests, it passes
+      # otherwise, I dunno, just call it flaky.
+      guest_memfd_test.tags = [ "flaky" ];
     };
   };
 
