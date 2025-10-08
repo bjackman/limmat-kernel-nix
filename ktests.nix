@@ -112,9 +112,8 @@ let
       # triply-nested definition. Somehow this leads to a bogus
       # run_kselftests.sh command.
       nx_huge_pages_test.sh = [ "lk-broken" ];
-      # I think this one might just be an issue with running in a VM
-      # Stage 2: L2 PT expiry TSC (3291811188) > L2 TSC deadline (3291391488)
-      vmx_preemption_timer_test = [ "lk-broken" ];
+      # Confirmed by seanjc to be flaky
+      vmx_preemption_timer_test.tags = [ "flaky" ];
     };
   };
 
