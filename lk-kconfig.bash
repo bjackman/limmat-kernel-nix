@@ -62,6 +62,13 @@ while true; do
     esac
 done
 
+# In case the user passses a -- and then extra args, fail.
+if [ $# -ne 0 ]; then
+    echo "Error: Unexpected arguments found: $*" >&2
+    usage
+    exit 1
+fi
+
 # Convert from a list of fragment names to a list of paths
 set -x
 FRAGS=
