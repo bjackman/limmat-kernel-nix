@@ -179,7 +179,8 @@ pkgs.writeShellApplication {
     KTESTS=false
     SHUTDOWN=false
 
-    KTESTS_ARGS=("--skip-tag" "lk-broken" "--skip-tag" "flaky" "--skip-tag" "slow" "*")
+    KTESTS_ARGS=("--skip-tag" "lk-broken" "--skip-tag" "flaky" "--skip-tag" "slow" \
+                 "--bail-on-failure" "*")
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:ds::bh \
