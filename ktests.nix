@@ -119,8 +119,9 @@ let
       guest_memfd_test.tags = [ "flaky" ];
       # Fails with something that looks like a flaky assertion
       kvm_clock_test.tags = [ "flaky" ];
-      # Rare flake.
+      # Several TSC-related tests are generally quite flaky.
       tsc_msrs_test.tags = [ "flaky" ];
+      vmx_tsc_adjust_test.tags = [ "flaky" ];
     };
   };
 
