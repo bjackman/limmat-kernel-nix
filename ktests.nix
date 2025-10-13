@@ -122,6 +122,10 @@ let
       # Several TSC-related tests are generally quite flaky.
       tsc_msrs_test.tags = [ "flaky" ];
       vmx_tsc_adjust_test.tags = [ "flaky" ];
+      # Based on prodkernel experience I think this is actually also flaky, I
+      # have never waited for it to finish upstream (note it does nothing when
+      # only one CPU though).
+      rseq_test.tags = [ "slow" ];
     };
   };
 
