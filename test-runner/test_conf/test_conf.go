@@ -12,7 +12,12 @@ type Test struct {
 	Tags    []string `json:"tags,omitempty"`
 }
 
-func Parse(testConfigFile string) (map[string]Test, error) {
+type TestConf struct {
+	BadTags []string
+	Tests   map[string]Test
+}
+
+func Parse(testConfigFile string) (*TestConf, error) {
 	jsonBytes, err := os.ReadFile(testConfigFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading JSON file: %w", err)
@@ -24,14 +29,29 @@ func Parse(testConfigFile string) (map[string]Test, error) {
 		return nil, fmt.Errorf("error unmarshaling JSON: %w", err)
 	}
 
-	tests := make(map[string]Test)
-	flatten("", data, tests, []string{})
+	var badTags []string
+	if badTagsData, ok := data["bad_tags"]; ok {
+		if badTagsList, ok := badTagsData.([]interface{}); ok {
+			for _, tag := range badTagsList {
+				if tagStr, ok := tag.(string); ok {
+					badTags = append(badTags, tagStr)
+				}
+			}
+		}
+		delete(data, "bad_tags")
+	}
 
-	return tests, nil
+	tests := make(map[string]Test)
+	parseTests("", data, tests, []string{})
+
+	return &TestConf{
+		BadTags: badTags,
+		Tests:   tests,
+	}, nil
 }
 
 // Er, this was vibe coded and it's fucking garbage, sorry.
-func flatten(prefix string, node interface{}, tests map[string]Test, tags []string) {
+func parseTests(prefix string, node interface{}, tests map[string]Test, tags []string) {
 	nodeAsMap, ok := node.(map[string]interface{})
 	if !ok {
 		return
@@ -62,6 +82,6 @@ func flatten(prefix string, node interface{}, tests map[string]Test, tags []stri
 		if prefix != "" {
 			newPrefix = prefix + "." + key
 		}
-		flatten(newPrefix, childNode, tests, currentTags)
+		parseTests(newPrefix, childNode, tests, currentTags)
 	}
 }

@@ -11,7 +11,7 @@ func TestParse(t *testing.T) {
 	testCases := []struct {
 		name        string
 		jsonContent string
-		expected    map[string]Test
+		expected    *TestConf
 		expectError bool
 	}{
 		{
@@ -24,10 +24,12 @@ func TestParse(t *testing.T) {
 					}
 				}
 			}`,
-			expected: map[string]Test{
-				"foo.bar": {
-					IsTest:  true,
-					Command: []string{"echo", "hello"},
+			expected: &TestConf{
+				Tests: map[string]Test{
+					"foo.bar": {
+						IsTest:  true,
+						Command: []string{"echo", "hello"},
+					},
 				},
 			},
 		},
@@ -41,7 +43,9 @@ func TestParse(t *testing.T) {
 					}
 				}
 			}`,
-			expected: map[string]Test{},
+			expected: &TestConf{
+				Tests: map[string]Test{},
+			},
 		},
 		{
 			name: "tag inheritance",
@@ -55,11 +59,13 @@ func TestParse(t *testing.T) {
 					}
 				}
 			}`,
-			expected: map[string]Test{
-				"foo.bar": {
-					IsTest:  true,
-					Command: []string{"echo", "hello"},
-					Tags:    []string{"test-tag", "suite-tag"},
+			expected: &TestConf{
+				Tests: map[string]Test{
+					"foo.bar": {
+						IsTest:  true,
+						Command: []string{"echo", "hello"},
+						Tags:    []string{"test-tag", "suite-tag"},
+					},
 				},
 			},
 		},
@@ -83,16 +89,39 @@ func TestParse(t *testing.T) {
 					}
 				}
 			}`,
-			expected: map[string]Test{
-				"suite-a.test-1": {
-					IsTest:  true,
-					Command: []string{"echo", "hello"},
-					Tags:    []string{"test-tag", "a-tag"},
+			expected: &TestConf{
+				Tests: map[string]Test{
+					"suite-a.test-1": {
+						IsTest:  true,
+						Command: []string{"echo", "hello"},
+						Tags:    []string{"test-tag", "a-tag"},
+					},
+					"suite-b.test-2": {
+						IsTest:  true,
+						Command: []string{"echo", "hello"},
+						Tags:    []string{"test-tag", "b-tag"},
+					},
 				},
-				"suite-b.test-2": {
-					IsTest:  true,
-					Command: []string{"echo", "hello"},
-					Tags:    []string{"test-tag", "b-tag"},
+			},
+		},
+		{
+			name: "bad_tags",
+			jsonContent: `{
+				"bad_tags": ["bad", "also-bad"],
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"]
+					}
+				}
+			}`,
+			expected: &TestConf{
+				BadTags: []string{"bad", "also-bad"},
+				Tests: map[string]Test{
+					"foo.bar": {
+						IsTest:  true,
+						Command: []string{"echo", "hello"},
+					},
 				},
 			},
 		},
@@ -120,7 +149,7 @@ func TestParse(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			tests, err := Parse(tmpfile.Name())
+			conf, err := Parse(tmpfile.Name())
 
 			if tc.expectError {
 				if err == nil {
@@ -133,7 +162,7 @@ func TestParse(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.expected, tests); diff != "" {
+			if diff := cmp.Diff(tc.expected, conf); diff != "" {
 				t.Errorf("Parse() mismatch (-want +got):\n%s", diff)
 			}
 		})

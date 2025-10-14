@@ -78,6 +78,7 @@ func TestMain(t *testing.T) {
 		jsonContent      string
 		testIdentifiers  string
 		skipTags         []string
+		includeBad       []string
 		bailOnFailure    bool
 		expectedOutput   string
 		expectedExitCode int
@@ -324,6 +325,61 @@ exit status 1
 `,
 			expectedExitCode: 1,
 		},
+		{
+			name: "bad tags are skipped by default",
+			jsonContent: `{
+				"bad_tags": ["bad"],
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"],
+						"tags": ["bad"]
+					},
+					"baz": {
+						"__is_test": true,
+						"command": ["echo", "world"]
+					}
+				}
+			}`,
+			testIdentifiers: "foo.*",
+			expectedOutput: `world
+
+=== Test Results Summary ===
+foo.baz                                                      PASS ✔️
+
+Total: 1, Passed: 1, Failed: 0, Error: 0, Skipped: 0
+`,
+			expectedExitCode: 0,
+		},
+		{
+			name: "include bad tag",
+			jsonContent: `{
+				"bad_tags": ["bad"],
+				"foo": {
+					"bar": {
+						"__is_test": true,
+						"command": ["echo", "hello"],
+						"tags": ["bad"]
+					},
+					"baz": {
+						"__is_test": true,
+						"command": ["echo", "world"]
+					}
+				}
+			}`,
+			testIdentifiers: "foo.*",
+			includeBad:      []string{"bad"},
+			expectedOutput: `hello
+world
+
+=== Test Results Summary ===
+foo.bar                                                      PASS ✔️
+foo.baz                                                      PASS ✔️
+
+Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
+`,
+			expectedExitCode: 0,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -347,6 +403,9 @@ exit status 1
 			}
 			for _, tag := range tc.skipTags {
 				args = append(args, "--skip-tag", tag)
+			}
+			for _, tag := range tc.includeBad {
+				args = append(args, "--include-bad", tag)
 			}
 			args = append(args, strings.Fields(tc.testIdentifiers)...)
 			cmd := exec.Command("go", args...)

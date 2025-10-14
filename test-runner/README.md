@@ -72,6 +72,36 @@ test-runner --test-config tests.json --skip-tag flaky suite.fast_test suite.slow
 Note that tests skipped via `--skip-tag` are skipped silently, that is they do
 NOT show up as `SKIP` in the output.
 
+## Bad Tags
+
+A global `bad_tags` field can be added to the test config. Tests with these tags
+will be skipped by default.
+
+```json
+{
+    "bad_tags": ["bad", "also-bad"],
+    "suite": {
+        "test": {
+            "__is_test": true,
+            "command": ["echo", "hello world"],
+            "tags": ["bad"]
+        }
+    }
+}
+```
+
+They can be enabled by setting `--include-bad`. `--include-bad` with no extra
+args will enable all bad tests, `--include-bad` with an argument enables a
+specific bad tag. When used with an argument it can be repeated.
+
+```sh
+# Include all bad tests
+test-runner --test-config tests.json --include-bad suite.*
+
+# Include only tests with the "bad" tag
+test-runner --test-config tests.json --include-bad bad suite.*
+```
+
 ## Bail on Failure
 
 The `--bail-on-failure` flag stops the test runner immediately after the first

@@ -39,12 +39,30 @@ func (s *stringSliceFlag) Set(value string) error {
 }
 
 // shouldSkipTest checks if a test should be skipped based on its tags
-func shouldSkipTest(test test_conf.Test, skipTags []string) bool {
-	for _, skipTag := range skipTags {
+func shouldSkipTest(test test_conf.Test, skipTags, includeBad, badTags map[string]bool) bool {
+	isBad := false
+	for _, testTag := range test.Tags {
+		if badTags[testTag] {
+			isBad = true
+			break
+		}
+	}
+
+	if isBad {
+		if len(includeBad) == 0 {
+			return true
+		}
 		for _, testTag := range test.Tags {
-			if testTag == skipTag {
-				return true
+			if includeBad[testTag] {
+				return false
 			}
+		}
+		return true
+	}
+
+	for _, testTag := range test.Tags {
+		if skipTags[testTag] {
+			return true
 		}
 	}
 	return false
@@ -56,7 +74,6 @@ func parseKselftestList(filePath string) error {
 		return fmt.Errorf("opening file: %w", err)
 	}
 	defer file.Close()
-
 	// I'm guessing kselftests are always exactly 2-levels deep. Haven't checked lol
 	tests := make(map[string]map[string]*test_conf.Test)
 	scanner := bufio.NewScanner(file)
@@ -110,10 +127,12 @@ func doMain() error {
 		}
 	}
 	var testConfigFile string
-	var skipTags stringSliceFlag
+	var skipTagsFlag stringSliceFlag
+	var includeBadFlag stringSliceFlag
 	var bailOnFailure bool
 	flag.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")
-	flag.Var(&skipTags, "skip-tag", "Skip tests with this tag (repeatable)")
+	flag.Var(&skipTagsFlag, "skip-tag", "Skip tests with this tag (repeatable)")
+	flag.Var(&includeBadFlag, "include-bad", "Include tests with this bad tag (repeatable)")
 	flag.BoolVar(&bailOnFailure, "bail-on-failure", false, "Stop running tests after the first failure")
 	flag.Parse()
 
@@ -126,22 +145,35 @@ func doMain() error {
 		return fmt.Errorf("at least one test identifier is required")
 	}
 
-	tests, err := test_conf.Parse(testConfigFile)
+	conf, err := test_conf.Parse(testConfigFile)
 	if err != nil {
 		return fmt.Errorf("parsing test config: %v", err)
+	}
+
+	skipTags := make(map[string]bool)
+	for _, tag := range skipTagsFlag {
+		skipTags[tag] = true
+	}
+	includeBad := make(map[string]bool)
+	for _, tag := range includeBadFlag {
+		includeBad[tag] = true
+	}
+	badTags := make(map[string]bool)
+	for _, tag := range conf.BadTags {
+		badTags[tag] = true
 	}
 
 	requestedTests := make(map[string]test_conf.Test)
 	for _, pattern := range testIdentifiers {
 		matched := false
-		for testID, test := range tests {
+		for testID, test := range conf.Tests {
 			match, err := filepath.Match(pattern, testID)
 			if err != nil {
 				return fmt.Errorf("invalid glob pattern %s: %v", pattern, err)
 			}
 			if match {
 				matched = true
-				if !shouldSkipTest(test, skipTags) {
+				if !shouldSkipTest(test, skipTags, includeBad, badTags) {
 					requestedTests[testID] = test
 				}
 			}
