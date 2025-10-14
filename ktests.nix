@@ -47,101 +47,110 @@ let
   # the kconfig provided by `lk-kconfig -f "base vm-boot kselftests`).
   # The slow tag means it's too slow for me to want to run it on every commit.
 
-  # run_vmtests.sh is the wrapper script for the mm selftests. You can run the
-  # whole thing via kselftests' crappy test runner but lots of the tests are
-  # broken/flaky so you really only wanna run a subset. To do that via
-  # kselftest you have to set KSELFTEST_RUN_VMTESTS_SH_ARGS but then you can't
-  # set the -t arg to a string containing spaces. Easiest thing to do here is
-  # just split it up into separate tests and always run a single sub-suite.
-  # This is kinda wasteful because it means we run the setup/teardown more
-  # often than necessary.
-  # Note this is an incomplete list of the tests.
-  vmtests.vmtests = {
-    mmap = mkVmtest "mmap";
-    # TODO: This fails because mkstemp()/unlink() run into a read-only
-    # filesystem.
-    gup_test = (mkVmtest "gup_test") // {
-      tags = [ "lk-broken" ];
+  testConfig = {
+    # run_vmtests.sh is the wrapper script for the mm selftests. You can run the
+    # whole thing via kselftests' crappy test runner but lots of the tests are
+    # broken/flaky so you really only wanna run a subset. To do that via
+    # kselftest you have to set KSELFTEST_RUN_VMTESTS_SH_ARGS but then you can't
+    # set the -t arg to a string containing spaces. Easiest thing to do here is
+    # just split it up into separate tests and always run a single sub-suite.
+    # This is kinda wasteful because it means we run the setup/teardown more
+    # often than necessary.
+    # Note this is an incomplete list of the tests.
+    vmtests = {
+      mmap = mkVmtest "mmap";
+      # TODO: This fails because mkstemp()/unlink() run into a read-only
+      # filesystem.
+      gup_test = (mkVmtest "gup_test") // {
+        tags = [ "lk-broken" ];
+      };
+      compaction = mkVmtest "compaction";
+      # TODO: This needs CONFIG_TEST_VMALLOC=m in the kernel.
+      vmalloc = mkVmtest "vmalloc" // {
+        tags = [ "lk-broken" ];
+      };
+      cow = mkVmtest "cow";
+      migration = mkVmtest "migration";
+      # TODO: This fails because of "You need to compile page_frag_test module"
+      # There seems to be a foible of run_vmtests.sh where it returns an error
+      # when all tests are skipped.
+      page_frag = mkVmtest "page_frag" // {
+        tags = [ "lk-broken" ];
+      };
+      thp = mkVmtest "thp" // {
+        # TODO: There is a bug in split_huge_page_test, the ksft_set_plan() call
+        # is broken under my configuratoin leading to:
+        # Planned tests != run tests (62 != 10)
+        tags = [ "lk-broken" ];
+      };
+      hugetlb = mkVmtest "hugetlb" // {
+        # Broken during 6.18 merge window
+        # https://lore.kernel.org/all/20250926033255.10930-1-kartikey406@gmail.com/T/#u
+        tags = [
+          "slow"
+          "lk-broken"
+        ];
+      };
     };
-    compaction = mkVmtest "compaction";
-    # TODO: This needs CONFIG_TEST_VMALLOC=m in the kernel.
-    vmalloc = mkVmtest "vmalloc" // {
-      tags = [ "lk-broken" ];
-    };
-    cow = mkVmtest "cow";
-    migration = mkVmtest "migration";
-    # TODO: This fails because of "You need to compile page_frag_test module"
-    # There seems to be a foible of run_vmtests.sh where it returns an error
-    # when all tests are skipped.
-    page_frag = mkVmtest "page_frag" // {
-      tags = [ "lk-broken" ];
-    };
-    thp = mkVmtest "thp" // {
-      # TODO: There is a bug in split_huge_page_test, the ksft_set_plan() call
-      # is broken under my configuratoin leading to:
-      # Planned tests != run tests (62 != 10)
-      tags = [ "lk-broken" ];
-    };
-    hugetlb = mkVmtest "hugetlb" // {
-      # Broken during 6.18 merge window
-      # https://lore.kernel.org/all/20250926033255.10930-1-kartikey406@gmail.com/T/#u
-      tags = [
-        "slow"
-        "lk-broken"
-      ];
-    };
-  };
-
-  # parse-kselftest-list will generate the actual list of kselftests, but also
-  # here we add tags and stuff for the ones we know about. This gets merged into
-  # the overal config below.
-  kselftestsConfig.kselftests = {
-    # Replaced by the explicit vmtests configuration above.
-    # Note this is also affected by the bug with .sh being in the name.
-    mm."run_vmtests.sh".tags = [ "lk-broken" ];
-    kvm = {
-      dirty_log_test.tags = [ "slow" ]; # It's not THAT slow
-      set_memory_region_test.tags = [ "slow" ]; # It's not THAT slow
-      dirty_log_perf_test.tags = [ "slow" ];
-      demand_paging_test.tags = [ "slow" ];
-      access_tracking_perf_test.tags = [ "slow" ];
-      hardware_disable_test.tags = [ "slow" ];
-      kvm_page_table_test.tags = [ "slow" ];
-      memslot_modification_stress_test.tags = [ "slow" ];
-      memslot_perf_test.tags = [ "slow" ];
-      # This test runs a guest with 128GiB of RAM, it's not gonna work in our
-      # puny little VM.
-      mmu_stress_test.tags = [ "slow" "lk-broken" ];
-      # Confirmed by seanjc to be flaky
-      vmx_preemption_timer_test.tags = [ "flaky" ];
-      # This seems to always fail when I run it alongside other tests, it passes
-      # otherwise, I dunno, just call it flaky.
-      guest_memfd_test.tags = [ "flaky" ];
-      # Fails with something that looks like a flaky assertion
-      kvm_clock_test.tags = [ "flaky" ];
-      # Several TSC-related tests are generally quite flaky.
-      tsc_msrs_test.tags = [ "flaky" ];
-      vmx_tsc_adjust_test.tags = [ "flaky" ];
-      # Based on prodkernel experience I think this is actually also flaky, I
-      # have never waited for it to finish upstream (note it does nothing when
-      # only one CPU though).
-      rseq_test.tags = [ "slow" ];
+    # parse-kselftest-list will generate the actual list of kselftests, but also
+    # here we add tags and stuff for the ones we know about. This gets merged into
+    # the overal config below.
+    kselftests = {
+      # Replaced by the explicit vmtests configuration above.
+      # Note this is also affected by the bug with .sh being in the name.
+      mm."run_vmtests.sh".tags = [ "lk-broken" ];
+      kvm = {
+        dirty_log_test.tags = [ "slow" ]; # It's not THAT slow
+        set_memory_region_test.tags = [ "slow" ]; # It's not THAT slow
+        dirty_log_perf_test.tags = [ "slow" ];
+        demand_paging_test.tags = [ "slow" ];
+        access_tracking_perf_test.tags = [ "slow" ];
+        hardware_disable_test.tags = [ "slow" ];
+        kvm_page_table_test.tags = [ "slow" ];
+        memslot_modification_stress_test.tags = [ "slow" ];
+        memslot_perf_test.tags = [ "slow" ];
+        # This test runs a guest with 128GiB of RAM, it's not gonna work in our
+        # puny little VM.
+        mmu_stress_test.tags = [
+          "slow"
+          "lk-broken"
+        ];
+        # Confirmed by seanjc to be flaky
+        vmx_preemption_timer_test.tags = [ "flaky" ];
+        # This seems to always fail when I run it alongside other tests, it passes
+        # otherwise, I dunno, just call it flaky.
+        guest_memfd_test.tags = [ "flaky" ];
+        # Fails with something that looks like a flaky assertion
+        kvm_clock_test.tags = [ "flaky" ];
+        # Several TSC-related tests are generally quite flaky.
+        tsc_msrs_test.tags = [ "flaky" ];
+        vmx_tsc_adjust_test.tags = [ "flaky" ];
+        # Based on prodkernel experience I think this is actually also flaky, I
+        # have never waited for it to finish upstream (note it does nothing when
+        # only one CPU though).
+        rseq_test.tags = [ "slow" ];
+      };
     };
   };
 
   # Convert the tests config to JSON and store in nix store
-  testsConfig = runCommand "tests-config.json" {
-    nativeBuildInputs = [ pkgs.jq test-runner ];
-  } ''
-    test-runner parse-kselftest-list ${kselftests}/bin/kselftest-list.txt > kselftests.json
-    # Combine the JSON generated from the Nix above, with the one generated by
-    # parse-kselftest-list, but put the latter under the kselftests key.
-    jq --slurp '.[0] + { "kselftests": .[1] } * .[2]' \
-      ${writeText "vmtests.json" (builtins.toJSON vmtests)} \
-      kselftests.json \
-      ${writeText "vmtests.json" (builtins.toJSON kselftestsConfig)} \
-      > $out
-  '';
+  testConfigJson =
+    runCommand "tests-config.json"
+      {
+        nativeBuildInputs = [
+          pkgs.jq
+          test-runner
+        ];
+      }
+      ''
+        test-runner parse-kselftest-list ${kselftests}/bin/kselftest-list.txt > kselftests.json
+        # Combine the JSON generated from the Nix above, with the one generated by
+        # parse-kselftest-list, but put the latter under the kselftests key.
+        jq --slurp '{ "kselftests": .[0] } * .[1]' \
+          kselftests.json \
+          ${writeText "tests.json" (builtins.toJSON testConfig)} \
+          > $out
+      '';
 
   # Create the wrapper that provides the config to test-runner
   ktests = stdenv.mkDerivation {
@@ -158,11 +167,11 @@ let
       # The parse-kselftest-list result will generate JSON that expects to find
       # run_kselftest.sh in the PATH.
       makeWrapper ${test-runner}/bin/test-runner $out/bin/ktests \
-        --add-flags "--test-config ${testsConfig}" \
+        --add-flags "--test-config ${testConfigJson}" \
         --prefix PATH : "${kselftests}/bin"
     '';
   };
 in
 # Just hang the config on the derivation as an extra attribute so it can be
 # accessed directly for debugging and stuff.
-ktests // { config = testsConfig; }
+ktests // { config = testConfigJson; }
