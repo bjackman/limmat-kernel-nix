@@ -43,11 +43,18 @@ let
       '';
     });
 
-  # The lk-broken tag means it doesn't work in the vm provided by lk-vm (with
-  # the kconfig provided by `lk-kconfig -f "base vm-boot kselftests`).
-  # The slow tag means it's too slow for me to want to run it on every commit.
 
   testConfig = {
+    bad_tags = [
+      # Doesn't work in the vm provided by lk-vm (with the kconfig provided by
+      # `lk-kconfig -f "base vm-boot kselftests`).
+      "lk-broken"
+      # Too slow for me to want to run it on every commit. Not defined
+      # precisely.
+      "slow"
+      # I've seen it fail and I didn't think it was my fault.
+      "flaky"
+    ];
     # run_vmtests.sh is the wrapper script for the mm selftests. You can run the
     # whole thing via kselftests' crappy test runner but lots of the tests are
     # broken/flaky so you really only wanna run a subset. To do that via
