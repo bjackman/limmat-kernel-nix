@@ -59,7 +59,10 @@ let
           };
           system.stateVersion = "25.05";
           services.getty.autologinUser = "root";
-          environment.systemPackages = [ ktests kselftests ];
+          environment.systemPackages = [
+            ktests
+            kselftests
+          ];
           boot.kernelParams = [
             "nokaslr"
             "earlyprintk=serial"

@@ -65,19 +65,20 @@ stdenv.mkDerivation {
   '';
 
   postInstall =
-    let deps = with pkgs; [
-      # So that this can be run as a systemd service (where we don't inherit the
-      # user's PATH), be very exhaustive about dependencies.
-      which
-      coreutils
-      gnugrep
-      gnused
-      # KVM selftests calladdr2line if there's a failure.
-      binutils
-    ];
-  in
-  ''
-    wrapProgram $out/bin/run_kselftest.sh \
-      --prefix PATH : "${lib.makeBinPath deps}"
-  '';
+    let
+      deps = with pkgs; [
+        # So that this can be run as a systemd service (where we don't inherit the
+        # user's PATH), be very exhaustive about dependencies.
+        which
+        coreutils
+        gnugrep
+        gnused
+        # KVM selftests calladdr2line if there's a failure.
+        binutils
+      ];
+    in
+    ''
+      wrapProgram $out/bin/run_kselftest.sh \
+        --prefix PATH : "${lib.makeBinPath deps}"
+    '';
 }
