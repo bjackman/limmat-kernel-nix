@@ -156,8 +156,11 @@ pkgs.writeShellApplication {
       -k, --kernel PATH    Specify the path to the kernel image. If you set
                            --tree, defaults to the x86 bzImage in that treee.
       -c, --cmdline ARGS   Args to append to kernel cmdline. Single string.
+      -q, --qemu-args ARGS Args to append to QEMU cmdline. Single string.
+                           e.g. for a Skylake VM: "-cpu Skylake-Server,+vmx"
       -d, --debug          Enable GDB stub in QEMU. Connect with "target
-                           remote localhost:1234" in GDB.
+                           remote localhost:1234" in GDB. Shorthand for
+                           including "-s -S" in --qemu-args.
       -s, --ktests [ARGS]  Run a tests then shutdown. QEMU exit code reflects
                            test result. Optional arg is shell-expanded into
                            arguments for the ktests tool.
@@ -183,8 +186,8 @@ pkgs.writeShellApplication {
                  "--bail-on-failure" "*")
 
     PARSED_ARGUMENTS=$(
-      getopt -o t:k:c:ds::bh \
-        --long tree:,kernel:,cmdline:,debug,ktests::,shutdown,help -- "$@")
+      getopt -o t:k:c:dq:s::bh \
+        --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,shutdown,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -209,8 +212,12 @@ pkgs.writeShellApplication {
               shift 2
               ;;
             -d|--debug)
-              QEMU_OPTS="-s -S"
+              QEMU_OPTS="$QEMU_OPTS -s -S"
               shift
+              ;;
+            -q|--qemu-opts)
+              QEMU_OPTS="$QEMU_OPTS $2"
+              shift 2
               ;;
             -s|--ktests)
               KTESTS=true
