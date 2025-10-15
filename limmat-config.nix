@@ -84,7 +84,8 @@ let
       };
     };
   # Helper script for running ktests in a test job. 1st arg is artifacts from
-  # build job. 2nd arg is args to pass to lk-vm's ktest arg.
+  # build job. 2nd arg is args to pass to lk-vm's ktest arg. 3rd arg is extra
+  # kernel args.
   run-ktests = pkgs.writeShellApplication {
     runtimeInputs = [ pkgs.coreutils lk-vm ];
     name = "run-ktests";
@@ -93,6 +94,7 @@ let
 
       BUILD_ARTIFACTS="$1"
       KTEST_ARGS="$2"
+      KERNEL_ARGS="$3"
 
       if [[ -e "$BUILD_ARTIFACTS"/skipped ]]; then
         # Kernel wasn't built, don't try to run it.
@@ -111,7 +113,7 @@ let
       # 0x20 means is TAINT_BAD_PAGE.
       timeout --signal=KILL 300s \
         ${lk-vm}/bin/lk-vm --kernel "$kernel" --ktests="$KTEST_ARGS" \
-        --cmdline "asi=on panic_on_warn=1 panic_on_taint=0x20"
+        --cmdline "$KERNEL_ARGS panic_on_warn=1 panic_on_taint=0x20"
     '';
   };
 in
@@ -175,7 +177,17 @@ in
         # With ASI compiled out, not much point in running too many tests,
         # just run the mm ones since that's the stuff the ASI patchs are most
         # likely to break.
-        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_ksft" "vmtests.*"'';
+        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_ksft" "vmtests.*" ""'';
+      }
+      {
+        name = "ksft_asi_off";
+        cache = "by_tree";
+        depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
+        resources = [ "qemu_throttle" ];
+        requires_worktree = false;
+        # Just want to check boot really, pick some arbitrary test that's quick
+        # and reliable.
+        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "vmtests.mmap" "asi=off"'';
       }
       {
         name = "ksft_asi";
@@ -183,7 +195,7 @@ in
         depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
         resources = [ "qemu_throttle" ];
         requires_worktree = false;
-        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "*"'';
+        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "*" "asi=on"'';
       }
       {
         name = "kunit_asi";
