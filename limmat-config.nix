@@ -83,6 +83,37 @@ let
           '';
       };
     };
+  # Helper script for running ktests in a test job. 1st arg is artifacts from
+  # build job. 2nd arg is args to pass to lk-vm's ktest arg.
+  run-ktests = pkgs.writeShellApplication {
+    runtimeInputs = [ pkgs.coreutils lk-vm ];
+    name = "run-ktests";
+    text = ''
+      set -eux
+
+      BUILD_ARTIFACTS="$1"
+      KTEST_ARGS="$2"
+
+      if [[ -e "$BUILD_ARTIFACTS"/skipped ]]; then
+        # Kernel wasn't built, don't try to run it.
+        exit 0
+      fi
+      kernel="$BUILD_ARTIFACTS"/bzImage
+
+      # Hack: the NixOS QEMU script by default uses ./$hostname.qcow2 for
+      # its disk. Switch to a tempdir to avoid sharing that (we have
+      # needs_worktree = false so we are running in the original source
+      # directory).
+      tmpdir="$(mktemp -d)"
+      pushd "$tmpdir"
+      trap 'popd && rm -rf $tmpdir' EXIT
+
+      # 0x20 means is TAINT_BAD_PAGE.
+      timeout --signal=KILL 300s \
+        ${lk-vm}/bin/lk-vm --kernel "$kernel" --ktests="$KTEST_ARGS" \
+        --cmdline "asi=on panic_on_warn=1 panic_on_taint=0x20"
+    '';
+  };
 in
 {
   # Why does this need to return everything inside a ".config" field instead of
@@ -141,24 +172,10 @@ in
         depends_on = [ "build_ksft" ]; # Defined by a mkBuild call with name = "ksft"
         resources = [ "qemu_throttle" ];
         requires_worktree = false;
-        command = ''
-          set -eux
-
-          # Hack: the NixOS QEMU script by default uses ./$hostname.qcow2 for
-          # its disk. Switch to a tempdir to avoid sharing that (we have
-          # needs_worktree = false so we are running in the original source
-          # directory).
-          tmpdir="$(mktemp -d)"
-          pushd "$tmpdir"
-          trap "popd && rm -rf $tmpdir" EXIT
-
-          # With ASI compiled out, not much point in running too many tests,
-          # just run the mm ones since that's the stuff the ASI patchs are most
-          # likely to break.
-          timeout --signal=KILL 300s \
-            ${lk-vm}/bin/lk-vm --kern "$LIMMAT_ARTIFACTS_build_ksft/bzImage" \
-            --ktests="vmtests.*"
-        '';
+        # With ASI compiled out, not much point in running too many tests,
+        # just run the mm ones since that's the stuff the ASI patchs are most
+        # likely to break.
+        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_ksft" "vmtests.*"'';
       }
       {
         name = "ksft_asi";
@@ -166,24 +183,7 @@ in
         depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
         resources = [ "qemu_throttle" ];
         requires_worktree = false;
-        command = ''
-          set -eux
-
-          if [[ -e "$LIMMAT_ARTIFACTS_build_asi"/skipped ]]; then
-            # Kernel wasn't built, don't try to run it.
-            exit 0
-          fi
-          kernel="$LIMMAT_ARTIFACTS_build_asi"/bzImage
-
-          tmpdir="$(mktemp -d)"
-          pushd "$tmpdir"
-          trap "popd && rm -rf $tmpdir" EXIT
-
-          # 0x20 means is TAINT_BAD_PAGE.
-          timeout --signal=KILL 300s \
-            ${lk-vm}/bin/lk-vm --kernel "$kernel" --ktests \
-            --cmdline "asi=on panic_on_warn=1 panic_on_taint=0x20"
-        '';
+        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "*"'';
       }
       {
         name = "kunit_asi";
