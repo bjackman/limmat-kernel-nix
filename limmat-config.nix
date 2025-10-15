@@ -152,9 +152,12 @@ in
           pushd "$tmpdir"
           trap "popd && rm -rf $tmpdir" EXIT
 
+          # With ASI compiled out, not much point in running too many tests,
+          # just run the mm ones since that's the stuff the ASI patchs are most
+          # likely to break.
           timeout --signal=KILL 300s \
             ${lk-vm}/bin/lk-vm --kern "$LIMMAT_ARTIFACTS_build_ksft/bzImage" \
-            --ktests
+            --ktests="vmtests.*"
         '';
       }
       {
