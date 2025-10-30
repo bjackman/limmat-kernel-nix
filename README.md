@@ -18,11 +18,24 @@ by acting as a layer on top of Limmat.
 This works by using all the toolchains and stuff from nixpkgs, and defining the
 config to refer directly to those binaries.
 
+### HOWTOs
+
+#### Boot an `lk-vm` with defconfig
+
+```sh
+make defconfig
+make kvm_guest.config
+scripts/config -e OVERLAY_FS -e ZRAM -e ZSWAP
+```
+
+This should give you a bzImage that boots.
+
 ## TODO
 
 - [x] Make kernel config biz more flexible
 - [x] Make kselftest running more flexible
 - [ ] Document shit
+- [ ] Properly support getting a bootable config starting from defconfig
 - [ ] Support running on other host architectures
 - [ ] Supoport running guests of other architectures
 - [ ] [Support running on
