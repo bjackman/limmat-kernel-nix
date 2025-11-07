@@ -1,0 +1,6 @@
+# Stuff to support running a Firecracker guest
+CONFIG_VIRTUALIZATION=y
+CONFIG_KVM=y
+CONFIG_KVM_INTEL=y
+CONFIG_KVM_AMD=y
+CONFIG_KVM_IOAPIC=y
