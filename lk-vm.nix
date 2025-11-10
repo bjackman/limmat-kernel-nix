@@ -62,6 +62,8 @@ let
           environment.systemPackages = [
             ktests
             kselftests
+            # Hack until we have SSH-vsock support or something
+            pkgs.tmux
           ];
           boot.kernelParams = [
             "nokaslr"
