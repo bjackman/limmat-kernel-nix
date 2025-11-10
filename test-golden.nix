@@ -25,7 +25,7 @@ pkgs.writeShellApplication {
     # deterministic.
     export GIT_AUTHOR_DATE="2000-01-01T00:00:00Z"
     export GIT_COMMITTER_DATE="2000-01-01T00:00:00Z"
-    GOLDEN_COMMIT_HASH=a022b70a91ddd847040fbef67e2b4c051ad13fa5
+    GOLDEN_COMMIT_HASH=6eade1a88927a144f50d194491b5b89a3e0aa962
 
     # If we just have a Nix derivation that produces a kernel
     # repository then Limmat will fall over because the .git dir
@@ -42,8 +42,8 @@ pkgs.writeShellApplication {
         exit 1
       fi
     else
-      # Copy preserving permissions but setting the writable bit on directories.
-      rsync -a --chmod=Du+w ${kernelSrc}/* .
+      # Copy preserving permissions but setting the writable bit
+      rsync -a --chmod=u+w ${kernelSrc}/* .
 
       # By default limmat logs to your home dir (dumb?).
       export LIMMAT_LOGFILE=$TMPDIR/limmat.log
@@ -55,6 +55,12 @@ pkgs.writeShellApplication {
       git config user.name "Chungonius Flunchér XIII"
       git add .
       git commit -m "init fake repo to make limmat happy"
+
+      # We'll run checkpatch which falls over if there isn't a vaguely realistic
+      # commit at HEAD.
+      echo "/* ok */" >> mm/page_alloc.c
+      git commit --signoff -m "another commit to avoid DoSing checkpatch" mm/page_alloc.c
+
       commit_hash="$(git rev-parse HEAD)"
       if [ "$commit_hash" != "$GOLDEN_COMMIT_HASH" ]; then
         echo "Unexpected commit hash $commit_hash"
