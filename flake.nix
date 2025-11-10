@@ -82,23 +82,18 @@
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
 
-        };
-
-        # Because of the hackery involved in this system, where we use `nix
-        # develop` from within the config, this can't be tested via a normal
-        # flake check which would run inside the build sandbox. So instead the
-        # tests for the config are exposed as an app that is run
-        # non-hermetically.
-        apps = {
-          test-golden = flake-utils.lib.mkApp {
-            drv = pkgs.callPackage ./test-golden.nix {
-              # Passing packages "manually" as a normal arg like this might be
-              # in poor taste, I'm not sure. Like maybe the "proper" way is via
-              # a nixpkgs overlay or something like that.
-              limmat-kernel = self.packages."${system}".limmat-kernel;
-              inherit limmatConfig;
-              kernelSrc = kernel;
-            };
+          # Because of the hackery involved in this system, where we use `nix
+          # develop` from within the config, this can't be tested via a normal
+          # flake check which would run inside the build sandbox. So instead the
+          # tests for the config are exposed as a package that is run
+          # non-hermetically.
+          test-golden = pkgs.callPackage ./test-golden.nix {
+            # Passing packages "manually" as a normal arg like this might be
+            # in poor taste, I'm not sure. Like maybe the "proper" way is via
+            # a nixpkgs overlay or something like that.
+            limmat-kernel = self.packages."${system}".limmat-kernel;
+            inherit limmatConfig;
+            kernelSrc = kernel;
           };
         };
 
