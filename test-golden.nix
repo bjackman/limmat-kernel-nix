@@ -75,7 +75,7 @@ pkgs.writeShellApplication {
     for test in ${lib.strings.concatStringsSep " " (map (t: t.name) limmatConfig.config.tests)}; do
       limmat-kernel --result-db "$TMPDIR"/limmat-db test "$test" || failed+=("$test")
     done
-    if [ ''${#failed[@]} -eq 0 ]; then
+    if [ ''${#failed[@]} -ne 0 ]; then
       echo "Failed tests:" "''${failed[@]}"
       exit 1
     fi
