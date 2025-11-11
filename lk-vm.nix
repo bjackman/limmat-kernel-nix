@@ -64,6 +64,10 @@ let
             kselftests
             # Hack until we have SSH-vsock support or something
             pkgs.tmux
+            # Hack to make it easier to run kselftests that were built outside
+            # of Nix. KVM selftests shell out to addr2line on failure which is
+            # quite handy.
+            pkgs.binutils
           ];
           boot.kernelParams = [
             "nokaslr"
