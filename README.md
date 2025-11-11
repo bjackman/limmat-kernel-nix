@@ -20,7 +20,33 @@ config to refer directly to those binaries.
 
 ### HOWTOs
 
-#### Boot an `lk-vm` with defconfig
+Start by running `nix develop path/to/this/repo#kernel`. This will always drop
+you in a Bash shell, you can add `-c fish` or whatever to run a different
+command such as your preferred shell.
+
+### Boot a VM
+
+Generate a kconfig that has the necessary features to boot in the VM:
+
+```
+lk-kconfig "base vm-boot"
+```
+
+Now build your kernel (e.g. `make -sj100 bzImage`).
+
+Then assuming you built the kernel in your current directory, you can boot that
+kernel in a VM with:
+
+```
+lk-vm --tree .
+```
+
+This will also mount your kernel tree at `/mnt/kernel/` in the VM.
+
+##### ... with defconfig
+
+If you wanna test defconfig instead of a minimal config provided by
+`lk-kconfig`, something like this should give you a working kconfig:
 
 ```sh
 make defconfig
@@ -28,7 +54,54 @@ make kvm_guest.config
 scripts/config -e OVERLAY_FS -e ZRAM -e ZSWAP
 ```
 
-This should give you a bzImage that boots.
+#### Run kselftests
+
+##### Pre-packaged kselftests
+
+`lk-vm` boots up with kselftests installed, as built from a fixed golden kernel
+source. You can run this via the `ktests` CLI which is in the `$PATH` after
+booting the VM.
+
+```sh
+# Run all available kselftests directly:
+ktests kselftests.*
+# Run a specific KVM selftest:
+ktests kselftests.kvm.amx_test
+# The mm selftests ("vmtests") also have special packaging to work around the
+# janky kernel scripts:
+ktests vmtests.mmap
+```
+
+The raw `run_kselftest.sh` is also in your path, in case you want to run that
+directly.
+
+##### Modified kselftests
+
+Warning: janky workflow ahead.
+
+TODO: Due to https://github.com/NixOS/nixpkgs/issues/59267, the `devShell`
+provided by this repo can't provide a static glibc, so you'll need to set up the
+build environment for this outside of Nix :(. An alternative to this janky
+workflow, which doesn't have this problem, would be to build the kselftests via
+nix with `--override-input`.
+
+Warning: the kselftests Makefiles are bad, you will generally need to
+make liberal  use of `make -C tools/testing/selftests clean`.
+
+Basically: build the kselftests in your kernel tree on the host, then run them
+in the VM via the 9pfs mount.
+
+```sh
+# From kernel tree, on the host. Update TARGETS depending on which tests you want to run.
+make -C tools/testing/selftests  TARGETS="kvm" -sj100 EXTRA_CFLAGS=-static install
+```
+
+In the guest:
+
+```sh
+cd /mnt/kernel/tools/testing/selftests/kselftest_install
+./run_kselftest.sh -t kvm:amx_test  # Or whatever test you wanna run.
+```
 
 ## TODO
 
