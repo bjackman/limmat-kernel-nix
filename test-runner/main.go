@@ -18,10 +18,13 @@ import (
 type TestResult string
 
 var (
-	TestFailed  TestResult = "FAIL ❌"
-	TestPassed  TestResult = "PASS ✔️"
-	TestError   TestResult = "ERR  🔥"
+	TestFailed TestResult = "FAIL ❌"
+	TestPassed TestResult = "PASS ✔️"
+	TestError  TestResult = "ERR  🔥"
+	// Skipped due to tags.
 	TestSkipped TestResult = "SKIP 🫥"
+	// Not run because we aborted.
+	TestDropped TestResult = "DROP ⏸️"
 )
 
 var ErrTestFailed = fmt.Errorf("one or more tests failed")
@@ -173,9 +176,7 @@ func doMain() error {
 			}
 			if match {
 				matched = true
-				if !shouldSkipTest(test, skipTags, includeBad, badTags) {
-					requestedTests[testID] = test
-				}
+				requestedTests[testID] = test
 			}
 		}
 		if !matched {
@@ -203,6 +204,10 @@ func doMain() error {
 			}
 			continue
 		}
+		if shouldSkipTest(test, skipTags, includeBad, badTags) {
+			results[testID] = TestSkipped
+			continue
+		}
 		cmd := exec.Command(test.Command[0], test.Command[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -211,7 +216,7 @@ func doMain() error {
 				results[testID] = TestFailed
 				if bailOnFailure {
 					for j := i + 1; j < len(testIDs); j++ {
-						results[testIDs[j]] = TestSkipped
+						results[testIDs[j]] = TestDropped
 					}
 					break
 				}
@@ -232,6 +237,7 @@ func doMain() error {
 	passedCount := 0
 	failedCount := 0
 	errorCount := 0
+	droppedCount := 0
 	skippedCount := 0
 	for _, testID := range testIDs {
 		result := results[testID]
@@ -244,12 +250,14 @@ func doMain() error {
 			failedCount++
 		case TestError:
 			errorCount++
+		case TestDropped:
+			droppedCount++
 		case TestSkipped:
 			skippedCount++
 		}
 	}
-	fmt.Printf("\nTotal: %d, Passed: %d, Failed: %d, Error: %d, Skipped: %d\n",
-		len(testIDs), passedCount, failedCount, errorCount, skippedCount)
+	fmt.Printf("\nTotal: %d, Passed: %d, Failed: %d, Error: %d, Skipped: %d, Dropped: %d\n",
+		len(testIDs), passedCount, failedCount, errorCount, skippedCount, droppedCount)
 
 	if testErr != nil {
 		return testErr

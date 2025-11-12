@@ -105,7 +105,7 @@ world
 foo.bar                                                      PASS ✔️
 foo.baz                                                      PASS ✔️
 
-Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
+Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 `,
 			expectedExitCode: 0,
 		}, {
@@ -137,7 +137,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
 === Test Results Summary ===
 foo.bar                                                      FAIL ❌
 
-Total: 1, Passed: 0, Failed: 1, Error: 0, Skipped: 0
+Total: 1, Passed: 0, Failed: 1, Error: 0, Skipped: 0, Dropped: 0
 exit status 1
 `,
 			expectedExitCode: 1,
@@ -157,7 +157,7 @@ exit status 1
 === Test Results Summary ===
 foo.bar                                                      FAIL ❌
 
-Total: 1, Passed: 0, Failed: 1, Error: 0, Skipped: 0
+Total: 1, Passed: 0, Failed: 1, Error: 0, Skipped: 0, Dropped: 0
 exit status 1
 `,
 			expectedExitCode: 1,
@@ -184,7 +184,7 @@ world
 foo.bar                                                      PASS ✔️
 foo.baz                                                      PASS ✔️
 
-Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
+Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 `,
 			expectedExitCode: 0,
 		},
@@ -210,7 +210,7 @@ world
 foo.bar                                                      PASS ✔️
 foo.baz                                                      PASS ✔️
 
-Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
+Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 `,
 			expectedExitCode: 0,
 		},
@@ -262,9 +262,10 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
 			expectedOutput: `world
 
 === Test Results Summary ===
+foo.bar                                                      SKIP 🫥
 foo.baz                                                      PASS ✔️
 
-Total: 1, Passed: 1, Failed: 0, Error: 0, Skipped: 0
+Total: 2, Passed: 1, Failed: 0, Error: 0, Skipped: 1, Dropped: 0
 `,
 			expectedExitCode: 0,
 		},
@@ -293,9 +294,11 @@ Total: 1, Passed: 1, Failed: 0, Error: 0, Skipped: 0
 			expectedOutput: `test
 
 === Test Results Summary ===
+foo.bar                                                      SKIP 🫥
+foo.baz                                                      SKIP 🫥
 foo.qux                                                      PASS ✔️
 
-Total: 1, Passed: 1, Failed: 0, Error: 0, Skipped: 0
+Total: 3, Passed: 1, Failed: 0, Error: 0, Skipped: 2, Dropped: 0
 `,
 			expectedExitCode: 0,
 		},
@@ -318,9 +321,9 @@ Total: 1, Passed: 1, Failed: 0, Error: 0, Skipped: 0
 			expectedOutput: `
 === Test Results Summary ===
 foo.bar                                                      FAIL ❌
-foo.baz                                                      SKIP 🫥
+foo.baz                                                      DROP ⏸️
 
-Total: 2, Passed: 0, Failed: 1, Error: 0, Skipped: 1
+Total: 2, Passed: 0, Failed: 1, Error: 0, Skipped: 0, Dropped: 1
 exit status 1
 `,
 			expectedExitCode: 1,
@@ -345,9 +348,10 @@ exit status 1
 			expectedOutput: `world
 
 === Test Results Summary ===
+foo.bar                                                      SKIP 🫥
 foo.baz                                                      PASS ✔️
 
-Total: 1, Passed: 1, Failed: 0, Error: 0, Skipped: 0
+Total: 2, Passed: 1, Failed: 0, Error: 0, Skipped: 1, Dropped: 0
 `,
 			expectedExitCode: 0,
 		},
@@ -376,7 +380,7 @@ world
 foo.bar                                                      PASS ✔️
 foo.baz                                                      PASS ✔️
 
-Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0
+Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 `,
 			expectedExitCode: 0,
 		},

@@ -69,9 +69,6 @@ test-runner --test-config tests.json --skip-tag slow --skip-tag flaky suite.*
 test-runner --test-config tests.json --skip-tag flaky suite.fast_test suite.slow_test
 ```
 
-Note that tests skipped via `--skip-tag` are skipped silently, that is they do
-NOT show up as `SKIP` in the output.
-
 ## Bad Tags
 
 A global `bad_tags` field can be added to the test config. Tests with these tags
