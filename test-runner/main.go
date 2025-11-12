@@ -184,7 +184,6 @@ func doMain() error {
 	}
 
 	results := make(map[string]TestResult)
-	failures := false
 	var testErr error
 
 	// Sort test IDs for deterministic execution order
@@ -210,7 +209,6 @@ func doMain() error {
 		if err := cmd.Run(); err != nil {
 			if _, ok := err.(*exec.ExitError); ok {
 				results[testID] = TestFailed
-				failures = true
 				if bailOnFailure {
 					for j := i + 1; j < len(testIDs); j++ {
 						results[testIDs[j]] = TestSkipped
@@ -256,7 +254,7 @@ func doMain() error {
 	if testErr != nil {
 		return testErr
 	}
-	if failures {
+	if failedCount != 0 {
 		return ErrTestFailed
 	}
 	if passedCount == 0 {
