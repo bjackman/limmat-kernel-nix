@@ -75,7 +75,7 @@ ktests vmtests.mmap
 The raw `run_kselftest.sh` is also in your path, in case you want to run that
 directly.
 
-##### Modified kselftests
+##### Modified kselftests (fast/janky process)
 
 Warning: janky workflow ahead.
 
@@ -102,6 +102,12 @@ In the guest:
 cd /mnt/kernel/tools/testing/selftests/kselftest_install
 ./run_kselftest.sh -t kvm:amx_test  # Or whatever test you wanna run.
 ```
+
+##### Modified kselftests (slow/Nix-based process)
+
+Basically: pass `--override-input kernel path/to/kernel/tree` to whatever `nix`
+command builds your kselftests. This might be `nix develop` if you don't need to
+iterate on the tests themselves.
 
 ## TODO
 
