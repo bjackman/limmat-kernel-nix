@@ -259,6 +259,9 @@ func doMain() error {
 	if failures {
 		return ErrTestFailed
 	}
+	if passedCount == 0 {
+		return fmt.Errorf("didn't run any tests")
+	}
 	return nil
 }
 
