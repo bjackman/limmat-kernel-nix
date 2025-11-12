@@ -123,9 +123,6 @@ let
         ];
         # Confirmed by seanjc to be flaky
         vmx_preemption_timer_test.tags = [ "flaky" ];
-        # This seems to always fail when I run it alongside other tests, it passes
-        # otherwise, I dunno, just call it flaky.
-        guest_memfd_test.tags = [ "flaky" ];
         # Fails with something that looks like a flaky assertion
         kvm_clock_test.tags = [ "flaky" ];
         # Several TSC-related tests are generally quite flaky.
