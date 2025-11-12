@@ -43,7 +43,6 @@ let
       '';
     });
 
-
   testConfig = {
     bad_tags = [
       # Doesn't work in the vm provided by lk-vm (with the kconfig provided by

@@ -87,7 +87,10 @@ let
   # build job. 2nd arg is args to pass to lk-vm's ktest arg. 3rd arg is extra
   # kernel args.
   run-ktests = pkgs.writeShellApplication {
-    runtimeInputs = [ pkgs.coreutils lk-vm ];
+    runtimeInputs = [
+      pkgs.coreutils
+      lk-vm
+    ];
     name = "run-ktests";
     text = ''
       set -eux
