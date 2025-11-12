@@ -157,27 +157,25 @@ let
           ${writeText "tests.json" (builtins.toJSON testConfig)} \
           > $out
       '';
-
-  # Create the wrapper that provides the config to test-runner
-  ktests = stdenv.mkDerivation {
-    pname = "ktests";
-    version = "0.1.0";
-
-    src = ./.;
-
-    buildInputs = [ kselftests ];
-    nativeBuildInputs = [ makeWrapper ];
-
-    installPhase = ''
-      mkdir -p $out/bin
-      # The parse-kselftest-list result will generate JSON that expects to find
-      # run_kselftest.sh in the PATH.
-      makeWrapper ${test-runner}/bin/test-runner $out/bin/ktests \
-        --add-flags "--test-config ${testConfigJson}" \
-        --prefix PATH : "${kselftests}/bin"
-    '';
-  };
 in
-# Just hang the config on the derivation as an extra attribute so it can be
-# accessed directly for debugging and stuff.
-ktests // { config = testConfigJson; }
+# Create the wrapper that provides the config to test-runner
+stdenv.mkDerivation {
+  pname = "ktests";
+  version = "0.1.0";
+
+  src = ./.;
+
+  buildInputs = [ kselftests ];
+  nativeBuildInputs = [ makeWrapper ];
+
+  installPhase = ''
+    mkdir -p $out/bin
+    # The parse-kselftest-list result will generate JSON that expects to find
+    # run_kselftest.sh in the PATH.
+    makeWrapper ${test-runner}/bin/test-runner $out/bin/ktests \
+      --add-flags "--test-config ${testConfigJson}" \
+      --prefix PATH : "${kselftests}/bin"
+  '';
+
+  passthru.config = testConfigJson;
+}
