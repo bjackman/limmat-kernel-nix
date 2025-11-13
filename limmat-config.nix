@@ -219,6 +219,8 @@ in
       }
       {
         name = "checkpatch";
+        # HACK: See comments on LIMMAT_NOTES_OBJECT in checkpatch.py.
+        cache = "no_caching";
         command = mkTestScript {
           name = "checkpatch";
           text = "python ${./checkpatch.py}";

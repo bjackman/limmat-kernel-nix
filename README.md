@@ -18,7 +18,20 @@ by acting as a layer on top of Limmat.
 This works by using all the toolchains and stuff from nixpkgs, and defining the
 config to refer directly to those binaries.
 
-### HOWTOs
+## Checkpatch
+
+The Limmat config includes `checkpatch` test that runs checkpatch while ignoring
+some basic stuff. This also allows overriding the checkpatch config for
+individual commits, but this support is half baked until
+https://github.com/bjackman/limmat/pull/39 can be submitted.
+
+To disable checkpatch warnings:
+
+- `git notes --ref=limmat append -m "checkpatch-ignore=$CATEGORY" $COMMIT`.
+
+- Restart Limmat.
+
+## HOWTOs
 
 Start by running `nix develop path/to/this/repo#kernel`. This will always drop
 you in a Bash shell, you can add `-c fish` or whatever to run a different
