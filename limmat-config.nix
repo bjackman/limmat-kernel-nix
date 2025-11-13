@@ -209,6 +209,7 @@ in
         name = "ksft";
         configFrags = [
           "base"
+          "compile"
           "vm-boot"
           "kselftests"
           "debug"
@@ -219,6 +220,7 @@ in
         ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
         configFrags = [
           "base"
+          "compile"
           "vm-boot"
           "kselftests"
           "debug"

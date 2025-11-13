@@ -1,0 +1,2 @@
+# Grab bag of stuff I wanna enable to check my code compiles
+CONFIG_CMA=y
