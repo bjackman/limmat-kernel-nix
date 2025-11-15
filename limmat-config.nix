@@ -233,7 +233,7 @@ in
         # With ASI compiled out, not much point in running too many tests,
         # just run the mm ones since that's the stuff the ASI patchs are most
         # likely to break.
-        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_ksft" "vmtests.*" ""'';
+        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_ksft" "*" ""'';
       }
       {
         name = "ksft_asi_off";
@@ -243,7 +243,7 @@ in
         requires_worktree = false;
         # Just want to check boot really, pick some arbitrary test that's quick
         # and reliable.
-        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "vmtests.mmap" "asi=off"'';
+        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "*" "asi=off"'';
       }
       {
         name = "ksft_asi";
