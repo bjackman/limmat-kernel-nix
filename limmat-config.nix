@@ -35,18 +35,11 @@ let
     }:
     let
       appName = "limmat-kernel_${name}";
-      # Hack to workaround awkward Limmat behaviour: stderr and stdout are
-      # stored together we no feature to merge them.
-      appText = ''
-        exec 2>&1
-        ${text}
-      '';
     in
     "${
       pkgs.writeShellApplication {
-        inherit runtimeInputs;
+        inherit runtimeInputs text;
         name = appName;
-        text = appText;
       }
     }/bin/${appName}";
   # Helper to generate a test script that runs a kernel build.
