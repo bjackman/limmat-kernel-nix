@@ -7,6 +7,34 @@
   limmatConfig,
   kernelSrc,
 }:
+let
+  fakeKernelRepo = pkgs.runCommand "fake-kernel-repo" { } ''
+    set -euo pipefail
+
+    mkdir $out
+    cd $out
+
+    PATH=${pkgs.git}/bin:"$PATH"
+
+    # Set a hard-coded date to try and make the commit hash
+    # deterministic. Not certain this works.
+    export GIT_AUTHOR_DATE="2000-01-01T00:00:00Z"
+    export GIT_COMMITTER_DATE="2000-01-01T00:00:00Z"
+
+    ${pkgs.rsync}/bin/rsync -a --chmod=u+w ${kernelSrc}/* .
+
+    git init
+    git config user.email chung.flunch@example.com
+    git config user.name "Chungonius Flunchér XIII"
+    git add .
+    git commit -m "init fake repo to make limmat happy"
+
+    # We'll run checkpatch which falls over if there isn't a vaguely realistic
+    # commit at HEAD.
+    echo "/* ok */" >> mm/page_alloc.c
+    git commit --signoff -m "another commit to avoid DoSing checkpatch" mm/page_alloc.c
+  '';
+in
 pkgs.writeShellApplication {
   name = "limmat-kernel-test-golden";
   runtimeInputs = [
@@ -14,60 +42,28 @@ pkgs.writeShellApplication {
     pkgs.git
     limmat-kernel
   ];
+  passthru = { inherit fakeKernelRepo; };
   text = ''
-    TMPDIR="''${TMPDIR:-/tmp}"
-    GOLDEN_KERNEL_TREE="''${GOLDEN_KERNEL_TREE:-"$TMPDIR"/lkn-golden-kernel}"
     set -eux -o pipefail
-    mkdir -p "$GOLDEN_KERNEL_TREE"
-    cd "$GOLDEN_KERNEL_TREE"
 
-    # Set a hard-coded date to try and make the commit hash
-    # deterministic.
-    export GIT_AUTHOR_DATE="2000-01-01T00:00:00Z"
-    export GIT_COMMITTER_DATE="2000-01-01T00:00:00Z"
-    GOLDEN_COMMIT_HASH=80401e97bf6e0a369b40f980f7cb4b037aa28c49
+    TMPDIR="$(mktemp -d)"
+    # Note this evaluates $PWD now so this will change back to the current
+    # directory
+    # shellcheck disable=SC2064
+    trap "cd $PWD && rm -rf $TMPDIR" EXIT
+    cd "$TMPDIR"
 
     # If we just have a Nix derivation that produces a kernel
     # repository then Limmat will fall over because the .git dir
     # has what Git describes as "dubious permissions". So instead
     # we do this silly dance to set up a golden tree in a
-    # relatively reproducible way.
-    if [ -e .git ]; then
-      git reset --hard
-      git clean -fdx
-      commit_hash="$(git rev-parse HEAD)"
-      if [ "$commit_hash" != "$GOLDEN_COMMIT_HASH" ]; then
-        echo "Unexpected commit hash $commit_hash"
-        echo "try deleting $GOLDEN_KERNEL_TREE and restarting."
-        exit 1
-      fi
-    else
-      # Copy preserving permissions but setting the writable bit
-      rsync -a --chmod=u+w ${kernelSrc}/* .
+    # reproducible way: we build it in the nix store then copy it into a
+    # directory that we own here.
+    rsync -a --no-owner --chmod=u+w ${fakeKernelRepo} .
+    cd ./"$(basename ${fakeKernelRepo})"
 
-      # By default limmat logs to your home dir (dumb?).
-      export LIMMAT_LOGFILE=$TMPDIR/limmat.log
-
-      # Limmat fails if you aren't in a Git repository with commits in
-      # it.
-      git init
-      git config user.email chung.flunch@example.com
-      git config user.name "Chungonius Flunchér XIII"
-      git add .
-      git commit -m "init fake repo to make limmat happy"
-
-      # We'll run checkpatch which falls over if there isn't a vaguely realistic
-      # commit at HEAD.
-      echo "/* ok */" >> mm/page_alloc.c
-      git commit --signoff -m "another commit to avoid DoSing checkpatch" mm/page_alloc.c
-
-      commit_hash="$(git rev-parse HEAD)"
-      if [ "$commit_hash" != "$GOLDEN_COMMIT_HASH" ]; then
-        echo "Unexpected commit hash $commit_hash"
-        echo "Please update GOLDEN_COMMIT hash in this script"
-        exit 1
-      fi
-    fi
+    # By default limmat logs to your home dir (dumb?).
+    export LIMMAT_LOGFILE=$TMPDIR/limmat.log
 
     # Disable warning if loop always has exactly one iteration.
     declare -a failed=()
