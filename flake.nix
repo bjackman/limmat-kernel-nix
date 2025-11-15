@@ -40,7 +40,10 @@
         checks.default = pkgs.callPackage ./check-nix-fmt.nix { };
 
         packages = rec {
-          limmatTOML = format.generate "limmat.toml" limmatConfig.config;
+          # Export the TOML as a separate package. Also smush the limmatConfig
+          # attrset onto this output package so it's easily accessible via 'nix
+          # eval .#limatConfig.config' for debugging.
+          limmatTOML = format.generate "limmat.toml" limmatConfig.config // limmatConfig;
 
           # Mostly for convenient testing, export a version of Limmat with the
           # config from this repo hard-coded into it. Usually you'll instead
