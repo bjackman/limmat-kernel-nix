@@ -25,7 +25,7 @@ pkgs.writeShellApplication {
     # deterministic.
     export GIT_AUTHOR_DATE="2000-01-01T00:00:00Z"
     export GIT_COMMITTER_DATE="2000-01-01T00:00:00Z"
-    GOLDEN_COMMIT_HASH=6eade1a88927a144f50d194491b5b89a3e0aa962
+    GOLDEN_COMMIT_HASH=80401e97bf6e0a369b40f980f7cb4b037aa28c49
 
     # If we just have a Nix derivation that produces a kernel
     # repository then Limmat will fall over because the .git dir
