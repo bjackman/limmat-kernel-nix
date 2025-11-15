@@ -9,6 +9,10 @@
 let
   # For simplicity, all the scripts just have a common set of runtimeInputs.
   # This will also be exported in order to expose that stuff to the devShell.
+  # Note that these runtimeInputs are special, not like the normal
+  # writeShellApplication runtimeInputs: as well as stuff being in $PATH, stuff
+  # like CFLAGS is also set up via the stdenv, so that you can use C libraries
+  # here too.
   runtimeInputs = (
     with pkgs;
     [
@@ -36,20 +40,68 @@ let
   );
   # Helper to generate a script with the runtimeInputs in its environment.
   # Outputs the full path of the script itself, not the overall derivation.
+  #
+  # This really unholy. What we're trying to do here is something a bit like
+  # writeShellApplication, but with the terrible seed of devShell planted in it.
+  # So as well as injecting the runtimeInputs into $PATH, it also does the stuff
+  # that a development shell would have, so that C libraries are available to
+  # the compiler etc. None of this at all resembles how the fuck Nix is actually
+  # supposed to be used.
   mkTestScript =
     {
       name,
       text,
-    }:
+    }@args:
     let
-      appName = "limmat-kernel_${name}";
+      pkg = pkgs.stdenv.mkDerivation rec {
+        name = "limmat-kernel_${args.name}";
+
+        # So the actual way we get the correct variables set up is by sourcing
+        # the setup script of the stdenv. This is the really fucked up bit right
+        # here, you are not supposed to be randomly sourcing this at built time,
+        # which is why we need to set some random internal variables to make it
+        # even work.
+        # One way to try to mitigate this hell might be be: instead of
+        # forwarding the NIX_ variables from the installPhase and then using
+        # them to influence the stdenv at runtime, just forward the end result
+        # of the stdenv by exporting the appropriate vars. The only reason I
+        # haven't tried this is that I don't know what those vars are.
+        src = pkgs.writeShellScript "${name}_script" ''
+          set -o pipefail -o errexit -o nounset
+
+          out=/tmp/dummy-nix-out
+          dev=/tmp/dummy-nix-dev
+          noDumpEnvVars=1
+          export NIX_ENFORCE_PURITY=0
+          source ${pkgs.buildPackages.stdenv}/setup
+
+          export PATH="${lib.makeBinPath runtimeInputs}:$PATH"
+
+          ${text}
+        '';
+
+        buildInputs = runtimeInputs;
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+
+        # Disable most of the fancy stuff since this is a trivial derivation.
+        dontUnpack = true;
+        dontConfigure = true;
+        dontBuild = true;
+
+        installPhase = ''
+          mkdir -p $out/bin
+          cp $src $out/bin/${name}
+
+          # Note it's important to use --set instead of --prefix here, as the
+          # latter de-duplicates args so it will drop the -isystem args etc.
+          wrapProgram $out/bin/${name} \
+            --set NIX_CFLAGS_COMPILE "$NIX_CFLAGS_COMPILE" \
+            --set NIX_LDFLAGS "$NIX_LDFLAGS" \
+            --prefix PATH ":" "$PATH"
+        '';
+      };
     in
-    "${
-      pkgs.writeShellApplication {
-        inherit runtimeInputs text;
-        name = appName;
-      }
-    }/bin/${appName}";
+    builtins.toPath "${pkg}/bin/${pkg.name}";
   # Helper to generate a test script that runs a kernel build.
   mkBuild =
     {
