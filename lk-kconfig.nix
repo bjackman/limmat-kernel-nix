@@ -14,7 +14,10 @@ let
 in
 pkgs.writeShellApplication {
   name = "lk-kconfig";
-  runtimeInputs = [ pkgs.gnugrep ];
+  runtimeInputs = with pkgs; [
+    gnugrep
+    getopt
+  ];
   runtimeEnv = {
     LK_KCONFIG_FRAGMENTS_DIR = fragments;
   };
