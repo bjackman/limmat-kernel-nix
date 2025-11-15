@@ -132,6 +132,8 @@ let
         # have never waited for it to finish upstream (note it does nothing when
         # only one CPU though).
         rseq_test.tags = [ "slow" ];
+        # x86/fix_hypercall_test.c:75: ret == (uint64_t)-14
+        fix_hypercall_test.tags = [ "lk-broken" ];
       };
     };
   };
