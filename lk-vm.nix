@@ -204,6 +204,7 @@ pkgs.writeShellApplication {
     SHUTDOWN=false
 
     KTESTS_ARGS=("--bail-on-failure" "*")
+    KTESTS_OUTPUT_HOST=
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:dq:s:o:bh \
