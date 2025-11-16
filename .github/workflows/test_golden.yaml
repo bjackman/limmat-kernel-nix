@@ -17,3 +17,7 @@ jobs:
         name: JEST Tests            # Name of the check run which will be created
         path: /tmp/limmat-db/**/junit.xml    # Path to test results
         reporter: jest-junit        # Format of test results
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist-without-markdown
+        path: /tmp/limmat-db
