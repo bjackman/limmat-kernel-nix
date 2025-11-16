@@ -7,24 +7,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 
+	"test-runner/runner"
 	"test-runner/test_conf"
-)
-
-type TestResult string
-
-var (
-	TestFailed TestResult = "FAIL ❌"
-	TestPassed TestResult = "PASS ✔️"
-	TestError  TestResult = "ERR  🔥"
-	// Skipped due to tags.
-	TestSkipped TestResult = "SKIP 🫥"
-	// Not run because we aborted.
-	TestDropped TestResult = "DROP ⏸️"
 )
 
 var ErrTestFailed = fmt.Errorf("one or more tests failed")
@@ -39,36 +26,6 @@ func (s *stringSliceFlag) String() string {
 func (s *stringSliceFlag) Set(value string) error {
 	*s = append(*s, value)
 	return nil
-}
-
-// shouldSkipTest checks if a test should be skipped based on its tags
-func shouldSkipTest(test test_conf.Test, skipTags, includeBad, badTags map[string]bool) bool {
-	isBad := false
-	for _, testTag := range test.Tags {
-		if badTags[testTag] {
-			isBad = true
-			break
-		}
-	}
-
-	if isBad {
-		if len(includeBad) == 0 {
-			return true
-		}
-		for _, testTag := range test.Tags {
-			if includeBad[testTag] {
-				return false
-			}
-		}
-		return true
-	}
-
-	for _, testTag := range test.Tags {
-		if skipTags[testTag] {
-			return true
-		}
-	}
-	return false
 }
 
 func parseKselftestList(filePath string) error {
@@ -184,54 +141,13 @@ func doMain() error {
 		}
 	}
 
-	results := make(map[string]TestResult)
-	var testErr error
-
-	// Sort test IDs for deterministic execution order
-	var testIDs []string
-	for testID := range requestedTests {
-		testIDs = append(testIDs, testID)
-	}
-	sort.Strings(testIDs)
-
-	for i, testID := range testIDs {
-		test := requestedTests[testID]
-		if len(test.Command) == 0 {
-			results[testID] = TestError
-			fmt.Printf("Error running %s: empty command\n", testID)
-			if testErr == nil {
-				testErr = fmt.Errorf("error running %s: empty command", testID)
-			}
-			continue
-		}
-		if shouldSkipTest(test, skipTags, includeBad, badTags) {
-			results[testID] = TestSkipped
-			continue
-		}
-		cmd := exec.Command(test.Command[0], test.Command[1:]...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			if _, ok := err.(*exec.ExitError); ok {
-				results[testID] = TestFailed
-				if bailOnFailure {
-					for j := i + 1; j < len(testIDs); j++ {
-						results[testIDs[j]] = TestDropped
-					}
-					break
-				}
-			} else {
-				results[testID] = TestError
-				// Save first error, continue other tests
-				fmt.Printf("Error running %s: %v\n", testID, err)
-				if testErr == nil {
-					testErr = fmt.Errorf("error running %s: %v", testID, err)
-				}
-			}
-		} else {
-			results[testID] = TestPassed
-		}
-	}
+	runResults, testErr := runner.RunTests(&runner.RunOptions{
+		RequestedTests: requestedTests,
+		SkipTags:       skipTags,
+		IncludeBad:     includeBad,
+		BadTags:        badTags,
+		BailOnFailure:  bailOnFailure,
+	})
 
 	fmt.Println("\n=== Test Results Summary ===")
 	passedCount := 0
@@ -239,25 +155,24 @@ func doMain() error {
 	errorCount := 0
 	droppedCount := 0
 	skippedCount := 0
-	for _, testID := range testIDs {
-		result := results[testID]
-		fmt.Printf("%-60s %s\n", testID, result)
+	for _, result := range runResults {
+		fmt.Printf("%-60s %s\n", result.TestID, result.Result)
 
-		switch result {
-		case TestPassed:
+		switch result.Result {
+		case runner.TestPassed:
 			passedCount++
-		case TestFailed:
+		case runner.TestFailed:
 			failedCount++
-		case TestError:
+		case runner.TestError:
 			errorCount++
-		case TestDropped:
+		case runner.TestDropped:
 			droppedCount++
-		case TestSkipped:
+		case runner.TestSkipped:
 			skippedCount++
 		}
 	}
 	fmt.Printf("\nTotal: %d, Passed: %d, Failed: %d, Error: %d, Skipped: %d, Dropped: %d\n",
-		len(testIDs), passedCount, failedCount, errorCount, skippedCount, droppedCount)
+		len(runResults), passedCount, failedCount, errorCount, skippedCount, droppedCount)
 
 	if testErr != nil {
 		return testErr
