@@ -10,6 +10,8 @@ jobs:
     - uses: actions/checkout@v5
     - uses: DeterminateSystems/nix-installer-action@main
     - uses: DeterminateSystems/magic-nix-cache-action@main
+      with:
+        use-flakehub: false
     - run: mkdir /tmp/limmat-db
     - run: nix run .#test-golden -- /tmp/limmat-db
     - uses: actions/upload-artifact@v4
