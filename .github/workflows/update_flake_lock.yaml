@@ -5,35 +5,55 @@ on:
   schedule:
     - cron: '0 0 * * *' # daily
 
+
+#
+# THIS IS AI SLOP, copy with care, it's probably overwrought, I just can't bring
+# myself to care about GitHub Actions.
+#
+
 jobs:
-  nix-flake-update:
+  nix-flake-update-check:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
-      issues: write
-      pull-requests: write
-    runs-on: ubuntu-latest
+    outputs:
+      changes_present: ${{ steps.flake_update_check.outputs.changes_present }}
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
 
-      - name: nix flake update
+      - name: Nix flake update and check for changes
         id: flake_update_check
         run: |
           nix flake update
 
+          # Sets a step output to true if git diff finds changes (exit code 1)
           if git diff --exit-code flake.lock; then
             echo "changes_present=false" >> $GITHUB_OUTPUT
           else
             echo "changes_present=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run test_golden workflow
-        if: steps.flake_update_check.outputs.changes_present == 'true'
-        uses: ./.github/workflows/test_golden.yaml
+  run-tests:
+    needs: nix-flake-update-check
+    if: needs.nix-flake-update-check.outputs.changes_present == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/test_golden.yaml
+
+  commit-changes:
+    needs: [nix-flake-update-check, run-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: needs.nix-flake-update-check.outputs.changes_present == 'true' && always() && needs.run-tests.result == 'success'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Re-run nix flake update (to ensure we have the correct file for commit)
+        run: nix flake update
 
       - name: Commit and push
-        if: success() && steps.flake_update_check.outputs.changes_present == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
