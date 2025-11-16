@@ -1,5 +1,6 @@
 name: "Run test-golden"
 on:
+  workflow_call:
   pull_request:
   push:
 jobs:
