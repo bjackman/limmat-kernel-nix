@@ -21,4 +21,5 @@ jobs:
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
         path: /tmp/limmat-db/**/junit.xml
+        name: limmat-test-golden
         reporter: jest-junit
