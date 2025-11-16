@@ -47,6 +47,14 @@ func parseKselftestList(filePath string) error {
 		if !ok {
 			return fmt.Errorf("can't parse suite:name line from %s: %q", filePath, line)
 		}
+		// Hack: The test config is a flat array, with nesting denoted as
+		// suite.test.subtest or whatever. But, when exporting XML we want to
+		// actually expose the nesting structure. So '.' is actualylly a special
+		// character. So, just munge it away if it appears in the kselftest test
+		// name.
+		// The proper approach here would actually just be to have the TestConf
+		// have a proper recursive structure at runtime like the JSON has.
+		testName = strings.Replace(testName, ".", "_", -1)
 		if _, ok := tests[suiteName]; !ok {
 			tests[suiteName] = make(map[string]*test_conf.Test)
 		}
