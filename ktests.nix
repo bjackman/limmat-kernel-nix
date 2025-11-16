@@ -146,6 +146,8 @@ let
         "nx_hugepages_test.sh" = [ "flaky" ];
         "vmx_apic_access_test" = [ "flaky" ];
         "vmx_dirty_log_test" = [ "flaky" ];
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19412387941
+        "system_counter_offset_test" = [ "flaky" ];
       };
     };
   };
