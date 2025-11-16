@@ -169,6 +169,7 @@ let
       # 0x20 means is TAINT_BAD_PAGE.
       timeout --signal=KILL 300s \
         ${lk-vm}/bin/lk-vm --kernel "$kernel" --ktests="$KTEST_ARGS" \
+        --ktests-output="$LIMMAT_ARTIFACTS" \
         --cmdline "$KERNEL_ARGS panic_on_warn=1 panic_on_taint=0x20"
     '';
   };
