@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"test-runner/junit"
 	"test-runner/runner"
 	"test-runner/test_conf"
 )
@@ -81,7 +82,7 @@ func doMain() error {
 			}
 			return parseKselftestList(os.Args[2])
 		case "help", "-h", "--help":
-			fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] [--bail-on-failure] <test-id-glob>...")
+			fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] [--bail-on-failure] [--log-dir <path>] [--junit-xml <path>] <test-id-glob>...")
 			fmt.Println("       test-runner parse-kselftest-list <file>")
 			return nil
 		}
@@ -90,10 +91,14 @@ func doMain() error {
 	var skipTagsFlag stringSliceFlag
 	var includeBadFlag stringSliceFlag
 	var bailOnFailure bool
+	var logDir string
+	var junitXMLPath string
 	flag.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")
 	flag.Var(&skipTagsFlag, "skip-tag", "Skip tests with this tag (repeatable)")
 	flag.Var(&includeBadFlag, "include-bad", "Include tests with this bad tag (repeatable)")
 	flag.BoolVar(&bailOnFailure, "bail-on-failure", false, "Stop running tests after the first failure")
+	flag.StringVar(&logDir, "log-dir", "", "Path to a directory to store test logs")
+	flag.StringVar(&junitXMLPath, "junit-xml", "", "Path to write a JUnit XML report")
 	flag.Parse()
 
 	if testConfigFile == "" {
@@ -146,8 +151,15 @@ func doMain() error {
 		SkipTags:       skipTags,
 		IncludeBad:     includeBad,
 		BadTags:        badTags,
+		LogDir:         logDir,
 		BailOnFailure:  bailOnFailure,
 	})
+
+	if junitXMLPath != "" {
+		if err := junit.GenerateReport(runResults, junitXMLPath); err != nil {
+			return fmt.Errorf("generating JUnit report: %w", err)
+		}
+	}
 
 	fmt.Println("\n=== Test Results Summary ===")
 	passedCount := 0
