@@ -14,9 +14,8 @@ jobs:
     - uses: dorny/test-reporter@v2
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
-        name: JEST Tests            # Name of the check run which will be created
-        path: /tmp/limmat-db/**/junit.xml    # Path to test results
-        reporter: jest-junit        # Format of test results
+        path: /tmp/limmat-db/**/junit.xml
+        reporter: jest-junit
     - uses: actions/upload-artifact@v4
       with:
         name: dist-without-markdown
