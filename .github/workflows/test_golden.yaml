@@ -12,12 +12,13 @@ jobs:
     - uses: DeterminateSystems/magic-nix-cache-action@main
     - run: mkdir /tmp/limmat-db
     - run: nix run .#test-golden -- /tmp/limmat-db
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}       # run this step even if previous step failed
+      with:
+        name: dist-without-markdown
+        path: /tmp/limmat-db
     - uses: dorny/test-reporter@v2
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
         path: /tmp/limmat-db/**/junit.xml
         reporter: jest-junit
-    - uses: actions/upload-artifact@v4
-      with:
-        name: dist-without-markdown
-        path: /tmp/limmat-db
