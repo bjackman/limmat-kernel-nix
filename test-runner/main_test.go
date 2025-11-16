@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 )
+
+var testBinaryPath = "./test-runner-test-binary"
 
 func TestParseKselftestList(t *testing.T) {
 	kselftestList := `kvm:guest_memfd_test
@@ -72,7 +75,7 @@ futex:functional`
 	}
 }
 
-func TestMain(t *testing.T) {
+func TestMainFunc(t *testing.T) {
 	testCases := []struct {
 		name             string
 		jsonContent      string
@@ -119,8 +122,8 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 				}
 			}`,
 			testIdentifiers:  "foo.baz",
-			expectedOutput:   "Error: no tests match pattern: foo.baz\nexit status 127\n",
-			expectedExitCode: 1,
+			expectedOutput:   "Error: no tests match pattern: foo.baz\n",
+			expectedExitCode: 127,
 		},
 		{
 			name: "test fails",
@@ -138,7 +141,6 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 foo.bar                                                      FAIL ❌
 
 Total: 1, Passed: 0, Failed: 1, Error: 0, Skipped: 0, Dropped: 0
-exit status 1
 `,
 			expectedExitCode: 1,
 		},
@@ -158,7 +160,6 @@ exit status 1
 foo.bar                                                      FAIL ❌
 
 Total: 1, Passed: 0, Failed: 1, Error: 0, Skipped: 0, Dropped: 0
-exit status 1
 `,
 			expectedExitCode: 1,
 		},
@@ -225,8 +226,8 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 				}
 			}`,
 			testIdentifiers:  "nonexistent.*",
-			expectedOutput:   "Error: no tests match pattern: nonexistent.*\nexit status 127\n",
-			expectedExitCode: 1,
+			expectedOutput:   "Error: no tests match pattern: nonexistent.*\n",
+			expectedExitCode: 127,
 		},
 		{
 			name: "invalid glob pattern",
@@ -239,8 +240,8 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 				}
 			}`,
 			testIdentifiers:  "foo[",
-			expectedOutput:   "Error: invalid glob pattern foo[: syntax error in pattern\nexit status 127\n",
-			expectedExitCode: 1,
+			expectedOutput:   "Error: invalid glob pattern foo[: syntax error in pattern\n",
+			expectedExitCode: 127,
 		},
 		{
 			name: "skip single tag",
@@ -324,7 +325,6 @@ foo.bar                                                      FAIL ❌
 foo.baz                                                      DROP ⏸️
 
 Total: 2, Passed: 0, Failed: 1, Error: 0, Skipped: 0, Dropped: 1
-exit status 1
 `,
 			expectedExitCode: 1,
 		},
@@ -401,7 +401,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 				t.Fatal(err)
 			}
 
-			args := []string{"run", ".", "--test-config", tmpfile.Name()}
+			args := []string{"--test-config", tmpfile.Name()}
 			if tc.bailOnFailure {
 				args = append(args, "--bail-on-failure")
 			}
@@ -412,7 +412,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 				args = append(args, "--include-bad", tag)
 			}
 			args = append(args, strings.Fields(tc.testIdentifiers)...)
-			cmd := exec.Command("go", args...)
+			cmd := exec.Command(testBinaryPath, args...)
 			output, err := cmd.CombinedOutput()
 
 			if tc.expectedExitCode == 0 {
@@ -438,4 +438,23 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 			}
 		})
 	}
+}
+
+func TestMain(m *testing.M) {
+	log.Println("Building the test binary...")
+
+	buildCmd := exec.Command("go", "build", "-o", testBinaryPath, ".")
+	buildCmd.Stdout = os.Stdout
+	buildCmd.Stderr = os.Stderr
+
+	if err := buildCmd.Run(); err != nil {
+		log.Fatalf("Failed to build the binary: %v", err)
+	}
+	defer func() {
+		if err := os.Remove(testBinaryPath); err != nil {
+			log.Printf("Warning: Failed to remove binary: %v", err)
+		}
+	}()
+
+	os.Exit(m.Run())
 }
