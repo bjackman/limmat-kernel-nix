@@ -26,7 +26,7 @@ let
         qemuExitPortHex = "0xf4";
       in
       [
-        {
+        rec {
           networking.hostName = hostName;
           virtualisation.vmVariant = {
             virtualisation = {
@@ -46,6 +46,10 @@ let
                 kernel-tree = {
                   source = "$KERNEL_TREE";
                   target = "/mnt/kernel";
+                };
+                ktests-output = {
+                  source = "$KTESTS_OUTPUT_HOST";
+                  target = "/mnt/ktests-output";
                 };
               };
               # Attempt to ensure there's space left over in the rootfs (which
@@ -92,15 +96,21 @@ let
           # encode ktests into a systemd service. You can then run it with
           # systemd.unit=ktests.service.
           systemd.services.ktests = {
-            script = ''
-              # Convert the KTESTS_ARGS to an array so it can be expanded
-              # without glob expansion.
-              IFS=' ' read -r -a args <<< "$KTESTS_ARGS"
-              # Writing the value v to the isa-debug-exit port will cause QEMU to
-              # immediately exit with the exit code `v << 1 | 1`.
-              ${ktests}/bin/ktests "''${args[@]}" \
-                || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))
-            '';
+            script =
+              let
+                ktestsOutputDir = virtualisation.vmVariant.virtualisation.sharedDirectories.ktests-output.target;
+              in
+              ''
+                # Convert the KTESTS_ARGS to an array so it can be expanded
+                # without glob expansion.
+                IFS=' ' read -r -a args <<< "$KTESTS_ARGS"
+                # Writing the value v to the isa-debug-exit port will cause QEMU to
+                # immediately exit with the exit code `v << 1 | 1`.
+                ${ktests}/bin/ktests \
+                  --junit-xml ${ktestsOutputDir}/junit.xml --log-dir ${ktestsOutputDir} \
+                  "''${args[@]}" \
+                  || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))
+              '';
             serviceConfig = {
               Type = "oneshot";
               StandardOutput = "tty";
@@ -192,6 +202,7 @@ pkgs.writeShellApplication {
     SHUTDOWN=false
 
     KTESTS_ARGS=("--bail-on-failure" "*")
+    KTESTS_OUTPUT_HOST=$(mktemp -d)
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:dq:s::bh \
@@ -285,8 +296,16 @@ pkgs.writeShellApplication {
     KERNEL_TREE="$(realpath "$KERNEL_TREE")"
     export NIXPKGS_QEMU_KERNEL_${hostName}
     export KERNEL_TREE
+    export KTESTS_OUTPUT_HOST
     export QEMU_KERNEL_PARAMS="$CMDLINE"
     export QEMU_OPTS
+
+    set +e
     ${nixosRunner}/bin/run-${hostName}-vm "$@"
+    exit_code=$?
+    if "$KTESTS"; then
+      echo "Ktests output: $KTESTS_OUTPUT_HOST"
+    fi
+    exit "$exit_code"
   '';
 }
