@@ -19,6 +19,8 @@ jobs:
       with:
         name: limmat-db
         path: /tmp/limmat-db
+    # OK this kiinda works but it turns out for some reason this tool ignores
+    # all but the first line of the <failure> content.
     - uses: dorny/test-reporter@v2
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
