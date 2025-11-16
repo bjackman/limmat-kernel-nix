@@ -134,6 +134,18 @@ let
         rseq_test.tags = [ "slow" ];
         # x86/fix_hypercall_test.c:75: ret == (uint64_t)-14
         fix_hypercall_test.tags = [ "lk-broken" ];
+        # Failed:
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19393418421/job/55490088190
+        # Passed:
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19392874394/job/55488849774
+        msrs_test = [ "flaky" ];
+        # Failed:
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19392874394/job/55488849774
+        # Passed:
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19393418421/job/55490088190
+        "nx_hugepages_test.sh" = [ "flaky" ];
+        "vmx_apic_access_test" = [ "flaky" ];
+        "vmx_dirty_log_test" = [ "flaky" ];
       };
     };
   };
