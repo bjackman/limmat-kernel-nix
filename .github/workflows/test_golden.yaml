@@ -15,7 +15,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
-        name: dist-without-markdown
+        name: limmat-db
         path: /tmp/limmat-db
     - uses: dorny/test-reporter@v2
       if: ${{ !cancelled() }}       # run this step even if previous step failed
