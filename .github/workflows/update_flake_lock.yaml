@@ -21,7 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
-
       - name: Nix flake update and check for changes
         id: flake_update_check
         run: |
@@ -52,7 +51,6 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
       - name: Re-run nix flake update (to ensure we have the correct file for commit)
         run: nix flake update
-
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
