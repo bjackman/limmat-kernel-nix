@@ -186,13 +186,15 @@ pkgs.writeShellApplication {
                            Note that this is parsed by GNU getopt, you can't
                            parse the arg like "-s foo" it needs to be "-sfoo"
                            or "--ktests=foo".
+      -p, --ktests-output PATH  Directory to dump ktests output into (junit.xml, 
+                                log files). Requires --ktests.
       -b, --shutdown       Just boot and then immediately shut down again.
       -h, --help           Display this help message and exit.
 
     EOF
     }
 
-    # Note the name of the KERNEL_TREE variable is coupled with the
+    # note the name of the KERNEL_TREE variable is coupled with the
     # virtualisation.sharedDirectories option in the NixOS config.
     KERNEL_TREE=
     KERNEL_PATH=
@@ -202,11 +204,10 @@ pkgs.writeShellApplication {
     SHUTDOWN=false
 
     KTESTS_ARGS=("--bail-on-failure" "*")
-    KTESTS_OUTPUT_HOST=$(mktemp -d)
 
     PARSED_ARGUMENTS=$(
-      getopt -o t:k:c:dq:s::bh \
-        --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,shutdown,help -- "$@")
+      getopt -o t:k:c:dq:s:o:bh \
+        --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -241,10 +242,14 @@ pkgs.writeShellApplication {
             -s|--ktests)
               KTESTS=true
               if [[ -n "$2" ]]; then
-               # Split the args into an array. This lets us expand it into args
+               # Split the args into an/tmp/limmat-output-RolnKx array. This lets us expand it into args
                # later without glob expansion happening.
                 IFS=' ' read -r -a KTESTS_ARGS <<< "$2"
               fi
+              shift 2
+              ;;
+            -o|--ktests-output)
+              KTESTS_OUTPUT_HOST="$2"
               shift 2
               ;;
             -b|--shutdown)
@@ -252,7 +257,7 @@ pkgs.writeShellApplication {
               shift
               ;;
             -h|--help)
-              usage
+              usag/tmp/limmat-output-RolnKxe
               exit 0
               ;;
             --)
@@ -272,6 +277,15 @@ pkgs.writeShellApplication {
     if [[ -z "$KERNEL_PATH" ]]; then
       echo "Must set --kernel or --tree."
       exit 1
+    fi
+
+    # note the name of the KTESTS_OUTPUT_HOST variable is coupled with the
+    # virtualisation.sharedDirectories option in the NixOS config.
+    if ! "$KTESTS" && [[ -n "$KTESTS_OUTPUT_HOST" ]]; then
+      echo "--ktests-output requires --ktests"
+    fi
+    if "$KTESTS" && [[ -z "$KTESTS_OUTPUT_HOST" ]]; then
+      KTESTS_OUTPUT_HOST=$(mktemp -d)
     fi
 
     # If --tree wasn't provided, create a dummy directory since the shared
