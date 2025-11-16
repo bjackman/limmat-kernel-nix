@@ -44,9 +44,18 @@ pkgs.writeShellApplication {
   ];
   passthru = { inherit fakeKernelRepo; };
   text = ''
+    # For the benefit of Github, takes an optional single argument that tells it
+    # where to put the limmat DB. This is a hack to allow exporting JUnit XML
+    # data to the UI.
+    LIMMAT_DB_PATH="$1"
+
     set -eux -o pipefail
 
     TMPDIR="$(mktemp -d)"
+    if [[ -z "$LIMMAT_DB_PATH" ]]; then
+      LIMMAT_DB_PATH="$TMPDIR"/limmat-db
+    fi
+
     # Note this evaluates $PWD now so this will change back to the current
     # directory
     # shellcheck disable=SC2064
@@ -69,7 +78,7 @@ pkgs.writeShellApplication {
     declare -a failed=()
     # shellcheck disable=SC2043
     for test in ${lib.strings.concatStringsSep " " (map (t: t.name) limmatConfig.config.tests)}; do
-      limmat-kernel --result-db "$TMPDIR"/limmat-db test "$test" || failed+=("$test")
+      limmat-kernel --result-db "$LIMMAT_DB_PATH" test "$test" || failed+=("$test")
     done
     if [ ''${#failed[@]} -ne 0 ]; then
       echo "Failed tests:" "''${failed[@]}"

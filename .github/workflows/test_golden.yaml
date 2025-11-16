@@ -9,4 +9,11 @@ jobs:
     - uses: actions/checkout@v5
     - uses: DeterminateSystems/nix-installer-action@main
     - uses: DeterminateSystems/magic-nix-cache-action@main
-    - run: nix run .#test-golden
+    - run: mkdir /tmp/limmat-db
+    - run: nix run .#test-golden -- /tmp/limmat-db
+    - uses: dorny/test-reporter@v2
+      if: ${{ !cancelled() }}       # run this step even if previous step failed
+      with:
+        name: JEST Tests            # Name of the check run which will be created
+        path: /tmp/limmat-db/**/junit.xml    # Path to test results
+        reporter: jest-junit        # Format of test results
