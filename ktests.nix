@@ -151,6 +151,8 @@ let
         # Not sure what's up with this but I see it get stuck when run via lk-vm
         # -s, even though it works fine when I run it manually in the guest.
         coalesced_io_test.tags = [ "lk-broken" ];
+        # This one seems OK in GHA but I see it hang on my Cloudtop.
+        xapic_ipi_test.tags = [ "lk-broken" ];
       };
     };
   };
