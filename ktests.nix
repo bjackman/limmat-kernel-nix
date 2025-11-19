@@ -117,6 +117,7 @@ let
         memslot_perf_test.tags = [ "slow" ];
         pre_fault_memory_test.tags = [ "slow" ];
         coalesced_io_test.tags = [ "slow" ];
+        xapic_state_test.tags = [ "slow" ];
         # This test runs a guest with 128GiB of RAM, it's not gonna work in our
         # puny little VM.
         mmu_stress_test.tags = [
