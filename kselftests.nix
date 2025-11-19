@@ -59,6 +59,8 @@ stdenv.mkDerivation {
     # just setting the literal string "$(out)" and then that's getting expanded
     # by Make.
     "KSFT_INSTALL_PATH=$(out)/bin"
+    # Fail the build if the build fails, instead of just not outputting the tests.
+    "FORCE_TARGETS=1"
   ];
   preInstall = ''
     mkdir -p $out/bin
