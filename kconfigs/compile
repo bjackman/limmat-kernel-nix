@@ -1,2 +1,12 @@
 # Grab bag of stuff I wanna enable to check my code compiles
 CONFIG_CMA=y
+
+# Deps for UNACCEPTED_MEMORY
+CONFIG_EFI=y
+CONFIG_EFI_STUB=y
+CONFIG_AMD_MEM_ENCRYPT=y
+CONFIG_UNACCEPTED_MEMORY=y
+
+# Deps for MEMORY_FAILURE
+CONFIG_X86_MCE=y
+CONFIG_MEMORY_FAILURE=y
