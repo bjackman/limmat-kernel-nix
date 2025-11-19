@@ -81,10 +81,6 @@ let
             "earlyprintk=serial"
             "debug"
             "loglevel=7"
-            # There seems to be a bug in the kernel or QEMU which leads to boot
-            # failing when I'm running lots of QEMU instances at once. Disabling
-            # this seems to work around it...
-            "noapic"
             # Suggested by the error message of mm hugetlb selftests:
             "hugepagesz=1G"
             "hugepages=4"
