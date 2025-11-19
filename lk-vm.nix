@@ -207,7 +207,7 @@ pkgs.writeShellApplication {
     KTESTS_OUTPUT_HOST=
 
     PARSED_ARGUMENTS=$(
-      getopt -o t:k:c:dq:s:o:bh \
+      getopt -o t:k:c:dq:s::o:bh \
         --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help -- "$@")
 
     # shellcheck disable=SC2181
