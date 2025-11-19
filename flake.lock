@@ -62,11 +62,11 @@
     "kernel": {
       "flake": false,
       "locked": {
-        "lastModified": 1763331938,
-        "narHash": "sha256-x2s5WmSJhMq6BykhclDAjxHmS05KQABMOYctui5L5ws=",
+        "lastModified": 1763488942,
+        "narHash": "sha256-R8jVOue8KhxxPqm66dEkN7tEVcf5AwbOXLtSGTUbbFs=",
         "owner": "torvalds",
         "repo": "linux",
-        "rev": "6a23ae0a96a600d1d12557add110e0bb6e32730c",
+        "rev": "8b690556d8fe074b4f9835075050fba3fb180e93",
         "type": "github"
       },
       "original": {
@@ -135,11 +135,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1763049705,
-        "narHash": "sha256-A5LS0AJZ1yDPTa2fHxufZN++n8MCmtgrJDtxFxrH4S8=",
+        "lastModified": 1763334038,
+        "narHash": "sha256-LBVOyaH6NFzQ3X/c6vfMZ9k4SV2ofhpxeL9YnhHNJQQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "3acb677ea67d4c6218f33de0db0955f116b7588c",
+        "rev": "4c8cdd5b1a630e8f72c9dd9bf582b1afb3127d2c",
         "type": "github"
       },
       "original": {
