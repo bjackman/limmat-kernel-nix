@@ -148,6 +148,11 @@ let
         vmx_dirty_log_test.tags = [ "flaky" ];
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19412387941
         system_counter_offset_test.tags = [ "flaky" ];
+        # Not sure what's up with this but I see it get stuck when run via lk-vm
+        # -s, even though it works fine when I run it manually in the guest.
+        coalesced_io_test.tags = [ "lk-broken" ];
+        # This one seems OK in GHA but I see it hang on my Cloudtop.
+        xapic_ipi_test.tags = [ "lk-broken" ];
       };
     };
   };
