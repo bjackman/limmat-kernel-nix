@@ -106,7 +106,7 @@ func RunTests(opts *RunOptions) ([]*TestResult, error) {
 			}
 			defer f.Close()
 			logFile = logPath
-			logWriter = f
+			logWriter = io.MultiWriter(f, os.Stdout)
 		} else {
 			logWriter = os.Stdout
 		}
