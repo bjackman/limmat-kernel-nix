@@ -284,8 +284,11 @@ pkgs.writeShellApplication {
     # virtualisation.sharedDirectories option in the NixOS config.
     if ! "$KTESTS" && [[ -n "$KTESTS_OUTPUT_HOST" ]]; then
       echo "--ktests-output requires --ktests"
+      exit 1
     fi
-    if "$KTESTS" && [[ -z "$KTESTS_OUTPUT_HOST" ]]; then
+    # This needs to be set even if we aren't using --ktests, otherwise QEMU's
+    # 9pfs setup fails and QEMU falls over.
+    if [[ -z "$KTESTS_OUTPUT_HOST" ]]; then
       KTESTS_OUTPUT_HOST=$(mktemp -d)
     fi
 
