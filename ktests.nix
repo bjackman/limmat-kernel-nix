@@ -104,7 +104,7 @@ let
     kselftests = {
       # Replaced by the explicit vmtests configuration above.
       # Note this is also affected by the bug with .sh being in the name.
-      mm."run_vmtests.sh".tags = [ "lk-broken" ];
+      mm.run_vmtests_sh.tags = [ "lk-broken" ];
       kvm = {
         dirty_log_test.tags = [ "slow" ]; # It's not THAT slow
         set_memory_region_test.tags = [ "slow" ]; # It's not THAT slow
@@ -143,7 +143,7 @@ let
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19392874394/job/55488849774
         # Passed:
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19393418421/job/55490088190
-        nx_hugepages_test.sh.tags = [ "flaky" ];
+        nx_hugepages_test_sh.tags = [ "flaky" ];
         vmx_apic_access_test.tags = [ "flaky" ];
         vmx_dirty_log_test.tags = [ "flaky" ];
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19412387941
