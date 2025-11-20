@@ -153,6 +153,21 @@ let
         system_counter_offset_test.tags = [ "flaky" ];
       };
     };
+    example = {
+      fail = mkTest (writeShellApplication {
+        name = "example-fail";
+        text = ''
+          echo hello world
+          echo hello world
+          echo hello world
+          echo hello world
+          echo hello world
+          echo hello world
+          echo oh nooes
+          exit 1
+        '';
+      });
+    };
   };
 
   # Convert the tests config to JSON and store in nix store

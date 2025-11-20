@@ -19,9 +19,10 @@ jobs:
       with:
         name: limmat-db
         path: /tmp/limmat-db
-    - uses: dorny/test-reporter@v2
+    - uses: bjackman/test-reporter@jest-junit-full-log
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
         path: /tmp/limmat-db/**/junit.xml
         name: limmat-test-golden
         reporter: jest-junit
+        jest-junit-full-log: true
