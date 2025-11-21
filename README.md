@@ -122,6 +122,37 @@ Basically: pass `--override-input kernel path/to/kernel/tree` to whatever `nix`
 command builds your kselftests. This might be `nix develop` if you don't need to
 iterate on the tests themselves.
 
+### Run KUnit tests
+
+The devShell should have everything set up to run KUnit tests. To run under
+QEMU:
+
+```sh
+./tools/testing/kunit/kunit.py run --arch x86_64
+```
+
+You'll probably want some debugging kconfigs enabled, a simple way to get them
+is to append `./kconfigs/debug` from this repo onto your `.kunitconfig`, for
+example:
+
+```sh
+# Generate a .kunitconfig if you haven't already got one in .kunit/
+./tools/testing/kunit/kunit.py config --arch x86_64
+cat $this_repo/kconfigs/debug >> .kunit/kunitconfig
+```
+
+Then run the tests with something like:
+
+```sh
+./tools/testing/kunit/kunit.py run --arch x86_64 --kernel_args "nokaslr" --qemu_args "-s -S"
+```
+
+Now in another devShell you can attach GDB using something like:
+
+```sh
+gdb .kunit/vmlinux -ex "target remote localhost:1234"
+```
+
 ## TODO
 
 - [x] Make kernel config biz more flexible
