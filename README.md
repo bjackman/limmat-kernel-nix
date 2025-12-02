@@ -144,7 +144,7 @@ cat $this_repo/kconfigs/debug >> .kunit/kunitconfig
 Then run the tests with something like:
 
 ```sh
-./tools/testing/kunit/kunit.py run --arch x86_64 --kernel_args "nokaslr" --qemu_args "-s -S"
+./tools/testing/kunit/kunit.py run --arch x86_64 --kernel_args "nokaslr" --qemu_args "-s -S" --timeout 9999
 ```
 
 Now in another devShell you can attach GDB using something like:
