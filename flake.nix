@@ -121,6 +121,9 @@
               limmat
               b4
               codespell
+              # No support for actually building with LLVM but clangd is
+              # compatible with GCC luckily.
+              clang-tools
             ])
             ++ (with self.packages."${system}"; [
               lk-vm
