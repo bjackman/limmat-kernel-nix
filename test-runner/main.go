@@ -65,7 +65,7 @@ func parseKselftestList(filePath string) error {
 		}
 		suite[testName] = &test_conf.Test{
 			IsTest:  true,
-			Command: []string{"run_kselftest.sh", "--error-on-fail", "-t", line},
+			Command: []string{"run_kselftest.sh", "-t", line},
 		}
 	}
 

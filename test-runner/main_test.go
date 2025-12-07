@@ -22,7 +22,6 @@ futex:functional`
       "__is_test": true,
       "command": [
         "run_kselftest.sh",
-        "--error-on-fail",
         "-t",
         "futex:functional"
       ]
@@ -33,7 +32,6 @@ futex:functional`
       "__is_test": true,
       "command": [
         "run_kselftest.sh",
-        "--error-on-fail",
         "-t",
         "kvm:guest_memfd_test"
       ]
