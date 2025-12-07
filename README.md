@@ -138,13 +138,14 @@ example:
 ```sh
 # Generate a .kunitconfig if you haven't already got one in .kunit/
 ./tools/testing/kunit/kunit.py config --arch x86_64
+# Add debugging configs
 cat $this_repo/kconfigs/debug >> .kunit/kunitconfig
 ```
 
 Then run the tests with something like:
 
 ```sh
-./tools/testing/kunit/kunit.py run --arch x86_64 --kernel_args "nokaslr" --qemu_args "-s -S" --timeout 9999
+./tools/testing/kunit/kunit.py run --arch x86_64 --qemu_args "-s -S" --timeout 9999
 ```
 
 Now in another devShell you can attach GDB using something like:
