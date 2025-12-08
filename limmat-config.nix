@@ -24,6 +24,7 @@ let
       bison
       elfutils
 
+      qemu # For kunit.py
       ccache
       # checkpatch.py needs python. checkatch.pl calls spdxcheck.py which uses
       # ply and gitpython.
