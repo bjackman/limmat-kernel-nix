@@ -31,6 +31,9 @@ To disable checkpatch warnings:
 
 - Restart Limmat.
 
+NOTE: You probably also want to configure git to copy notes to the new commit
+when rewriting (rebasing, amending): `git config set notes.rewriteRef 'refs/notes/*'`.
+
 ## HOWTOs
 
 Start by running `nix develop path/to/this/repo#kernel`. This will always drop
