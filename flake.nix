@@ -24,9 +24,6 @@
       let
         pkgs = import nixpkgs { inherit system; };
         limmat = inputs.limmat.packages."${system}".default;
-        # This package will be used for golden testing, and also to grab the
-        # toolchains etc for the devShell.
-        refKernel = pkgs.linuxPackages.kernel;
         limmatConfig = (
           pkgs.callPackage ./limmat-config.nix {
             lk-vm = self.packages."${system}".lk-vm;
@@ -102,7 +99,7 @@
 
         devShells.kernel = pkgs.mkShell {
           inputsFrom = [
-            refKernel
+            pkgs.linuxPackages.kernel
             self.packages."${system}".kselftests
           ];
           packages =
