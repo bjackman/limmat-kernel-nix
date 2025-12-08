@@ -121,8 +121,6 @@
               # No support for actually building with LLVM but clangd is
               # compatible with GCC luckily.
               clang-tools
-              # For manually building with Clang
-              clang
             ])
             ++ (with self.packages."${system}"; [
               lk-vm
