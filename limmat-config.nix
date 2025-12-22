@@ -240,6 +240,18 @@ in
         command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_ksft" "*" ""'';
       }
       {
+        name = "kunit_x86";
+        cache = "by_tree";
+        resources = [ "qemu_throttle" ];
+        command = ''
+          set -eux
+
+          make mrproper
+          rm -rf .kunit/  # Clear leftover .kunitconfig
+          tools/testing/kunit/kunit.py run --arch=x86_64
+        '';
+      }
+      {
         name = "ksft_asi_off";
         cache = "by_tree";
         depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
