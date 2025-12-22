@@ -4,7 +4,6 @@
 {
   pkgs,
   lib,
-  system,
   # This is the function that you would use in a flake to define a NixOS
   # configuration. It is not actually a part of nixpkgs itself but one of the
   # nixpkgs flakes' `lib` outputs so it needs to be passed here explicitly.
@@ -17,7 +16,7 @@
 let
   hostName = "testvm";
   nixosConfig = nixosSystem {
-    inherit system;
+    system = pkgs.stdenv.hostPlatform.system;
     modules =
       let
         # I/O port that will be used for the isa-debug-exit device. I don't know
