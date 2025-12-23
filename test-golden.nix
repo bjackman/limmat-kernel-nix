@@ -40,6 +40,8 @@ pkgs.writeShellApplication {
   runtimeInputs = [
     pkgs.gnutar
     pkgs.git
+    pkgs.coreutils
+    pkgs.rsync
     limmat-kernel
   ];
   passthru = { inherit fakeKernelRepo; };
