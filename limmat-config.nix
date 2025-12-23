@@ -243,13 +243,16 @@ in
         name = "kunit_x86";
         cache = "by_tree";
         resources = [ "qemu_throttle" ];
-        command = ''
-          set -eux
+        command = mkTestScript {
+          name = "kunit_x86";
+          text = ''
+            set -eux
 
-          make mrproper
-          rm -rf .kunit/  # Clear leftover .kunitconfig
-          tools/testing/kunit/kunit.py run --arch=x86_64
-        '';
+            make mrproper
+            rm -rf .kunit/  # Clear leftover .kunitconfig
+            tools/testing/kunit/kunit.py run --arch=x86_64
+          '';
+        };
       }
       {
         name = "ksft_asi_off";
@@ -273,18 +276,21 @@ in
         name = "kunit_asi";
         cache = "by_tree";
         resources = [ "qemu_throttle" ];
-        command = ''
-          set -eux
+        command = mkTestScript {
+          name = "kunit_asi";
+          text = ''
+            set -eux
 
-          for kunitconfig in arch/x86/mm/.kunitconfig arch/x86/.kunitconfig; do
-            if [[ -e "$kunitconfig" ]]; then
-              make mrproper
-              tools/testing/kunit/kunit.py run --arch=x86_64 \
-                --kunitconfig "$kunitconfig" --kernel_args asi=on
-              grep ADDRESS_SPACE_ISOLATION .kunit/.config
-            fi
-          done
-        '';
+            for kunitconfig in arch/x86/mm/.kunitconfig arch/x86/.kunitconfig; do
+              if [[ -e "$kunitconfig" ]]; then
+                make mrproper
+                tools/testing/kunit/kunit.py run --arch=x86_64 \
+                  --kunitconfig "$kunitconfig" --kernel_args asi=on
+                grep ADDRESS_SPACE_ISOLATION .kunit/.config
+              fi
+            done
+          '';
+        };
       }
       {
         name = "checkpatch";
