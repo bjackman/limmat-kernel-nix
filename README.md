@@ -157,6 +157,22 @@ Now in another devShell you can attach GDB using something like:
 gdb .kunit/vmlinux -ex "target remote localhost:1234"
 ```
 
+## Developing this repo
+
+Mostly because of me not knowing Nix properly when I wrote it, the integration
+test for this repo is an application instead of a flake check. You can run it
+with `nix run .#test-golden -- /tmp/limmat-db`, or to be really thorough about checking the
+environment:
+
+```sh
+nix shell ~/src/limmat-kernel-nix#test-golden --ignore-environment \
+      --keep HOME --keep USER --keep TMPDIR  \
+      -c limmat-kernel-test-golden /tmp/limmat-db
+```
+
+This should be moved to a flake check and then the resulting limmat-db should be
+an output of the check derivation or something.
+
 ## TODO
 
 - [x] Make kernel config biz more flexible
