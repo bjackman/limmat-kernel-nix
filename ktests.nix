@@ -153,6 +153,8 @@ let
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19412387941
         system_counter_offset_test.tags = [ "flaky" ];
         cpuid_test.tags = [ "flaky" ];
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/20547584624
+        nested_exceptions_test.tags = [ "flaky" ];
       };
     };
   };
