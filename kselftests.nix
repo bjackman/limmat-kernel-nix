@@ -37,16 +37,20 @@ stdenv.mkDerivation {
     grep GUP_TEST .config
   '';
   preBuild = ''
+    # HACK: Adding glibc.static to buildInputs breaks things due to a Nix bug.
+    export LIBRARY_PATH=${pkgs.glibc.static}/lib:$LIBRARY_PATH
     make -j$NIX_BUILD_CORES headers
     # Need to set this in shell code, there's no way to pass flags with spaces
     # otherwise lmao i don fuken no m8 wo'eva
-    makeFlagsArray+=("TARGETS=mm kvm") # TODO build the rest oo
+    makeFlagsArray+=("TARGETS=mm kvm x86") # TODO build the rest too
+    # HACK: -I../ works around
+    # https://lore.kernel.org/all/DFHI984SEFV3.2JL88CLHNT2SO@google.com/
+    makeFlagsArray+=("EXTRA_CFLAGS=-Wno-error=unused-result -I../")
   '';
   # Note these flags get re-used for both the buildPhase and the configurePhase.
   makeFlags = [
     "-C"
     "tools/testing/selftests"
-    "EXTRA_CFLAGS=-Wno-error=unused-result"
     # I'm not entirely sure how that $(out) thing works, I copied it from
     # something I saw in the nixpkgs manual. We wanna set KSFT_INSTALL_PATH to
     # the value of the $out shell variable at runtime. My best guess is this is
