@@ -160,6 +160,10 @@ let
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/20768491948/job/59639617699
         tsc_scaling_test.tags = [ "flaky" ];
       };
+      x86 = {
+        # It prints SKIP but returns an error.
+        test_shadow_stack_64.tags = [ "lk-broken" ];
+      };
     };
   };
 
