@@ -101,6 +101,8 @@ let
     # parse-kselftest-list will generate the actual list of kselftests, but also
     # here we add tags and stuff for the ones we know about. This gets merged into
     # the overal config below.
+    # Note that the ksefltests package doesn't build all the tests (see
+    # TARGETS=).
     kselftests = {
       # Replaced by the explicit vmtests configuration above.
       # Note this is also affected by the bug with .sh being in the name.
