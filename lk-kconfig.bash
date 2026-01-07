@@ -110,18 +110,33 @@ cp "$TMPCONFIG" .config
 # shellcheck disable=SC2086
 scripts/kconfig/merge_config.sh -s -n $FRAGS
 
-# Now check that all the configs were enables as expected. First get all the
-# lines that aren't comments. Note Kconfig is fucked up and "# CONFIG_FOO is not
-# set" is a kinda up sort-of-comment where actually it can sometimes carry
-# semantic meaning.
-comment_pcre='^#(?! CONFIG_[A-Z0-9_]+ is not set$).*$'
+# Check configs that were requested to be enabled. This is just all nonempty
+# lines that don't start with #.
+enables_re='^[^#].*$'
 # shellcheck disable=SC2086
-configs_requested=$(cat "$TMPCONFIG" $FRAGS | grep -vP "$comment_pcre" | sort | uniq)
-# Now get the non-comment lines from the final config
-configs_actual=$(grep -vP "$comment_pcre" .config | sort | uniq)
-missing=$(comm -2 -3 <(echo "$configs_requested") <(echo "$configs_actual"))
-if [[ -n "$missing" ]]; then
+enables_requested=$(cat "$TMPCONFIG" $FRAGS | grep "$enables_re" | sort | uniq)
+enables_actual=$(grep "$enables_re" .config | sort | uniq)
+missing_enables=$(comm -2 -3 <(echo "$enables_requested") <(echo "$enables_actual"))
+if [[ -n "$missing_enables" ]]; then
     echo "Config settings missing from final config. Dependencies not handled? Typos? Missing lines:"
-    echo "$missing"
+    echo "$missing_enables"
+    exit 1
+fi
+
+# Now check configs that we wanted to be disabled. Note Kconfig is fucked up
+# and "# CONFIG_FOO is not set" is a kinda up sort-of-comment where actually it
+# can sometimes carry semantic meaning.
+# First extract the specific configs that were explicitly requested to be
+# disabled.
+# shellcheck disable=SC2086
+want_disabled_configs=$(cat "$TMPCONFIG" $FRAGS | sed -En "s/^# (CONFIG_[A-Z0-9_]+) is not set$/\1/p" | sort | uniq)
+# Now get all the options that were configured (don't care about the actual that
+# was set, don't care about "is not set" lines, just care about
+# CONFIG_FOO=something lines).
+enabled_configs=$(sed -En 's/^(CONFIG_[A-Z0-9_]+)=.*$/\1/p' .config | sort | uniq)
+unexpected_configs=$(comm -1 -2 <(echo "$want_disabled_configs") <(echo "$enabled_configs"))
+if [[ -n "$unexpected_configs" ]]; then
+    echo "Configs appearing in the final config that were marked as 'is not set' in the fragments:"
+    echo "$unexpected_configs"
     exit 1
 fi
