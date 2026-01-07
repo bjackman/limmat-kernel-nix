@@ -155,6 +155,8 @@ let
         cpuid_test.tags = [ "flaky" ];
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/20547584624
         nested_exceptions_test.tags = [ "flaky" ];
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/20768491948/job/59639617699
+        tsc_scaling_test.tags = [ "flaky" ];
       };
     };
   };
