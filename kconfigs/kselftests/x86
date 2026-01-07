@@ -1,0 +1,5 @@
+CONFIG_IA32_EMULATION=y
+CONFIG_X86_X32_ABI=y
+# I had issues with the futex API without setting this. Perhaps glibc bug.
+CONFIG_COMPAT_32BIT_TIME=y
+
