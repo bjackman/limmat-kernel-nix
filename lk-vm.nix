@@ -12,6 +12,7 @@
   ktests,
   # For manual poking around, also put kselftests itself in the PATH.
   kselftests,
+  test-kernel,
 }:
 let
   hostName = "testvm";
@@ -49,6 +50,10 @@ let
                 ktests-output = {
                   source = "$KTESTS_OUTPUT_HOST";
                   target = "/mnt/ktests-output";
+                };
+                kernel-exchange = {
+                  source = "$KERNEL_EXCHANGE_HOST";
+                  target = "/mnt/kernel-exchange";
                 };
               };
               # Attempt to ensure there's space left over in the rootfs (which
@@ -98,6 +103,34 @@ let
             ];
           };
 
+          # The default crashdump implementation assumes we want to boot the
+          # system default kernel (at /run/current-system/kernel). But since we
+          # are netbooting a custom kernel that doesn't match the system default,
+          # we need to make sure we kexec into the custom kernel instead.
+          # lk-vm ensures the kernel image is available at /mnt/kernel-exchange/bzImage.
+          boot.postBootCommands =
+            let
+              crashdump = nixosConfig.config.boot.crashDump;
+              kernelParams = lib.concatStringsSep " " crashdump.kernelParams;
+            in
+            lib.mkForce ''
+              echo "loading crashdump kernel...";
+              # Check if kdump is supported by the kernel
+              if [ -e /sys/kernel/kexec_crash_size ]; then
+                # We reuse the running kernel's command line to ensure we have the correct root device and other parameters.
+                # We append our specific crashdump parameters.
+                # We do NOT use the system initrd because our custom monolithic kernel might not be compatible with it,
+                # and we expect it to be able to mount the root filesystem directly (passed via cmdline).
+                CURRENT_CMDLINE=$(cat /proc/cmdline)
+                ${pkgs.kexec-tools}/sbin/kexec -p /mnt/kernel-exchange/bzImage \
+                --reset-vga --console-vga \
+                --command-line="$CURRENT_CMDLINE init=$(readlink -f /run/current-system/init) irqpoll maxcpus=1 reset_devices ${kernelParams}" \
+                || echo "Failed to load crash kernel"
+              else
+                echo "Kexec/Kdump not supported by the running kernel."
+              fi
+            '';
+
           # Tell stage-1 not to bother trying to load the virtio modules since
           # we're using a custom kernel, the user has to take care of building
           # those in. We need mkForce because qemu-guest.nix doesn't respect
@@ -107,6 +140,10 @@ let
           # As an easy way to be able to run it from the kernel cmdline, just
           # encode ktests into a systemd service. You can then run it with
           # systemd.unit=ktests.service.
+          # Disable the standard kdump loading service if it exists, to prevent it from
+          # overwriting our custom load in postBootCommands.
+          systemd.services.kdump-load.enable = lib.mkForce false;
+
           systemd.services.kdump-save = {
             description = "Save kdump vmcore";
             script =
@@ -243,6 +280,7 @@ pkgs.writeShellApplication {
 
     KTESTS_ARGS=("--bail-on-failure" "*")
     KTESTS_OUTPUT_HOST=
+    KERNEL_EXCHANGE_HOST=
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:dq:s::o:bh \
@@ -314,8 +352,7 @@ pkgs.writeShellApplication {
       KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
     fi
     if [[ -z "$KERNEL_PATH" ]]; then
-      echo "Must set --kernel or --tree."
-      exit 1
+      KERNEL_PATH=${test-kernel}/bzImage
     fi
 
     # note the name of the KTESTS_OUTPUT_HOST variable is coupled with the
@@ -337,6 +374,26 @@ pkgs.writeShellApplication {
       trap 'rmdir $KERNEL_TREE' EXIT
     fi
 
+    # Prepare kernel exchange directory for kdump
+    KERNEL_EXCHANGE_HOST=$(mktemp -d)
+    # We want to keep this until exit. We can't easily chain traps so let's just
+    # rely on the fact that /tmp gets cleaned up eventually or rely on the VM
+    # not leaving too much mess. Actually, let's try to be clean.
+    # The previous trap for KERNEL_TREE might be overwritten.
+    # Let's clean up both.
+    cleanup() {
+        rm -rf "$KERNEL_EXCHANGE_HOST"
+        if [[ -d "$KERNEL_TREE" ]] && [[ -z "${1:-}" ]]; then
+           # Only remove KERNEL_TREE if we created it (indicated by empty arg passed here? No, complicated)
+           # Simpler: just ignore errors
+           rmdir "$KERNEL_TREE" 2>/dev/null || true
+        fi
+    }
+    trap cleanup EXIT
+
+    # Copy or symlink the kernel image to the exchange directory so the guest can access it for kexec
+    ln -sf "$KERNEL_PATH" "$KERNEL_EXCHANGE_HOST/bzImage"
+
     if "$KTESTS"; then
       CMDLINE="$CMDLINE systemd.unit=ktests.service systemd.setenv=KTESTS_ARGS=\"''${KTESTS_ARGS[*]}\""
     elif "$SHUTDOWN"; then
@@ -353,6 +410,7 @@ pkgs.writeShellApplication {
     export NIXPKGS_QEMU_KERNEL_${hostName}
     export KERNEL_TREE
     export KTESTS_OUTPUT_HOST
+    export KERNEL_EXCHANGE_HOST
     export QEMU_KERNEL_PARAMS="$CMDLINE"
     export QEMU_OPTS
 
