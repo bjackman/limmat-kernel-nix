@@ -383,7 +383,7 @@ pkgs.writeShellApplication {
     # Let's clean up both.
     cleanup() {
         rm -rf "$KERNEL_EXCHANGE_HOST"
-        if [[ -d "$KERNEL_TREE" ]] && [[ -z "${1:-}" ]]; then
+        if [[ -d "$KERNEL_TREE" ]] && [[ -z "''${1:-}" ]]; then
            # Only remove KERNEL_TREE if we created it (indicated by empty arg passed here? No, complicated)
            # Simpler: just ignore errors
            rmdir "$KERNEL_TREE" 2>/dev/null || true
