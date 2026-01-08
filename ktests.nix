@@ -166,6 +166,7 @@ let
         # This one goes into an infinite loop but only in GHA:
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/20803287757/job/59752430820#step:8:32
         mov_ss_trap_32 = [ "lk-broken" ];
+        mov_ss_trap_64 = [ "lk-broken" ];
       };
     };
   };
