@@ -120,7 +120,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 				}
 			}`,
 			testIdentifiers:  "foo.baz",
-			expectedOutput:   "Error: no tests match pattern: foo.baz\n",
+			expectedOutput:   "Error: no tests match pattern: foo.baz\nDid you mean 'foo.bar'?\n",
 			expectedExitCode: 127,
 		},
 		{

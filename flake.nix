@@ -69,7 +69,7 @@
             pname = "test-runner";
             version = "0.1.0";
             src = ./test-runner;
-            vendorHash = "sha256-uPqabZgQGQulf+F3BvMLhv4O0h5jOq12F7K60u5xjtA=";
+            vendorHash = "sha256-BCgQzMak7ebugES9UxNshpiH9VK+er5cxKS2aV6ogso=";
           };
           # Tool plus a config to run some kernel tests.
           ktests = pkgs.callPackage ./ktests.nix {
