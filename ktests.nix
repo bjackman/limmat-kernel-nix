@@ -163,6 +163,9 @@ let
       x86 = {
         # It prints SKIP but returns an error.
         test_shadow_stack_64.tags = [ "lk-broken" ];
+        # This one goes into an infinite loop but only in GHA:
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/20803287757/job/59752430820#step:8:32
+        mov_ss_trap_32 = [ "lk-broken" ];
       };
     };
   };
