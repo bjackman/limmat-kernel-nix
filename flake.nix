@@ -78,9 +78,14 @@
 
           lk-vm = pkgs.callPackage ./lk-vm.nix {
             nixosSystem = nixpkgs.lib.nixosSystem;
-            inherit ktests kselftests;
+            inherit ktests kselftests default-kernel;
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
+
+          default-kernel = pkgs.callPackage ./default-kernel.nix {
+            inherit lk-kconfig;
+            kernelSrc = kernel;
+          };
 
           # Because of the hackery involved in this system, where we use `nix
           # develop` from within the config, this can't be tested via a normal

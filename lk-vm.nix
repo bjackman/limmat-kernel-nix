@@ -12,6 +12,7 @@
   ktests,
   # For manual poking around, also put kselftests itself in the PATH.
   kselftests,
+  default-kernel,
 }:
 let
   hostName = "testvm";
@@ -196,6 +197,7 @@ pkgs.writeShellApplication {
     # virtualisation.sharedDirectories option in the NixOS config.
     KERNEL_TREE=
     KERNEL_PATH=
+    DEFAULT_KERNEL="${default-kernel}/bzImage"
     CMDLINE=
     QEMU_OPTS=
     KTESTS=false
@@ -272,6 +274,9 @@ pkgs.writeShellApplication {
 
     if [[ -z "$KERNEL_PATH" && -n "$KERNEL_TREE" ]]; then
       KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
+    fi
+    if [[ -z "$KERNEL_PATH" ]]; then
+      KERNEL_PATH="$DEFAULT_KERNEL"
     fi
     if [[ -z "$KERNEL_PATH" ]]; then
       echo "Must set --kernel or --tree."
