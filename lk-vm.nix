@@ -84,6 +84,20 @@ let
             "hugepagesz=1G"
             "hugepages=4"
           ];
+
+          boot.crashDump = {
+            enable = true;
+            reservedMemory = "256M";
+            # When the kernel crashes, it will reboot into the crash kernel (which is
+            # the same kernel). We want it to save the vmcore and then poweroff.
+            # We use maxcpus=1 because kdump kernels often have trouble with multiple CPUs.
+            kernelParams = [
+              "systemd.unit=kdump-save.service"
+              "maxcpus=1"
+              "reset_devices"
+            ];
+          };
+
           # Tell stage-1 not to bother trying to load the virtio modules since
           # we're using a custom kernel, the user has to take care of building
           # those in. We need mkForce because qemu-guest.nix doesn't respect
@@ -93,6 +107,32 @@ let
           # As an easy way to be able to run it from the kernel cmdline, just
           # encode ktests into a systemd service. You can then run it with
           # systemd.unit=ktests.service.
+          systemd.services.kdump-save = {
+            description = "Save kdump vmcore";
+            script =
+              let
+                ktestsOutputDir = virtualisation.vmVariant.virtualisation.sharedDirectories.ktests-output.target;
+              in
+              ''
+                if [ -e /proc/vmcore ]; then
+                  echo "Saving vmcore to ${ktestsOutputDir}/vmcore..."
+                  cp --sparse=always /proc/vmcore ${ktestsOutputDir}/vmcore
+                  echo "Done saving vmcore."
+                else
+                  echo "No /proc/vmcore found."
+                fi
+              '';
+            serviceConfig = {
+              Type = "oneshot";
+              StandardOutput = "tty";
+              StandardError = "tty";
+            };
+            # We need the shared directory to be mounted.
+            requires = [ "local-fs.target" ];
+            after = [ "local-fs.target" ];
+            onSuccess = [ "poweroff.target" ];
+          };
+
           systemd.services.ktests = {
             script =
               let
