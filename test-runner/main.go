@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"test-runner/junit"
@@ -89,9 +90,33 @@ func doMain() error {
 				return fmt.Errorf("usage: test-runner parse-kselftest-list <file>")
 			}
 			return parseKselftestList(os.Args[2])
+		case "list":
+			listCmd := flag.NewFlagSet("list", flag.ExitOnError)
+			var testConfigFile string
+			listCmd.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")
+			if err := listCmd.Parse(os.Args[2:]); err != nil {
+				return err
+			}
+			if testConfigFile == "" {
+				return fmt.Errorf("--test-config flag is required")
+			}
+			conf, err := test_conf.Parse(testConfigFile)
+			if err != nil {
+				return fmt.Errorf("parsing test config: %v", err)
+			}
+			var keys []string
+			for k := range conf.Tests {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, k := range keys {
+				fmt.Println(k)
+			}
+			return nil
 		case "help", "-h", "--help":
 			fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] [--bail-on-failure] [--log-dir <path>] [--junit-xml <path>] <test-id-glob>...")
 			fmt.Println("       test-runner parse-kselftest-list <file>")
+			fmt.Println("       test-runner list --test-config <file>")
 			return nil
 		}
 	}
@@ -150,7 +175,15 @@ func doMain() error {
 			}
 		}
 		if !matched {
-			return fmt.Errorf("no tests match pattern: %s", pattern)
+			errMsg := fmt.Sprintf("no tests match pattern: %s", pattern)
+			var keys []string
+			for k := range conf.Tests {
+				keys = append(keys, k)
+			}
+			if bestMatch, ok := findClosestTest(pattern, keys); ok {
+				errMsg += fmt.Sprintf("\nDid you mean '%s'?", bestMatch)
+			}
+			return fmt.Errorf(errMsg)
 		}
 	}
 
