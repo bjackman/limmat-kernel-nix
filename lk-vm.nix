@@ -205,6 +205,7 @@ pkgs.writeShellApplication {
     QEMU_OPTS=
     KTESTS=false
     SHUTDOWN=false
+    USE_GOLDEN=false
 
     KTESTS_ARGS=("--bail-on-failure" "*")
     KTESTS_OUTPUT_HOST=
