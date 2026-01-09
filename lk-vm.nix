@@ -47,9 +47,13 @@ let
                   source = "$KERNEL_TREE";
                   target = "/mnt/kernel";
                 };
-                ktests-output = {
-                  source = "$KTESTS_OUTPUT_HOST";
-                  target = "/mnt/ktests-output";
+                shared-output = {
+                  source = "$HOST_OUTPUT_DIR";
+                  target = "/mnt/shared-output";
+                };
+                exchange = {
+                  source = "$EXCHANGE_DIR";
+                  target = "/mnt/exchange";
                 };
               };
               # Attempt to ensure there's space left over in the rootfs (which
@@ -75,6 +79,7 @@ let
             # of Nix. KVM selftests shell out to addr2line on failure which is
             # quite handy.
             pkgs.binutils
+            pkgs.kexec-tools
           ];
           boot.kernelParams = [
             "nokaslr"
@@ -82,6 +87,7 @@ let
             # Suggested by the error message of mm hugetlb selftests:
             "hugepagesz=1G"
             "hugepages=4"
+            "crashkernel=256M"
           ];
           # I really don't know what the log levels are but this is the lowest
           # one that shows WARNs.
@@ -92,13 +98,51 @@ let
           # boot.inirtd.includeDefaultModules.
           boot.initrd.kernelModules = lib.mkForce [ ];
 
+          boot.crashDump.enable = true;
+
+          systemd.services.load-crash-kernel = {
+            wantedBy = [ "multi-user.target" ];
+            script = ''
+              if [[ -f /sys/kernel/kexec_crash_loaded && $(cat /sys/kernel/kexec_crash_loaded) != "1" ]]; then
+                 echo "Loading crash kernel..."
+                 ${pkgs.kexec-tools}/bin/kexec -p /mnt/exchange/bzImage \
+                   --initrd=/mnt/exchange/initrd \
+                   --append="$(cat /proc/cmdline) systemd.unit=save-vmcore.service"
+              else
+                 echo "Crash kernel already loaded or not supported."
+              fi
+            '';
+            serviceConfig = {
+              Type = "oneshot";
+              StandardOutput = "journal+console";
+            };
+          };
+
+          systemd.services.save-vmcore = {
+            unitConfig.RequiresMountsFor = "/mnt/shared-output";
+            script = ''
+              if [[ -f /proc/vmcore ]]; then
+                echo "Saving vmcore to /mnt/shared-output/vmcore..."
+                cp /proc/vmcore /mnt/shared-output/vmcore
+                echo "vmcore saved."
+              else
+                echo "No vmcore found."
+              fi
+              ${pkgs.systemd}/bin/poweroff -f
+            '';
+            serviceConfig = {
+              Type = "oneshot";
+              StandardOutput = "journal+console";
+            };
+          };
+
           # As an easy way to be able to run it from the kernel cmdline, just
           # encode ktests into a systemd service. You can then run it with
           # systemd.unit=ktests.service.
           systemd.services.ktests = {
             script =
               let
-                ktestsOutputDir = virtualisation.vmVariant.virtualisation.sharedDirectories.ktests-output.target;
+                ktestsOutputDir = virtualisation.vmVariant.virtualisation.sharedDirectories.shared-output.target;
               in
               ''
                 # Convert the KTESTS_ARGS to an array so it can be expanded
@@ -208,7 +252,7 @@ pkgs.writeShellApplication {
     USE_GOLDEN=false
 
     KTESTS_ARGS=("--bail-on-failure" "*")
-    KTESTS_OUTPUT_HOST=
+    HOST_OUTPUT_DIR=
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:dq:s::o:bhg \
@@ -254,7 +298,7 @@ pkgs.writeShellApplication {
               shift 2
               ;;
             -o|--ktests-output)
-              KTESTS_OUTPUT_HOST="$2"
+              HOST_OUTPUT_DIR="$2"
               shift 2
               ;;
             -b|--shutdown)
@@ -296,16 +340,16 @@ pkgs.writeShellApplication {
       exit 1
     fi
 
-    # note the name of the KTESTS_OUTPUT_HOST variable is coupled with the
+    # note the name of the HOST_OUTPUT_DIR variable is coupled with the
     # virtualisation.sharedDirectories option in the NixOS config.
-    if ! "$KTESTS" && [[ -n "$KTESTS_OUTPUT_HOST" ]]; then
+    if ! "$KTESTS" && [[ -n "$HOST_OUTPUT_DIR" ]]; then
       echo "--ktests-output requires --ktests"
       exit 1
     fi
     # This needs to be set even if we aren't using --ktests, otherwise QEMU's
     # 9pfs setup fails and QEMU falls over.
-    if [[ -z "$KTESTS_OUTPUT_HOST" ]]; then
-      KTESTS_OUTPUT_HOST=$(mktemp -d)
+    if [[ -z "$HOST_OUTPUT_DIR" ]]; then
+      HOST_OUTPUT_DIR=$(mktemp -d)
     fi
 
     # If --tree wasn't provided, create a dummy directory since the shared
@@ -314,6 +358,11 @@ pkgs.writeShellApplication {
       KERNEL_TREE=$(mktemp -d)
       trap 'rmdir $KERNEL_TREE' EXIT
     fi
+
+    EXCHANGE_DIR=$(mktemp -d)
+    trap 'rm -rf $EXCHANGE_DIR; rmdir $KERNEL_TREE 2>/dev/null || true' EXIT
+    ln -s "$KERNEL_PATH" "$EXCHANGE_DIR/bzImage"
+    ln -s "${nixosConfig.config.system.build.initialRamdisk}/initrd" "$EXCHANGE_DIR/initrd"
 
     if "$KTESTS"; then
       CMDLINE="$CMDLINE systemd.unit=ktests.service systemd.setenv=KTESTS_ARGS=\"''${KTESTS_ARGS[*]}\""
@@ -330,7 +379,8 @@ pkgs.writeShellApplication {
     KERNEL_TREE="$(realpath "$KERNEL_TREE")"
     export NIXPKGS_QEMU_KERNEL_${hostName}
     export KERNEL_TREE
-    export KTESTS_OUTPUT_HOST
+    export HOST_OUTPUT_DIR
+    export EXCHANGE_DIR
     export QEMU_KERNEL_PARAMS="$CMDLINE"
     export QEMU_OPTS
 
@@ -338,7 +388,7 @@ pkgs.writeShellApplication {
     ${nixosRunner}/bin/run-${hostName}-vm "$@"
     exit_code=$?
     if "$KTESTS"; then
-      echo "Ktests output: $KTESTS_OUTPUT_HOST"
+      echo "Ktests output: $HOST_OUTPUT_DIR"
     fi
     exit "$exit_code"
   '';

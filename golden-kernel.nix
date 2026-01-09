@@ -12,7 +12,7 @@ pkgs.stdenv.mkDerivation {
     cp -r $src/* .
     chmod -R u+w .
 
-    lk-kconfig --frags "base vm-boot kselftests debug"
+    lk-kconfig --frags "base vm-boot kselftests debug kdump"
     make -j$NIX_BUILD_CORES bzImage
   '';
   installPhase = ''
