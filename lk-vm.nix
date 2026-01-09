@@ -341,4 +341,5 @@ pkgs.writeShellApplication {
     fi
     exit "$exit_code"
   '';
+  passthru = { inherit nixosConfig; };
 }
