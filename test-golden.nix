@@ -21,7 +21,8 @@ let
     export GIT_AUTHOR_DATE="2000-01-01T00:00:00Z"
     export GIT_COMMITTER_DATE="2000-01-01T00:00:00Z"
 
-    ${pkgs.rsync}/bin/rsync -a --chmod=u+w ${kernelSrc}/* .
+    cp -r --reflink=auto ${kernelSrc}/. .
+    chmod -R u+w .
 
     git init
     git config user.email chung.flunch@example.com
@@ -70,8 +71,8 @@ pkgs.writeShellApplication {
     # we do this silly dance to set up a golden tree in a
     # reproducible way: we build it in the nix store then copy it into a
     # directory that we own here.
-    rsync -a --no-owner --chmod=u+w ${fakeKernelRepo} .
-    cd ./"$(basename ${fakeKernelRepo})"
+    cp -r --reflink=auto "${fakeKernelRepo}/." .
+    chmod -R u+w .
 
     # By default limmat logs to your home dir (dumb?).
     export LIMMAT_LOGFILE=$TMPDIR/limmat.log
