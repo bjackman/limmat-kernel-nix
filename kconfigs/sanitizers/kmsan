@@ -1,0 +1,2 @@
+# Clang only
+# CONFIG_KMSAN=y
