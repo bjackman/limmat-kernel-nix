@@ -79,12 +79,13 @@ let
           boot.kernelParams = [
             "nokaslr"
             "earlyprintk=serial"
-            "debug"
-            "loglevel=7"
             # Suggested by the error message of mm hugetlb selftests:
             "hugepagesz=1G"
             "hugepages=4"
           ];
+          # I really don't know what the log levels are but this is the lowest
+          # one that shows WARNs.
+          boot.consoleLogLevel = 5;
           # Tell stage-1 not to bother trying to load the virtio modules since
           # we're using a custom kernel, the user has to take care of building
           # those in. We need mkForce because qemu-guest.nix doesn't respect
