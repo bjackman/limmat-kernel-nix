@@ -1,6 +1,6 @@
 { pkgs, lk-kconfig, kernelSrc }:
 pkgs.stdenv.mkDerivation {
-  name = "default-kernel";
+  name = "golden-kernel";
   src = kernelSrc;
   nativeBuildInputs = with pkgs; [
     bison flex bc elfutils openssl

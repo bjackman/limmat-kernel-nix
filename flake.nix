@@ -78,11 +78,11 @@
 
           lk-vm = pkgs.callPackage ./lk-vm.nix {
             nixosSystem = nixpkgs.lib.nixosSystem;
-            inherit ktests kselftests default-kernel;
+            inherit ktests kselftests golden-kernel;
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
 
-          default-kernel = pkgs.callPackage ./default-kernel.nix {
+          golden-kernel = pkgs.callPackage ./golden-kernel.nix {
             inherit lk-kconfig;
             kernelSrc = kernel;
           };
