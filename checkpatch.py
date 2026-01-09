@@ -85,6 +85,7 @@ ignore = [
     "LOGGING_CONTINUATION",   # yeah yeah yeah
     "COMPLEX_MACRO",          # yeah yeah yeah
     "LONG_LINE",              # yeah yeah yeah
+    "NEW_TYPEDEFS",           # yeah yeah yeah
     "EXPORT_SYMBOL",          # noisy
     "EMBEDDED_FUNCTION_NAME", # noisy
     # Will let b4 prep --check identify this for me at the last minute. For now
