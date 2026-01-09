@@ -13,6 +13,7 @@ import (
 
 	"test-runner/junit"
 	"test-runner/runner"
+	"test-runner/search"
 	"test-runner/test_conf"
 )
 
@@ -180,7 +181,7 @@ func doMain() error {
 			for k := range conf.Tests {
 				keys = append(keys, k)
 			}
-			if bestMatch, ok := findClosestTest(pattern, keys); ok {
+			if bestMatch, ok := search.FindClosestTest(pattern, keys); ok {
 				errMsg += fmt.Sprintf("\nDid you mean '%s'?", bestMatch)
 			}
 			return fmt.Errorf(errMsg)
