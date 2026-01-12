@@ -105,9 +105,13 @@ let
             script = ''
               if [[ -f /sys/kernel/kexec_crash_loaded && $(cat /sys/kernel/kexec_crash_loaded) != "1" ]]; then
                  echo "Loading crash kernel..."
+                 # We must filter out systemd.run from the command line, otherwise the crash trigger
+                 # might run again in the crash kernel.
+                 # We also filter systemd.unit to ensure our new unit takes precedence.
+                 CMDLINE=$(cat /proc/cmdline | sed 's/systemd.run=[^ ]*//g' | sed 's/systemd.unit=[^ ]*//g')
                  ${pkgs.kexec-tools}/bin/kexec -p /mnt/exchange/bzImage \
                    --initrd=/mnt/exchange/initrd \
-                   --append="$(cat /proc/cmdline) systemd.unit=save-vmcore.service"
+                   --append="$CMDLINE systemd.unit=save-vmcore.service"
               else
                  echo "Crash kernel already loaded or not supported."
               fi
