@@ -98,6 +98,9 @@ let
           # boot.inirtd.includeDefaultModules.
           boot.initrd.kernelModules = lib.mkForce [ ];
 
+          # Disable available kernel modules to avoid building modules-shrunk
+          boot.initrd.availableKernelModules = lib.mkForce [ ];
+
           boot.crashDump.enable = true;
 
           systemd.services.load-crash-kernel = {
@@ -106,9 +109,9 @@ let
               if [[ -f /sys/kernel/kexec_crash_loaded && $(cat /sys/kernel/kexec_crash_loaded) != "1" ]]; then
                  echo "Loading crash kernel..."
                  # We must filter out systemd.run from the command line, otherwise the crash trigger
-                 # might run again in the crash kernel.
+                 # might run again in the crash kernel. We handle both quoted and unquoted variants.
                  # We also filter systemd.unit to ensure our new unit takes precedence.
-                 CMDLINE=$(cat /proc/cmdline | sed 's/systemd.run=[^ ]*//g' | sed 's/systemd.unit=[^ ]*//g')
+                 CMDLINE=$(cat /proc/cmdline | sed -r 's/systemd\.run="[^"]*"//g' | sed -r 's/systemd\.run=[^ ]*//g' | sed -r 's/systemd\.unit=[^ ]*//g')
                  ${pkgs.kexec-tools}/bin/kexec -p /mnt/exchange/bzImage \
                    --initrd=/mnt/exchange/initrd \
                    --append="$CMDLINE systemd.unit=save-vmcore.service"
