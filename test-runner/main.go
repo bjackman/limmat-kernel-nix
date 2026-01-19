@@ -31,7 +31,6 @@ func (s *stringSliceFlag) Set(value string) error {
 	return nil
 }
 
-// Global flag variables
 var (
 	testConfigFile string
 	skipTagsFlag   stringSliceFlag
@@ -43,12 +42,6 @@ var (
 
 func registerGlobalFlags(fs *flag.FlagSet) {
 	fs.StringVar(&testConfigFile, "test-config", testConfigFile, "Path to a JSON file with test definitions")
-	// For other flags, we don't strictly need to carry over the value as default if they are
-	// just accumulators or booleans that default to empty/false, unless we want to allow
-	// overriding them. But for simplicity and consistency, let's just register them.
-	// Note: stringSliceFlag (Var) doesn't take a default value in the same way,
-	// it accumulates. If we re-register the same variable, it will keep accumulating
-	// if we parse more flags. This is desired.
 	fs.Var(&skipTagsFlag, "skip-tag", "Skip tests with this tag (repeatable)")
 	fs.Var(&includeBadFlag, "include-bad", "Include tests with this bad tag (repeatable)")
 	fs.BoolVar(&bailOnFailure, "bail-on-failure", bailOnFailure, "Stop running tests after the first failure")
@@ -226,9 +219,7 @@ func doMain() error {
 	args := flag.Args()
 	if len(args) == 0 {
 		// No subcommand or test identifiers
-		fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] [--bail-on-failure] [--log-dir <path>] [--junit-xml <path>] [run] <test-id-glob>...")
-		fmt.Println("       test-runner parse-kselftest-list <file>")
-		fmt.Println("       test-runner list --test-config <file>")
+		flag.Usage()
 		return nil
 	}
 
@@ -270,9 +261,7 @@ func doMain() error {
 		}
 		return doRun(runCmd.Args())
 	case "help", "-h", "--help":
-		fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] [--bail-on-failure] [--log-dir <path>] [--junit-xml <path>] [run] <test-id-glob>...")
-		fmt.Println("       test-runner parse-kselftest-list <file>")
-		fmt.Println("       test-runner list --test-config <file>")
+		flag.Usage()
 		return nil
 	default:
 		// Implicit run command
