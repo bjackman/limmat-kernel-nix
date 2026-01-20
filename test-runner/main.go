@@ -218,9 +218,8 @@ func doMain() error {
 
 	args := flag.Args()
 	if len(args) == 0 {
-		// No subcommand or test identifiers
 		flag.Usage()
-		return nil
+		return fmt.Errorf("no args provided")
 	}
 
 	subcmd := args[0]
