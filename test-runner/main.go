@@ -31,6 +31,24 @@ func (s *stringSliceFlag) Set(value string) error {
 	return nil
 }
 
+var (
+	testConfigFile string
+	skipTagsFlag   stringSliceFlag
+	includeBadFlag stringSliceFlag
+	bailOnFailure  bool
+	logDir         string
+	junitXMLPath   string
+)
+
+func registerGlobalFlags(fs *flag.FlagSet) {
+	fs.StringVar(&testConfigFile, "test-config", testConfigFile, "Path to a JSON file with test definitions")
+	fs.Var(&skipTagsFlag, "skip-tag", "Skip tests with this tag (repeatable)")
+	fs.Var(&includeBadFlag, "include-bad", "Include tests with this bad tag (repeatable)")
+	fs.BoolVar(&bailOnFailure, "bail-on-failure", bailOnFailure, "Stop running tests after the first failure")
+	fs.StringVar(&logDir, "log-dir", logDir, "Path to a directory to store test logs")
+	fs.StringVar(&junitXMLPath, "junit-xml", junitXMLPath, "Path to write a JUnit XML report")
+}
+
 func parseKselftestList(filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -83,63 +101,11 @@ func parseKselftestList(filePath string) error {
 	return nil
 }
 
-func doMain() error {
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "parse-kselftest-list":
-			if len(os.Args) != 3 {
-				return fmt.Errorf("usage: test-runner parse-kselftest-list <file>")
-			}
-			return parseKselftestList(os.Args[2])
-		case "list":
-			listCmd := flag.NewFlagSet("list", flag.ExitOnError)
-			var testConfigFile string
-			listCmd.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")
-			if err := listCmd.Parse(os.Args[2:]); err != nil {
-				return err
-			}
-			if testConfigFile == "" {
-				return fmt.Errorf("--test-config flag is required")
-			}
-			conf, err := test_conf.Parse(testConfigFile)
-			if err != nil {
-				return fmt.Errorf("parsing test config: %v", err)
-			}
-			var keys []string
-			for k := range conf.Tests {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-			for _, k := range keys {
-				fmt.Println(k)
-			}
-			return nil
-		case "help", "-h", "--help":
-			fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] [--bail-on-failure] [--log-dir <path>] [--junit-xml <path>] <test-id-glob>...")
-			fmt.Println("       test-runner parse-kselftest-list <file>")
-			fmt.Println("       test-runner list --test-config <file>")
-			return nil
-		}
-	}
-	var testConfigFile string
-	var skipTagsFlag stringSliceFlag
-	var includeBadFlag stringSliceFlag
-	var bailOnFailure bool
-	var logDir string
-	var junitXMLPath string
-	flag.StringVar(&testConfigFile, "test-config", "", "Path to a JSON file with test definitions")
-	flag.Var(&skipTagsFlag, "skip-tag", "Skip tests with this tag (repeatable)")
-	flag.Var(&includeBadFlag, "include-bad", "Include tests with this bad tag (repeatable)")
-	flag.BoolVar(&bailOnFailure, "bail-on-failure", false, "Stop running tests after the first failure")
-	flag.StringVar(&logDir, "log-dir", "", "Path to a directory to store test logs")
-	flag.StringVar(&junitXMLPath, "junit-xml", "", "Path to write a JUnit XML report")
-	flag.Parse()
-
+func doRun(testIdentifiers []string) error {
 	if testConfigFile == "" {
 		return fmt.Errorf("--test-config flag is required")
 	}
 
-	testIdentifiers := flag.Args()
 	if len(testIdentifiers) == 0 {
 		return fmt.Errorf("at least one test identifier is required")
 	}
@@ -238,6 +204,70 @@ func doMain() error {
 		return fmt.Errorf("didn't run any tests")
 	}
 	return nil
+}
+
+func doMain() error {
+	registerGlobalFlags(flag.CommandLine)
+	flag.Usage = func() {
+		fmt.Println("usage: test-runner [--test-config <file>] [--skip-tag <tag>] [--bail-on-failure] [--log-dir <path>] [--junit-xml <path>] [run] <test-id-glob>...")
+		fmt.Println("       test-runner parse-kselftest-list <file>")
+		fmt.Println("       test-runner list --test-config <file>")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) == 0 {
+		// No subcommand or test identifiers
+		flag.Usage()
+		return nil
+	}
+
+	subcmd := args[0]
+	switch subcmd {
+	case "parse-kselftest-list":
+		// Expect exactly one more argument: file path
+		if len(args) != 2 {
+			return fmt.Errorf("usage: test-runner parse-kselftest-list <file>")
+		}
+		return parseKselftestList(args[1])
+	case "list":
+		listCmd := flag.NewFlagSet("list", flag.ExitOnError)
+		registerGlobalFlags(listCmd)
+		if err := listCmd.Parse(args[1:]); err != nil {
+			return err
+		}
+		if testConfigFile == "" {
+			return fmt.Errorf("--test-config flag is required")
+		}
+		conf, err := test_conf.Parse(testConfigFile)
+		if err != nil {
+			return fmt.Errorf("parsing test config: %v", err)
+		}
+		var keys []string
+		for k := range conf.Tests {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			fmt.Println(k)
+		}
+		return nil
+	case "run":
+		runCmd := flag.NewFlagSet("run", flag.ExitOnError)
+		registerGlobalFlags(runCmd)
+		if err := runCmd.Parse(args[1:]); err != nil {
+			return err
+		}
+		return doRun(runCmd.Args())
+	case "help", "-h", "--help":
+		flag.Usage()
+		return nil
+	default:
+		// Implicit run command
+		// All args are treated as test identifiers
+		return doRun(args)
+	}
 }
 
 func main() {
