@@ -176,7 +176,11 @@ func doRun(testIdentifiers []string) error {
 	droppedCount := 0
 	skippedCount := 0
 	for _, result := range runResults {
-		fmt.Printf("%-60s %s\n", result.TestID, result.Result)
+		if result.Result == runner.TestSkipped {
+			fmt.Printf("%-60s %s %s\n", result.TestID, result.Result, result.SkipReason)
+		} else {
+			fmt.Printf("%-60s %s\n", result.TestID, result.Result)
+		}
 
 		switch result.Result {
 		case runner.TestPassed:

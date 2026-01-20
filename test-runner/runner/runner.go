@@ -26,12 +26,13 @@ var (
 )
 
 type TestResult struct {
-	TestID    string
-	Result    TestStatus
-	StartTime time.Time
-	EndTime   time.Time
-	LogFile   string
-	Err       error // For execution errors, not test failures
+	TestID     string
+	Result     TestStatus
+	StartTime  time.Time
+	EndTime    time.Time
+	LogFile    string
+	Err        error // For execution errors, not test failures
+	SkipReason string
 }
 
 type RunOptions struct {
@@ -83,12 +84,13 @@ func RunTests(opts *RunOptions) ([]*TestResult, error) {
 			}
 			continue
 		}
-		if shouldSkipTest(test, opts.SkipTags, opts.IncludeBad, opts.BadTags) {
+		if skipped, skipTags := shouldSkipTest(test, opts.SkipTags, opts.IncludeBad, opts.BadTags); skipped {
 			runResults = append(runResults, &TestResult{
-				TestID:    testID,
-				Result:    TestSkipped,
-				StartTime: startTime,
-				EndTime:   time.Now(),
+				TestID:     testID,
+				Result:     TestSkipped,
+				StartTime:  startTime,
+				EndTime:    time.Now(),
+				SkipReason: fmt.Sprintf("[%s]", strings.Join(skipTags, ",")),
 			})
 			continue
 		}
@@ -161,32 +163,36 @@ func RunTests(opts *RunOptions) ([]*TestResult, error) {
 	return runResults, testErr
 }
 
-// shouldSkipTest checks if a test should be skipped based on its tags
-func shouldSkipTest(test test_conf.Test, skipTags, includeBad, badTags map[string]bool) bool {
-	isBad := false
+// shouldSkipTest checks if a test should be skipped based on its tags.
+// Returns true and the tags causing the skip if it should be skipped.
+func shouldSkipTest(test test_conf.Test, skipTags, includeBad, badTags map[string]bool) (bool, []string) {
+	var foundBadTags []string
 	for _, testTag := range test.Tags {
 		if badTags[testTag] {
-			isBad = true
-			break
+			foundBadTags = append(foundBadTags, testTag)
 		}
 	}
 
-	if isBad {
+	if len(foundBadTags) > 0 {
 		if len(includeBad) == 0 {
-			return true
+			return true, foundBadTags
 		}
 		for _, testTag := range test.Tags {
 			if includeBad[testTag] {
-				return false
+				return false, nil
 			}
 		}
-		return true
+		return true, foundBadTags
 	}
 
+	var foundSkipTags []string
 	for _, testTag := range test.Tags {
 		if skipTags[testTag] {
-			return true
+			foundSkipTags = append(foundSkipTags, testTag)
 		}
 	}
-	return false
+	if len(foundSkipTags) > 0 {
+		return true, foundSkipTags
+	}
+	return false, nil
 }

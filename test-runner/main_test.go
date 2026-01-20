@@ -261,7 +261,7 @@ Total: 2, Passed: 2, Failed: 0, Error: 0, Skipped: 0, Dropped: 0
 			expectedOutput: `world
 
 === Test Results Summary ===
-foo.bar                                                      SKIP 🫥
+foo.bar                                                      SKIP 🫥 [slow]
 foo.baz                                                      PASS ✔️
 
 Total: 2, Passed: 1, Failed: 0, Error: 0, Skipped: 1, Dropped: 0
@@ -293,8 +293,8 @@ Total: 2, Passed: 1, Failed: 0, Error: 0, Skipped: 1, Dropped: 0
 			expectedOutput: `test
 
 === Test Results Summary ===
-foo.bar                                                      SKIP 🫥
-foo.baz                                                      SKIP 🫥
+foo.bar                                                      SKIP 🫥 [slow]
+foo.baz                                                      SKIP 🫥 [flaky]
 foo.qux                                                      PASS ✔️
 
 Total: 3, Passed: 1, Failed: 0, Error: 0, Skipped: 2, Dropped: 0
@@ -346,7 +346,7 @@ Total: 2, Passed: 0, Failed: 1, Error: 0, Skipped: 0, Dropped: 1
 			expectedOutput: `world
 
 === Test Results Summary ===
-foo.bar                                                      SKIP 🫥
+foo.bar                                                      SKIP 🫥 [bad]
 foo.baz                                                      PASS ✔️
 
 Total: 2, Passed: 1, Failed: 0, Error: 0, Skipped: 1, Dropped: 0
