@@ -178,7 +178,7 @@ an output of the check derivation or something.
 - [x] Make kernel config biz more flexible
 - [x] Make kselftest running more flexible
 - [ ] Document shit
-- [ ] Properly support getting a bootable config starting from defconfig
+- [x] Properly support getting a bootable config starting from defconfig
 - [ ] Support running on other host architectures
 - [ ] Supoport running guests of other architectures
 - [ ] [Support running on
