@@ -192,135 +192,155 @@ in
         name = "qemu_throttle";
         count = 1;
       }
+      # Don't DoS the build service.
+      {
+        name = "kbs";
+        count = 8;
+      }
     ];
 
-    tests = [
-      # Ultra minimal - this shouldn't even enable 64bit
-      (
-        mkBuild {
-          name = "32";
-          configFrags = [ "base" ];
+    tests =
+      let
+        mkGbuild = name: args: {
+          inherit name;
+          requires_worktree = false;
+          resources = [ "kbs" ];
+          command = ''gbuild2 --need_local_outputs=false --remote --commit="$LIMMAT_COMMIT" ${args}'';
+        };
+      in
+      [
+        # Ultra minimal - this shouldn't even enable 64bit
+        (
+          mkBuild {
+            name = "32";
+            configFrags = [ "base" ];
+          }
+          // {
+            depends_on = [ "ksft" ]; # Hack to deprioritise
+          }
+        )
+        # Minimal kernel for running kselftests in a NixOS VM
+        (mkBuild {
+          name = "ksft";
+          configFrags = [
+            "base"
+            "compile"
+            "vm-boot"
+            "kselftests"
+            "debug"
+          ];
+        })
+        (mkBuild {
+          name = "asi";
+          ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
+          configFrags = [
+            "base"
+            "compile"
+            "vm-boot"
+            "kselftests"
+            "debug"
+            "asi"
+          ];
+        })
+        (mkGbuild "gb" "")
+        (mkGbuild "gb_arm" "ARCH=arm64")
+        (mkGbuild "gb_dbg" "CONFIG=dbg")
+        {
+          name = "ksft";
+          cache = "by_tree";
+          depends_on = [ "build_ksft" ]; # Defined by a mkBuild call with name = "ksft"
+          resources = [ "qemu_throttle" ];
+          requires_worktree = false;
+          # With ASI compiled out, not much point in running too many tests,
+          # just run the mm ones since that's the stuff the ASI patchs are most
+          # likely to break.
+          command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_ksft" "*" ""'';
         }
-        // {
-          depends_on = [ "ksft" ]; # Hack to deprioritise
-        }
-      )
-      # Minimal kernel for running kselftests in a NixOS VM
-      (mkBuild {
-        name = "ksft";
-        configFrags = [
-          "base"
-          "compile"
-          "vm-boot"
-          "kselftests"
-          "debug"
-        ];
-      })
-      (mkBuild {
-        name = "asi";
-        ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
-        configFrags = [
-          "base"
-          "compile"
-          "vm-boot"
-          "kselftests"
-          "debug"
-          "asi"
-        ];
-      })
-      {
-        name = "ksft";
-        cache = "by_tree";
-        depends_on = [ "build_ksft" ]; # Defined by a mkBuild call with name = "ksft"
-        resources = [ "qemu_throttle" ];
-        requires_worktree = false;
-        # With ASI compiled out, not much point in running too many tests,
-        # just run the mm ones since that's the stuff the ASI patchs are most
-        # likely to break.
-        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_ksft" "*" ""'';
-      }
-      {
-        name = "kunit_x86";
-        cache = "by_tree";
-        resources = [ "qemu_throttle" ];
-        command = mkTestScript {
+        {
           name = "kunit_x86";
-          text = ''
-            set -eux
+          cache = "by_tree";
+          resources = [ "qemu_throttle" ];
+          command = mkTestScript {
+            name = "kunit_x86";
+            text = ''
+              set -eux
 
-            make mrproper
-            rm -rf .kunit/  # Clear leftover .kunitconfig
-            tools/testing/kunit/kunit.py run --arch=x86_64
-          '';
-        };
-      }
-      {
-        name = "ksft_asi_off";
-        cache = "by_tree";
-        depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
-        resources = [ "qemu_throttle" ];
-        requires_worktree = false;
-        # Just want to check boot really, pick some arbitrary test that's quick
-        # and reliable.
-        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "*" "asi=off"'';
-      }
-      {
-        name = "ksft_asi";
-        cache = "by_tree";
-        depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
-        resources = [ "qemu_throttle" ];
-        requires_worktree = false;
-        command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "*" "asi=on"'';
-      }
-      {
-        name = "kunit_asi";
-        cache = "by_tree";
-        resources = [ "qemu_throttle" ];
-        command = mkTestScript {
+              make mrproper
+              rm -rf .kunit/  # Clear leftover .kunitconfig
+              tools/testing/kunit/kunit.py run --arch=x86_64
+            '';
+          };
+        }
+        {
+          name = "ksft_asi_off";
+          cache = "by_tree";
+          depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
+          resources = [ "qemu_throttle" ];
+          requires_worktree = false;
+          # Just want to check boot really, pick some arbitrary test that's quick
+          # and reliable.
+          command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "*" "asi=off"'';
+          run_by_default = false;
+        }
+        {
+          name = "ksft_asi";
+          cache = "by_tree";
+          depends_on = [ "build_asi" ]; # Defined by a mkBuild call with name = "asi"
+          resources = [ "qemu_throttle" ];
+          requires_worktree = false;
+          command = ''${run-ktests}/bin/run-ktests "$LIMMAT_ARTIFACTS_build_asi" "*" "asi=on"'';
+          run_by_default = false;
+        }
+        {
           name = "kunit_asi";
-          text = ''
-            set -eux
+          cache = "by_tree";
+          resources = [ "qemu_throttle" ];
+          run_by_default = false;
+          command = mkTestScript {
+            name = "kunit_asi";
+            text = ''
+              set -eux
 
-            for kunitconfig in arch/x86/mm/.kunitconfig arch/x86/.kunitconfig; do
-              if [[ -e "$kunitconfig" ]]; then
-                make mrproper
-                tools/testing/kunit/kunit.py run --arch=x86_64 \
-                  --kunitconfig "$kunitconfig" --kernel_args asi=on
-                grep ADDRESS_SPACE_ISOLATION .kunit/.config
+              for kunitconfig in arch/x86/mm/.kunitconfig arch/x86/.kunitconfig; do
+                if [[ -e "$kunitconfig" ]]; then
+                  make mrproper
+                  tools/testing/kunit/kunit.py run --arch=x86_64 \
+                    --kunitconfig "$kunitconfig" --kernel_args asi=on
+                  grep ADDRESS_SPACE_ISOLATION .kunit/.config
+                fi
+              done
+            '';
+          };
+        }
+        {
+          name = "checkpatch";
+          # HACK: See comments on LIMMAT_NOTES_OBJECT in checkpatch.py.
+          cache = "no_caching";
+          command = mkTestScript {
+            name = "checkpatch";
+            text = "python ${./checkpatch.py}";
+          };
+        }
+        {
+          name = "todo";
+          requires_worktree = false;
+          command = mkTestScript {
+            name = "checkpatch";
+            text = ''
+              set -ux +e
+
+              git show "$LIMMAT_COMMIT" | grep TODO
+              status=$?
+              if [[ "$status" == 1 ]]; then
+                exit 0  # no matches
+              elif [[ "$status" == 0 ]]; then
+                exit 1  # matches
               fi
-            done
-          '';
-        };
-      }
-      {
-        name = "checkpatch";
-        # HACK: See comments on LIMMAT_NOTES_OBJECT in checkpatch.py.
-        cache = "no_caching";
-        command = mkTestScript {
-          name = "checkpatch";
-          text = "python ${./checkpatch.py}";
-        };
-      }
-      {
-        name = "todo";
-        requires_worktree = false;
-        command = mkTestScript {
-          name = "checkpatch";
-          text = ''
-            set -ux +e
-
-            git show "$LIMMAT_COMMIT" | grep TODO
-            status=$?
-            if [[ "$status" == 1 ]]; then
-              exit 0  # no matches
-            elif [[ "$status" == 0 ]]; then
-              exit 1  # matches
-            fi
-            # error
-          '';
-        };
-      }
-    ];
+              # error
+            '';
+          };
+        }
+      ];
   };
   inherit runtimeInputs;
 }
