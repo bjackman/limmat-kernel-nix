@@ -1,9 +1,17 @@
-{ pkgs, lk-kconfig, kernelSrc }:
+{
+  pkgs,
+  lk-kconfig,
+  kernelSrc,
+}:
 pkgs.stdenv.mkDerivation {
   name = "golden-kernel";
   src = kernelSrc;
   nativeBuildInputs = with pkgs; [
-    bison flex bc elfutils openssl
+    bison
+    flex
+    bc
+    elfutils
+    openssl
     lk-kconfig
   ];
   buildPhase = ''
