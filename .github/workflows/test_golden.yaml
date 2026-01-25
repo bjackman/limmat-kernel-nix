@@ -12,8 +12,11 @@ jobs:
     - uses: DeterminateSystems/magic-nix-cache-action@main
       with:
         use-flakehub: false
+    # Build first because Github's shitty UI doesn't handle the size of the Nix
+    # build log very well.
+    - run: nix build .#test-golden
     - run: mkdir /tmp/limmat-db
-    - run: nix run .#test-golden -- /tmp/limmat-db
+    - run: ./result/bin/limmat-kernel-test-golden /tmp/limmat-db
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
