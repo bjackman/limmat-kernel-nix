@@ -54,7 +54,7 @@
             nativeBuildInputs = [ pkgs.makeWrapper ];
 
             installPhase = ''
-              makeWrapper ${limmat}/bin/limmat $out/bin/limmat-kernel \
+              makeWrapper ${limmat}/bin/limmat-wrapped $out/bin/limmat-kernel \
                 --set LIMMAT_CONFIG ${limmatTOML}
             '';
           };
