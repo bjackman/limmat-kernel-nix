@@ -206,6 +206,7 @@ in
           requires_worktree = false;
           resources = [ "kbs" ];
           command = ''gbuild2 --need_local_outputs=false --remote --commit="$LIMMAT_COMMIT" ${args}'';
+          run_by_default = false;
         };
       in
       [
