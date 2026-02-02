@@ -46,7 +46,12 @@ pkgs.writeShellApplication {
     limmat-kernel
   ];
   passthru = { inherit fakeKernelRepo; };
-  text = ''
+  text =
+    let
+      enabledTests = (builtins.filter (t: t.run_by_default or true) limmatConfig.config.tests);
+      testNames = map (t: t.name) enabledTests;
+      testsStr = lib.strings.concatStringsSep " " testNames;
+    in ''
     # For the benefit of Github, takes an optional single argument that tells it
     # where to put the limmat DB. This is a hack to allow exporting JUnit XML
     # data to the UI.
@@ -80,7 +85,7 @@ pkgs.writeShellApplication {
     # Disable warning if loop always has exactly one iteration.
     declare -a failed=()
     # shellcheck disable=SC2043
-    for test in ${lib.strings.concatStringsSep " " (map (t: t.name) limmatConfig.config.tests)}; do
+    for test in ${testsStr}; do
       limmat-kernel --result-db "$LIMMAT_DB_PATH" test "$test" || failed+=("$test")
     done
     if [ ''${#failed[@]} -ne 0 ]; then
