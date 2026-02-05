@@ -1,0 +1,8 @@
+# Note this is pretty useless coz the lk-vm configuration doesn't have
+# networking setup. But checking it anyway in case I wanna finish this job later.
+# But, probably instead it's better to figure out SSH-over-vsock.
+CONFIG_NET=y
+CONFIG_NETDEVICES=y
+CONFIG_NET_CORE=y
+CONFIG_VIRTIO_NET=y
+CONFIG_NET_INET=y
