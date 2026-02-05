@@ -236,7 +236,7 @@ pkgs.writeShellApplication {
               CMDLINE="$CMDLINE nowatchdog rcupdate.rcu_cpu_stall_suppress=1 tsc=nowatchdog"
               shift
               ;;
-            -q|--qemu-opts)
+            -q|--qemu-args)
               QEMU_OPTS="$QEMU_OPTS $2"
               shift 2
               ;;
