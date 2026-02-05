@@ -12,7 +12,6 @@
   ktests,
   # For manual poking around, also put kselftests itself in the PATH.
   kselftests,
-  golden-kernel,
 }:
 let
   hostName = "testvm";
@@ -171,8 +170,6 @@ pkgs.writeShellApplication {
       -t, --tree TREE      Optional path to a kernel tree.
       -k, --kernel PATH    Specify the path to the kernel image. If you set
                            --tree, defaults to the x86 bzImage in that treee.
-      -g, --golden         Use the pre-packaged "golden" kernel. Mutually
-                           exclusive with --tree and --kernel.
       -c, --cmdline ARGS   Args to append to kernel cmdline. Single string.
       -q, --qemu-args ARGS Args to append to QEMU cmdline. Single string.
                            e.g. for a Skylake VM: "-cpu Skylake-Server,+vmx"
@@ -197,19 +194,17 @@ pkgs.writeShellApplication {
     # virtualisation.sharedDirectories option in the NixOS config.
     KERNEL_TREE=
     KERNEL_PATH=
-    GOLDEN_KERNEL="${golden-kernel}/bzImage"
     CMDLINE=
     QEMU_OPTS=
     KTESTS=false
     SHUTDOWN=false
-    USE_GOLDEN=false
 
     KTESTS_ARGS=("--bail-on-failure" "*")
     KTESTS_OUTPUT_HOST=
 
     PARSED_ARGUMENTS=$(
-      getopt -o t:k:c:dq:s::o:bhg \
-        --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help,golden -- "$@")
+      getopt -o t:k:c:dq:s::o:bh \
+        --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -258,12 +253,8 @@ pkgs.writeShellApplication {
               SHUTDOWN=true
               shift
               ;;
-            -g|--golden)
-              USE_GOLDEN=true
-              shift
-              ;;
             -h|--help)
-              usage
+              usag/tmp/limmat-output-RolnKxe
               exit 0
               ;;
             --)
@@ -280,16 +271,8 @@ pkgs.writeShellApplication {
     if [[ -z "$KERNEL_PATH" && -n "$KERNEL_TREE" ]]; then
       KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
     fi
-    if "$USE_GOLDEN"; then
-      if [[ -n "$KERNEL_PATH" || -n "$KERNEL_TREE" ]]; then
-        echo "Error: --golden is mutually exclusive with --tree and --kernel."
-        exit 1
-      fi
-      KERNEL_PATH="$GOLDEN_KERNEL"
-    fi
-
     if [[ -z "$KERNEL_PATH" ]]; then
-      echo "Must set --kernel or --tree or --golden."
+      echo "Must set --kernel or --tree."
       exit 1
     fi
 
