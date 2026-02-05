@@ -174,8 +174,9 @@ pkgs.writeShellApplication {
       -q, --qemu-args ARGS Args to append to QEMU cmdline. Single string.
                            e.g. for a Skylake VM: "-cpu Skylake-Server,+vmx"
       -d, --debug          Enable GDB stub in QEMU. Connect with "target
-                           remote localhost:1234" in GDB. Shorthand for
-                           including "-s -S" in --qemu-args.
+                           remote localhost:1234" in GDB. Also disable watchdogs
+                           and softlockup detectors. This is basically just
+                           shorthand for certain --qemu-args and --cmdline args.
       -s, --ktests [ARGS]  Run a tests then shutdown. QEMU exit code reflects
                            test result. Optional arg is shell-expanded into
                            arguments for the ktests tool.
@@ -230,6 +231,9 @@ pkgs.writeShellApplication {
               ;;
             -d|--debug)
               QEMU_OPTS="$QEMU_OPTS -s -S"
+              # Don't want any watchdogs or softlockup detectors since they will
+              # fire when we set breakpoints.
+              CMDLINE="$CMDLINE nowatchdog rcupdate.rcu_cpu_stall_suppress=1 tsc=nowatchdog"
               shift
               ;;
             -q|--qemu-opts)
