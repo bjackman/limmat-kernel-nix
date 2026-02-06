@@ -160,6 +160,8 @@ let
           };
           users.users.root.initialHashedPassword = "";
           security.pam.services.sshd.allowNullPassword = true;
+
+          nix.settings.require-sigs = false;
         }
       ];
   };
