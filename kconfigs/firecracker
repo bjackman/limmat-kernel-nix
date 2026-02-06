@@ -4,6 +4,7 @@ CONFIG_KVM=y
 CONFIG_KVM_INTEL=y
 CONFIG_KVM_AMD=y
 CONFIG_KVM_IOAPIC=y
+CONFIG_KVM_XEN=y
 
 # Workaround ifdeffery error in
 # https://github.com/firecracker-microvm/firecracker/blob/feature/secret-hiding/resources/hiding_ci/linux_patches/25-gmem-uffd/0011-mm-provide-can_userfault-vma-operation.patch
