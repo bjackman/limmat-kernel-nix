@@ -30,12 +30,14 @@ let
           virtualisation.vmVariant = {
             virtualisation = {
               graphics = false;
-              # This BIOS doesn't mess up the terminal and is apparently faster.
               qemu.options = [
+                # This BIOS doesn't mess up the terminal and is apparently faster.
                 "-bios"
                 "qboot.rom"
                 "-device"
                 "isa-debug-exit,iobase=${qemuExitPortHex},iosize=0x04"
+                "-device"
+                "vhost-vsock-pci,guest-cid=3"
               ];
               # Tell the VM runner script that it should mount a directory on the
               # host, named in the environment variable, to /mnt/kernel. That
@@ -148,6 +150,16 @@ let
           # device mapper but I guess disabling it might save some time
           # somewhere.
           services.lvm.enable = false;
+
+          services.openssh = {
+            enable = true;
+            settings = {
+              PermitEmptyPasswords = "yes";
+              PermitRootLogin = "yes";
+            };
+          };
+          users.users.root.initialHashedPassword = "";
+          security.pam.services.sshd.allowNullPassword = true;
         }
       ];
   };

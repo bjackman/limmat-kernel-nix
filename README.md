@@ -70,6 +70,12 @@ make kvm_guest.config
 scripts/config -e OVERLAY_FS -e ZRAM -e ZSWAP
 ```
 
+#### SSH into it
+
+Assuming you have
+[`systemd-ssh-proxy`](https://www.freedesktop.org/software/systemd/man/latest/systemd-ssh-proxy.html)
+you should be able to SSH from the host to the guest with `ssh root@vsock/3`.
+
 #### Run kselftests
 
 ##### Pre-packaged kselftests
