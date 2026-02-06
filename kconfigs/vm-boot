@@ -103,3 +103,11 @@ CONFIG_ZRAM_BACKEND_ZSTD=y
 CONFIG_SWAP=y
 CONFIG_ZSWAP=y
 CONFIG_ZSWAP_DEFAULT_ON=y
+
+# These are not really required to boot but they are pretty cheap to enable so
+# just put them in here anyway instead of needing a separate fragment to support
+# vsock SSH.
+CONFIG_VSOCKETS=y
+CONFIG_VIRTIO_VSOCKETS=y
+# Not actually sure if this one is needed at all
+CONFIG_VHOST_VSOCK=y
