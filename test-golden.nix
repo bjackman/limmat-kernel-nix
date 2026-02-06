@@ -51,46 +51,47 @@ pkgs.writeShellApplication {
       enabledTests = (builtins.filter (t: t.run_by_default or true) limmatConfig.config.tests);
       testNames = map (t: t.name) enabledTests;
       testsStr = lib.strings.concatStringsSep " " testNames;
-    in ''
-    # For the benefit of Github, takes an optional single argument that tells it
-    # where to put the limmat DB. This is a hack to allow exporting JUnit XML
-    # data to the UI.
-    LIMMAT_DB_PATH="$1"
+    in
+    ''
+      # For the benefit of Github, takes an optional single argument that tells it
+      # where to put the limmat DB. This is a hack to allow exporting JUnit XML
+      # data to the UI.
+      LIMMAT_DB_PATH="$1"
 
-    set -eux -o pipefail
+      set -eux -o pipefail
 
-    TMPDIR="$(mktemp -d)"
-    if [[ -z "$LIMMAT_DB_PATH" ]]; then
-      LIMMAT_DB_PATH="$TMPDIR"/limmat-db
-    fi
+      TMPDIR="$(mktemp -d)"
+      if [[ -z "$LIMMAT_DB_PATH" ]]; then
+        LIMMAT_DB_PATH="$TMPDIR"/limmat-db
+      fi
 
-    # Note this evaluates $PWD now so this will change back to the current
-    # directory
-    # shellcheck disable=SC2064
-    trap "cd $PWD && rm -rf $TMPDIR" EXIT
-    cd "$TMPDIR"
+      # Note this evaluates $PWD now so this will change back to the current
+      # directory
+      # shellcheck disable=SC2064
+      trap "cd $PWD && rm -rf $TMPDIR" EXIT
+      cd "$TMPDIR"
 
-    # If we just have a Nix derivation that produces a kernel
-    # repository then Limmat will fall over because the .git dir
-    # has what Git describes as "dubious permissions". So instead
-    # we do this silly dance to set up a golden tree in a
-    # reproducible way: we build it in the nix store then copy it into a
-    # directory that we own here.
-    cp -r --reflink=auto "${fakeKernelRepo}/." .
-    chmod -R u+w .
+      # If we just have a Nix derivation that produces a kernel
+      # repository then Limmat will fall over because the .git dir
+      # has what Git describes as "dubious permissions". So instead
+      # we do this silly dance to set up a golden tree in a
+      # reproducible way: we build it in the nix store then copy it into a
+      # directory that we own here.
+      cp -r --reflink=auto "${fakeKernelRepo}/." .
+      chmod -R u+w .
 
-    # By default limmat logs to your home dir (dumb?).
-    export LIMMAT_LOGFILE=$TMPDIR/limmat.log
+      # By default limmat logs to your home dir (dumb?).
+      export LIMMAT_LOGFILE=$TMPDIR/limmat.log
 
-    # Disable warning if loop always has exactly one iteration.
-    declare -a failed=()
-    # shellcheck disable=SC2043
-    for test in ${testsStr}; do
-      limmat-kernel --result-db "$LIMMAT_DB_PATH" test "$test" || failed+=("$test")
-    done
-    if [ ''${#failed[@]} -ne 0 ]; then
-      echo "Failed tests:" "''${failed[@]}"
-      exit 1
-    fi
-  '';
+      # Disable warning if loop always has exactly one iteration.
+      declare -a failed=()
+      # shellcheck disable=SC2043
+      for test in ${testsStr}; do
+        limmat-kernel --result-db "$LIMMAT_DB_PATH" test "$test" || failed+=("$test")
+      done
+      if [ ''${#failed[@]} -ne 0 ]; then
+        echo "Failed tests:" "''${failed[@]}"
+        exit 1
+      fi
+    '';
 }
