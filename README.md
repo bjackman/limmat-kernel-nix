@@ -70,6 +70,15 @@ make kvm_guest.config
 scripts/config -e OVERLAY_FS -e ZRAM -e ZSWAP
 ```
 
+#### ... with the pre-packaged golden kernel
+
+This is the kernel that is tested in CI and which the kselftests source code is
+built from. This is handy if you don't have a kernel tree ready to go.
+
+```sh
+nix run .#lk-vm -- --kernel $(nix build .#golden-kernel --no-link --print-out-paths)/bzImage
+```
+
 #### SSH into it
 
 Assuming you have
