@@ -79,7 +79,7 @@
           };
           # Tool plus a config to run some kernel tests.
           ktests = pkgs.callPackage ./ktests.nix {
-            inherit kselftests test-runner;
+            inherit kselftests test-runner guest-memfd-test;
           };
 
           lk-vm = pkgs.callPackage ./lk-vm.nix {
