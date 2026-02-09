@@ -36,8 +36,6 @@ let
                 "qboot.rom"
                 "-device"
                 "isa-debug-exit,iobase=${qemuExitPortHex},iosize=0x04"
-                "-device"
-                "vhost-vsock-pci,guest-cid=3"
               ];
               # Tell the VM runner script that it should mount a directory on the
               # host, named in the environment variable, to /mnt/kernel. That
@@ -197,8 +195,12 @@ pkgs.writeShellApplication {
                            Note that this is parsed by GNU getopt, you can't
                            parse the arg like "-s foo" it needs to be "-sfoo"
                            or "--ktests=foo".
-      -p, --ktests-output PATH  Directory to dump ktests output into (junit.xml, 
+      -p, --ktests-output PATH  Directory to dump ktests output into (junit.xml,
                                 log files). Requires --ktests.
+      --vsock-cid          CID to assign for the guest for vsock connection.
+                           Default is 3 - this is a global resource so if you're
+                           running multiple instances at once you'll get errors.
+                           Disable this by setting -1.
       -b, --shutdown       Just boot and then immediately shut down again.
       -h, --help           Display this help message and exit.
 
@@ -213,13 +215,14 @@ pkgs.writeShellApplication {
     QEMU_OPTS=
     KTESTS=false
     SHUTDOWN=false
+    VSOCK_CID=3
 
     KTESTS_ARGS=("--bail-on-failure" "*")
     KTESTS_OUTPUT_HOST=
 
     PARSED_ARGUMENTS=$(
       getopt -o t:k:c:dq:s::o:bh \
-        --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help -- "$@")
+        --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help,vsock-cid: -- "$@")
 
     # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
@@ -271,6 +274,10 @@ pkgs.writeShellApplication {
               SHUTDOWN=true
               shift
               ;;
+            --vsock-cid)
+              VSOCK_CID="$2"
+              shift 2
+              ;;
             -h|--help)
               usag/tmp/limmat-output-RolnKxe
               exit 0
@@ -321,6 +328,10 @@ pkgs.writeShellApplication {
       # automatically make that the boot target.
       run_cmdline='"/run/current-system/sw/bin/bash -c true"'
       CMDLINE="$CMDLINE systemd.unit=kernel-command-line.service systemd.run=$run_cmdline"
+    fi
+
+    if [[ "$VSOCK_CID" != -1 ]]; then
+      QEMU_OPTS="$QEMU_OPTS -device vhost-vsock-pci,guest-cid=$VSOCK_CID"
     fi
 
     # This NixOS VM script only works with absolute paths.
