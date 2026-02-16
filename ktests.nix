@@ -19,31 +19,6 @@ let
     command = [ "${drv}/bin/${drv.pname or drv.name}" ];
   };
 
-  # Helper function to create a vmtest for a specific test type
-  mkVmtest =
-    testType:
-    mkTest (writeShellApplication {
-      name = "vmtests-${testType}";
-      runtimeInputs = [
-        kselftests
-      ]
-      ++ (with pkgs; [
-        # run_vmtests.sh deps:
-        bash
-        gawk
-        # General stuff for all the scripts (too hard to track all
-        # dependencies)
-        killall
-        mount
-        umount
-        procps
-      ]);
-      text = ''
-        cd ${kselftests}/bin/mm
-        ./run_vmtests.sh -t ${testType}
-      '';
-    });
-
   testConfig = {
     bad_tags = [
       # Doesn't work in the vm provided by lk-vm (with the kconfig provided by
@@ -55,59 +30,31 @@ let
       # I've seen it fail and I didn't think it was my fault.
       "flaky"
     ];
-    # run_vmtests.sh is the wrapper script for the mm selftests. You can run the
-    # whole thing via kselftests' crappy test runner but lots of the tests are
-    # broken/flaky so you really only wanna run a subset. To do that via
-    # kselftest you have to set KSELFTEST_RUN_VMTESTS_SH_ARGS but then you can't
-    # set the -t arg to a string containing spaces. Easiest thing to do here is
-    # just split it up into separate tests and always run a single sub-suite.
-    # This is kinda wasteful because it means we run the setup/teardown more
-    # often than necessary.
-    # Note this is an incomplete list of the tests.
-    vmtests = {
-      mmap = mkVmtest "mmap";
-      # TODO: This fails because mkstemp()/unlink() run into a read-only
-      # filesystem.
-      gup_test = (mkVmtest "gup_test") // {
-        tags = [ "lk-broken" ];
-      };
-      compaction = mkVmtest "compaction";
-      # TODO: This needs CONFIG_TEST_VMALLOC=m in the kernel.
-      vmalloc = mkVmtest "vmalloc" // {
-        tags = [ "lk-broken" ];
-      };
-      cow = mkVmtest "cow";
-      migration = mkVmtest "migration";
-      # TODO: This fails because of "You need to compile page_frag_test module"
-      # There seems to be a foible of run_vmtests.sh where it returns an error
-      # when all tests are skipped.
-      page_frag = mkVmtest "page_frag" // {
-        tags = [ "lk-broken" ];
-      };
-      thp = mkVmtest "thp" // {
-        # TODO: There is a bug in split_huge_page_test, the ksft_set_plan() call
-        # is broken under my configuratoin leading to:
-        # Planned tests != run tests (62 != 10)
-        tags = [ "lk-broken" ];
-      };
-      hugetlb = mkVmtest "hugetlb" // {
-        # Broken during 6.18 merge window
-        # https://lore.kernel.org/all/20250926033255.10930-1-kartikey406@gmail.com/T/#u
-        tags = [
-          "slow"
-          "lk-broken"
-        ];
-      };
-    };
     # parse-kselftest-list will generate the actual list of kselftests, but also
     # here we add tags and stuff for the ones we know about. This gets merged into
     # the overal config below.
     # Note that the ksefltests package doesn't build all the tests (see
     # TARGETS=).
     kselftests = {
-      # Replaced by the explicit vmtests configuration above.
       # Note this is also affected by the bug with .sh being in the name.
-      mm.run_vmtests_sh.tags = [ "lk-broken" ];
+      mm = {
+        # TODO: This fails because mkstemp()/unlink() run into a read-only
+        # filesystem.
+        ksft_gup_test_sh.tags = [ "lk-broken" ];
+        # TODO: There is a bug in split_huge_page_test, the ksft_set_plan() call
+        # is broken under my configuratoin leading to:
+        # Planned tests != run tests (62 != 10)
+        ksft_thp_sh.tags = [ "lk-broken" ];
+        # TODO: This needs CONFIG_TEST_VMALLOC=m in the kernel.
+        ksft_vmalloc_sh.tags = [ "lk-broken" ];
+        # Not sure what's wrong with these ones:
+        ksft_hmm_sh.tags = [ "lk-broken" ];
+        ksft_hugetlb_sh.tags = [ "lk-broken" ];
+        ksft_hugevm_sh.tags = [ "lk-broken" ];
+        ksft_madv_guard_sh.tags = [ "lk-broken" ];
+        ksft_mremap_sh.tags = [ "lk-broken" ];
+        ksft_vma_merge_sh.tags = [ "lk-broken" ];
+      };
       kvm = {
         dirty_log_test.tags = [ "slow" ]; # It's not THAT slow
         set_memory_region_test.tags = [ "slow" ]; # It's not THAT slow

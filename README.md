@@ -98,9 +98,6 @@ booting the VM.
 ktests kselftests.*
 # Run a specific KVM selftest:
 ktests kselftests.kvm.amx_test
-# The mm selftests ("vmtests") also have special packaging to work around the
-# janky kernel scripts:
-ktests vmtests.mmap
 ```
 
 The raw `run_kselftest.sh` is also in your path, in case you want to run that
