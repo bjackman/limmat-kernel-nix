@@ -127,19 +127,11 @@ let
           # having annoying errors in the logs.
           networking = {
             dhcpcd.enable = false;
-            useDHCP = false;
             firewall.enable = false;
             useNetworkd = false;
             networkmanager.enable = false;
-            resolvconf.enable = false;
           };
           services.resolved.enable = false;
-
-          boot.initrd = {
-            services.udev.packages = lib.mkForce [];
-            checkJournalingFS = false;
-            verbose = true;
-          };
 
           # Not sure what this is but it seems irrelevant to this usecase.
           # Disabling it avoids some log spam and also seems to shave a couple
