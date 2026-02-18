@@ -14,8 +14,8 @@ pkgs.stdenv.mkDerivation {
     openssl
     lk-kconfig
   ];
+  patchPhase = "patchShebangs scripts";
   buildPhase = ''
-    patchShebangs scripts
     # We need to copy source to a writable dir because src is read-only
     cp -r $src/* .
     chmod -R u+w .
