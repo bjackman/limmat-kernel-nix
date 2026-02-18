@@ -28,6 +28,7 @@
           pkgs.callPackage ./limmat-config.nix {
             lk-vm = self.packages."${system}".lk-vm;
             lk-kconfig = self.packages."${system}".lk-kconfig;
+            inherit inputs;
           }
         );
         format = pkgs.formats.toml { };
