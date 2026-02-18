@@ -60,12 +60,6 @@
           };
           default = limmat-kernel;
 
-          # AI slop binary to exercise some kernel code I'm working on.
-          # This could be checked into the master branch but only once the UAPI
-          # it uses is upstream (currently hardcoded in the C file) and I've
-          # actually reviewed it.
-          guest-memfd-test = pkgs.callPackage ./guest-memfd-test { };
-
           # Version of kselftests built from the nixpkgs kernel.
           kselftests = pkgs.callPackage ./kselftests.nix {
             kernelSrc = kernel;
@@ -79,7 +73,7 @@
           };
           # Tool plus a config to run some kernel tests.
           ktests = pkgs.callPackage ./ktests.nix {
-            inherit kselftests test-runner guest-memfd-test;
+            inherit kselftests test-runner;
           };
 
           lk-vm = pkgs.callPackage ./lk-vm.nix {

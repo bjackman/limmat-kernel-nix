@@ -10,7 +10,6 @@
   # Dependency packages
   kselftests,
   test-runner,
-  guest-memfd-test,
 }:
 let
   # Helper function to create a test definition from a derivation
@@ -117,7 +116,6 @@ let
         mov_ss_trap_64 = [ "lk-broken" ];
       };
     };
-    guest_memfd_test = mkTest guest-memfd-test;
   };
 
   # Convert the tests config to JSON and store in nix store
