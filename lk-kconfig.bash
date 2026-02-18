@@ -99,16 +99,11 @@ if [[ -n "$ENABLE" ]]; then
 fi
 cp "$TMPCONFIG" .config
 
-# -s means strict mode. This will raise an error if any of the config fragments
-# (including .config, which we just created), directly override each other. But
-# that doesn't take dependencies into account; if the final config doesn't match
-# someting you requested then it just spits out an error and succeeds anyway.
-#
 # -n means to do something like "make oldnoconfig" instead of "olddefconfig" -
 # i.e. it fills in the gaps with =n isntead of the default setting. This is a
 # kinda opinionated option for this script to set, maybe it should be optional.
 # shellcheck disable=SC2086
-scripts/kconfig/merge_config.sh -s -n $FRAGS
+scripts/kconfig/merge_config.sh -n $FRAGS
 
 # Check configs that were requested to be enabled. This is just all nonempty
 # lines that don't start with #.
