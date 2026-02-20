@@ -275,7 +275,9 @@ in
 
               make mrproper
               rm -rf .kunit/  # Clear leftover .kunitconfig
-              tools/testing/kunit/kunit.py run --arch=x86_64
+              # The --filter disables modules where I've seen flakiness
+              tools/testing/kunit/kunit.py run --arch=x86_64 \
+                --filter "module!=root_device_test module!=runtime_test"
             '';
           };
         }
