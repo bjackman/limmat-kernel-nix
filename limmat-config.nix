@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  pkgsCross,
 
   # Required args
   lk-vm,
@@ -8,13 +9,6 @@
   inputs,
 }:
 let
-  # TODO: Hm, cross-compilation appears to require building GCC.
-  # https://discourse.nixos.org/t/are-cross-compilers-cached/75444
-  includeAarch64 = false;
-  pkgsAarch64 = import inputs.nixpkgs {
-    localSystem = pkgs.system;
-    crossSystem = "aarch64-linux";
-  };
   # For simplicity, all the scripts just have a common set of runtimeInputs.
   # This will also be exported in order to expose that stuff to the devShell.
   # Note that these runtimeInputs are special, not like the normal
@@ -45,7 +39,7 @@ let
       perl
       git
       codespell
-    ]) ++ lib.optional includeAarch64 pkgsAarch64.gcc;
+    ]) ++ [ pkgsCross.aarch64-multiplatform.gcc ];
   # Helper to generate a script with the runtimeInputs in its environment.
   # Outputs the full path of the script itself, not the overall derivation.
   #
