@@ -74,6 +74,8 @@ let
             # of Nix. KVM selftests shell out to addr2line on failure which is
             # quite handy.
             pkgs.binutils
+            pkgs.bpftrace
+            pkgs.perf
           ];
           boot.kernelParams = [
             "nokaslr"
