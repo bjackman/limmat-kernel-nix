@@ -81,6 +81,7 @@ let
         tsc_msrs_test.tags = [ "flaky" ];
         vmx_tsc_adjust_test.tags = [ "flaky" ];
         nested_tsc_adjust_test.tags = [ "flaky" ];
+        tsc_scaling_sync.tags = [ "flaky" ];
         # Based on prodkernel experience I think this is actually also flaky, I
         # have never waited for it to finish upstream (note it does nothing when
         # only one CPU though).
