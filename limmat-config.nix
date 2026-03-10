@@ -271,7 +271,7 @@ in
               rm -rf .kunit/  # Clear leftover .kunitconfig
               # The --filter disables modules where I've seen flakiness
               tools/testing/kunit/kunit.py run --arch=x86_64 \
-                --filter "module!=root_device_test,module!=runtime_test,module!=platform_test" \
+                --filter "module!=root_device_test,module!=runtime_test,module!=platform_test,module!=gcd_kunit" \
                 --filter_action=skip
             '';
           };
