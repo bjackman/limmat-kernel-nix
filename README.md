@@ -45,7 +45,7 @@ command such as your preferred shell.
 Generate a kconfig that has the necessary features to boot in the VM:
 
 ```
-lk-kconfig "base vm-boot"
+lk-kconfig "x86 base vm-boot"
 ```
 
 Now build your kernel (e.g. `make -sj100 bzImage`).
@@ -168,6 +168,16 @@ Now in another devShell you can attach GDB using something like:
 ```sh
 gdb .kunit/vmlinux -ex "target remote localhost:1234"
 ```
+
+#### For 32bit (x86)
+
+Configure using `ARCH=i386 lk-vm --frags "i386 base vm-boot` and build the
+bzImage while also setting `ARCH=i386`. Then use `nix run <this repo>#lk-vm.i686
+-- <args>` to run `lk-vm` in 32-bit mode.
+
+NixOS doesn't cache 32-bit builds so this will require building a bunch of stuff
+(annoyingly also including the NixOS linux kernel, which you won't even use),
+hence this isn't included in the `devShell`.
 
 ## Developing this repo
 
