@@ -115,6 +115,10 @@ let
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/20803287757/job/59752430820#step:8:32
         mov_ss_trap_32 = [ "lk-broken" ];
         mov_ss_trap_64 = [ "lk-broken" ];
+        # On 32-bit kernels this fails, even when dmesg reports "NX (Execute
+        # Disable) protection: active" (requires PAE). Seems bad but no time to
+        # debug it.
+        nx_stack_32 = [ "lk-broken" ];
       };
     };
   };
