@@ -6,10 +6,18 @@
   lib,
   multiStdenv,
   fetchpatch,
+  stdenv,
 
   # Explicit args.
   kernelSrc,
 }:
+let
+  # On 32-bit most stuff doesn't compile. On x86_64 I can build this subset of
+  # kselftests. Assume that that will work on other systems too, although they
+  # probably don't really.
+  # TODO build the rest too
+  kselftestsTargets = if stdenv.hostPlatform.system == "i686-linux" then "x86" else "kvm mm x86";
+in
 multiStdenv.mkDerivation {
   name = "kselftests";
   src = kernelSrc;
@@ -43,7 +51,7 @@ multiStdenv.mkDerivation {
     make -j$NIX_BUILD_CORES headers
     # Need to set this in shell code, there's no way to pass flags with spaces
     # otherwise lmao i don fuken no m8 wo'eva
-    makeFlagsArray+=("TARGETS=mm kvm x86") # TODO build the rest too
+    makeFlagsArray+=("TARGETS=${kselftestsTargets}")
     # HACK: -I../ works around
     # https://lore.kernel.org/all/DFHI984SEFV3.2JL88CLHNT2SO@google.com/
     makeFlagsArray+=("EXTRA_CFLAGS=-Wno-error=unused-result -fomit-frame-pointer -I../")
