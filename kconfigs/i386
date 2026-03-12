@@ -1,3 +1,6 @@
 CONFIG_X86_32=y
 CONFIG_COMPAT_32BIT_TIME=y
 CONFIG_HIGHMEM4G=y
+# Realistically we almost certainly want to test with PAE since that gates some
+# pretty basic stuff.
+CONFIG_X86_PAE=y
