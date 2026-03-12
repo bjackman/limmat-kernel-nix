@@ -137,6 +137,16 @@ Basically: pass `--override-input kernel path/to/kernel/tree` to whatever `nix`
 command builds your kselftests. This might be `nix develop` if you don't need to
 iterate on the tests themselves.
 
+#### Boot a 32bit VM (x86)
+
+Configure using `ARCH=i386 lk-vm --frags "i386 base vm-boot` and build the
+bzImage while also setting `ARCH=i386`. Then use `nix run <this repo>#lk-vm.i686
+-- <args>` to run `lk-vm` in 32-bit mode.
+
+NixOS doesn't cache 32-bit builds so this will require building a bunch of stuff
+(annoyingly also including the NixOS linux kernel, which you won't even use),
+hence this isn't included in the `devShell`.
+
 ### Run KUnit tests
 
 The devShell should have everything set up to run KUnit tests. To run under
@@ -168,17 +178,6 @@ Now in another devShell you can attach GDB using something like:
 ```sh
 gdb .kunit/vmlinux -ex "target remote localhost:1234"
 ```
-
-#### For 32bit (x86)
-
-Configure using `ARCH=i386 lk-vm --frags "i386 base vm-boot` and build the
-bzImage while also setting `ARCH=i386`. Then use `nix run <this repo>#lk-vm.i686
--- <args>` to run `lk-vm` in 32-bit mode.
-
-NixOS doesn't cache 32-bit builds so this will require building a bunch of stuff
-(annoyingly also including the NixOS linux kernel, which you won't even use),
-hence this isn't included in the `devShell`.
-
 ## Developing this repo
 
 Mostly because of me not knowing Nix properly when I wrote it, the integration
