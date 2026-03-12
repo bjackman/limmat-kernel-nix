@@ -19,7 +19,13 @@
       kernel,
       ...
     }:
-    flake-utils.lib.eachDefaultSystem (
+    let
+      systems = with flake-utils.lib.system; [
+        x86_64-linux
+        i686-linux
+      ];
+    in
+    flake-utils.lib.eachSystem systems (
       system:
       let
         pkgs = import nixpkgs { inherit system; };

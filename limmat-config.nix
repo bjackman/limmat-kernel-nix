@@ -231,6 +231,7 @@ in
         (mkBuild {
           name = "ksft";
           configFrags = [
+            "x86"
             "base"
             "compile"
             "vm-boot"
@@ -242,6 +243,7 @@ in
           name = "asi";
           ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
           configFrags = [
+            "x86"
             "base"
             "compile"
             "vm-boot"
