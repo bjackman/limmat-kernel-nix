@@ -4,18 +4,11 @@
 {
   pkgs,
   lib,
-  # This is the function that you would use in a flake to define a NixOS
-  # configuration. It is not actually a part of nixpkgs itself but one of the
-  # nixpkgs flakes' `lib` outputs so it needs to be passed here explicitly.
-  nixosSystem,
-  # ktests package to install in the guest.
-  ktests,
-  # For manual poking around, also put kselftests itself in the PATH.
-  kselftests,
+  self,
 }:
 let
   hostName = "testvm";
-  nixosConfig = nixosSystem {
+  nixosConfig = self.inputs.nixpkgs.lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     modules =
       let
@@ -31,6 +24,7 @@ let
             ktestsOutputDir = "/mnt/ktests-output";
           in
           {
+            nixpkgs.overlays = [ self.overlays.guest ];
             networking.hostName = hostName;
             virtualisation.vmVariant = {
               virtualisation = {
@@ -70,17 +64,17 @@ let
             };
             system.stateVersion = "25.05";
             services.getty.autologinUser = "root";
-            environment.systemPackages = [
+            environment.systemPackages = with pkgs; [
               ktests
               kselftests
               # Hack until we have SSH-vsock support or something
-              pkgs.tmux
+              tmux
               # Hack to make it easier to run kselftests that were built outside
               # of Nix. KVM selftests shell out to addr2line on failure which is
               # quite handy.
-              pkgs.binutils
-              pkgs.bpftrace
-              pkgs.perf
+              binutils
+              bpftrace
+              perf
             ];
             boot.kernelParams = [
               "nokaslr"
@@ -108,7 +102,7 @@ let
                 IFS=' ' read -r -a args <<< "$KTESTS_ARGS"
                 # Writing the value v to the isa-debug-exit port will cause QEMU to
                 # immediately exit with the exit code `v << 1 | 1`.
-                ${ktests}/bin/ktests \
+                ${pkgs.ktests}/bin/ktests \
                   --junit-xml ${ktestsOutputDir}/junit.xml --log-dir ${ktestsOutputDir} \
                   "''${args[@]}" \
                   || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))

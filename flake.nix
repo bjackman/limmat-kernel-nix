@@ -25,10 +25,12 @@
         i686-linux
       ];
     in
-    flake-utils.lib.eachSystem systems (
+    (flake-utils.lib.eachSystem systems (
       system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+        };
         limmat = inputs.limmat.packages."${system}".default;
         limmatConfig = (
           pkgs.callPackage ./limmat-config.nix {
@@ -84,8 +86,7 @@
           };
 
           lk-vm = pkgs.callPackage ./lk-vm.nix {
-            nixosSystem = nixpkgs.lib.nixosSystem;
-            inherit ktests kselftests;
+            inherit self;
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
 
@@ -143,5 +144,11 @@
           MY_ENV = "foo";
         };
       }
-    );
+    ))
+    // {
+      # Packages intended for use in the lk-vm guest.
+      overlays.guest = final: prev: {
+        inherit (self.packages.${prev.stdenv.hostPlatform.system}) ktests kselftests test-runner;
+      };
+    };
 }
