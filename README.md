@@ -147,6 +147,11 @@ NixOS doesn't cache 32-bit builds so this will require building a bunch of stuff
 (annoyingly also including the NixOS linux kernel, which you won't even use),
 hence this isn't included in the `devShell`.
 
+If you are attaching GDB to this VM you'll need to first do `set architecture
+i386:x86-64` before the `target remote localhost:1234` will work. However this
+seems to be unstable, I've been able to set breakpoints and step through the
+execution but I can't read memory.
+
 ### Run KUnit tests
 
 The devShell should have everything set up to run KUnit tests. To run under
