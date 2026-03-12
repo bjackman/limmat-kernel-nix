@@ -87,7 +87,7 @@ pkgs.writeShellApplication {
       declare -a failed=()
       # shellcheck disable=SC2043
       for test in ${testsStr}; do
-        limmat-kernel --result-db "$LIMMAT_DB_PATH" test "$test" || failed+=("$test")
+        limmat-kernel --result-db "$LIMMAT_DB_PATH" test "$test" --worktree-dir /var/tmp/limmat || failed+=("$test")
       done
       if [ ''${#failed[@]} -ne 0 ]; then
         echo "Failed tests:" "''${failed[@]}"
