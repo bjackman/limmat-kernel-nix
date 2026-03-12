@@ -83,6 +83,8 @@ pkgs.writeShellApplication {
       # By default limmat logs to your home dir (dumb?).
       export LIMMAT_LOGFILE=$TMPDIR/limmat.log
 
+      mkdir -p /var/tmp/limmat
+
       # Disable warning if loop always has exactly one iteration.
       declare -a failed=()
       # shellcheck disable=SC2043
