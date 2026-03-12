@@ -1,5 +1,5 @@
 AVAIL_FRAGS=$(find "$LK_KCONFIG_FRAGMENTS_DIR/" -type f -printf '%P ')
-FRAG_NAMES="base vm-boot"
+FRAG_NAMES="base vm-boot ${ARCH:-x86}"
 
 usage() {
     cat <<EOF
@@ -16,7 +16,8 @@ Options:
                          Available fragments are: $AVAIL_FRAGS
                          You can view their contents in $LK_KCONFIG_FRAGMENTS_DIR
                          You can pass a directory like kselftests to enable all
-                         fragments in that directory.
+                         fragments in that directory. This automatically
+                         includes the value of \$ARCH, defaulting to x86_64.
                          Default: $FRAG_NAMES
     -e, --enable CONFIG  Space-separated list of extra configs to enable.
                          You can omit the CONFIG_ prefix.

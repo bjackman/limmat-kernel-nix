@@ -21,9 +21,8 @@ let
   # writeShellApplication runtimeInputs: as well as stuff being in $PATH, stuff
   # like CFLAGS is also set up via the stdenv, so that you can use C libraries
   # here too.
-  runtimeInputs = (
-    with pkgs;
-    [
+  runtimeInputs =
+    (with pkgs; [
       # Kernel build deps
       gnumake
       gcc
@@ -45,7 +44,8 @@ let
       perl
       git
       codespell
-    ]) ++ lib.optional includeAarch64 pkgsAarch64.gcc;
+    ])
+    ++ lib.optional includeAarch64 pkgsAarch64.gcc;
   # Helper to generate a script with the runtimeInputs in its environment.
   # Outputs the full path of the script itself, not the overall derivation.
   #

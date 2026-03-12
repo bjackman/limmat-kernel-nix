@@ -11,7 +11,6 @@
 #  - Cgroup controllers (the cgroups framework itself is present, otherwise
 #    NixOS's systemd falls over)
 #  - namespaces
-CONFIG_64BIT=y
 CONFIG_ACPI=y
 CONFIG_ADVISE_SYSCALLS=y
 CONFIG_AIO=y
@@ -84,7 +83,6 @@ CONFIG_VIRTIO=y
 CONFIG_VIRTIO_BLK=y
 CONFIG_VIRTIO_CONSOLE=y
 CONFIG_VIRTIO_PCI=y
-CONFIG_X86_64=y
 CONFIG_X86_IO_APIC=y
 CONFIG_X86_LOCAL_APIC=y
 # Without this, NixOS's autologin doesn't work (Might be that user login is
