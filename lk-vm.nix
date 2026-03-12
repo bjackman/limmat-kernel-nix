@@ -25,83 +25,84 @@ let
         qemuExitPortHex = "0xf4";
       in
       [
-        rec {
-          networking.hostName = hostName;
-          virtualisation.vmVariant = {
-            virtualisation = {
-              graphics = false;
-              qemu.options = [
-                # This BIOS doesn't mess up the terminal and is apparently faster.
-                "-bios"
-                "qboot.rom"
-                "-device"
-                "isa-debug-exit,iobase=${qemuExitPortHex},iosize=0x04"
-              ];
-              # Tell the VM runner script that it should mount a directory on the
-              # host, named in the environment variable, to /mnt/kernel. That
-              # variable must point to a directory. This is coupled with the script
-              # content below.
-              sharedDirectories = {
-                kernel-tree = {
-                  source = "$KERNEL_TREE";
-                  target = "/mnt/kernel";
+        (
+          { pkgs, config, ... }:
+          let
+            ktestsOutputDir = "/mnt/ktests-output";
+          in
+          {
+            networking.hostName = hostName;
+            virtualisation.vmVariant = {
+              virtualisation = {
+                graphics = false;
+                qemu.options = [
+                  # This BIOS doesn't mess up the terminal and is apparently faster.
+                  "-bios"
+                  "qboot.rom"
+                  "-device"
+                  "isa-debug-exit,iobase=${qemuExitPortHex},iosize=0x04"
+                ];
+                # Tell the VM runner script that it should mount a directory on the
+                # host, named in the environment variable, to /mnt/kernel. That
+                # variable must point to a directory. This is coupled with the script
+                # content below.
+                sharedDirectories = {
+                  kernel-tree = {
+                    source = "$KERNEL_TREE";
+                    target = "/mnt/kernel";
+                  };
+                  ktests-output = {
+                    source = "$KTESTS_OUTPUT_HOST";
+                    target = ktestsOutputDir;
+                  };
                 };
-                ktests-output = {
-                  source = "$KTESTS_OUTPUT_HOST";
-                  target = "/mnt/ktests-output";
-                };
+                # Attempt to ensure there's space left over in the rootfs (which
+                # may be where /tmp is).
+                diskSize = 2 * 1024; # Megabytes
+                # This seems to speed up boot a bit, and also I'm finding some KVM
+                # selftests hang the VM on a uniprocessor system.
+                cores = 8;
               };
-              # Attempt to ensure there's space left over in the rootfs (which
-              # may be where /tmp is).
-              diskSize = 2 * 1024; # Megabytes
-              # This seems to speed up boot a bit, and also I'm finding some KVM
-              # selftests hang the VM on a uniprocessor system.
-              cores = 8;
+
+              # mm selftests are hard-coded to put stuff in /tmp which has very
+              # little space on a NixOS VM, unless it's a tmpfs.
+              boot.tmp.useTmpfs = true;
             };
+            system.stateVersion = "25.05";
+            services.getty.autologinUser = "root";
+            environment.systemPackages = [
+              ktests
+              kselftests
+              # Hack until we have SSH-vsock support or something
+              pkgs.tmux
+              # Hack to make it easier to run kselftests that were built outside
+              # of Nix. KVM selftests shell out to addr2line on failure which is
+              # quite handy.
+              pkgs.binutils
+              pkgs.bpftrace
+              pkgs.perf
+            ];
+            boot.kernelParams = [
+              "nokaslr"
+              "earlyprintk=serial"
+              # Suggested by the error message of mm hugetlb selftests:
+              "hugepagesz=1G"
+              "hugepages=4"
+            ];
+            # I really don't know what the log levels are but this is the lowest
+            # one that shows WARNs.
+            boot.consoleLogLevel = 5;
+            # Tell stage-1 not to bother trying to load the virtio modules since
+            # we're using a custom kernel, the user has to take care of building
+            # those in. We need mkForce because qemu-guest.nix doesn't respect
+            # boot.inirtd.includeDefaultModules.
+            boot.initrd.kernelModules = lib.mkForce [ ];
 
-            # mm selftests are hard-coded to put stuff in /tmp which has very
-            # little space on a NixOS VM, unless it's a tmpfs.
-            boot.tmp.useTmpfs = true;
-          };
-          system.stateVersion = "25.05";
-          services.getty.autologinUser = "root";
-          environment.systemPackages = [
-            ktests
-            kselftests
-            # Hack until we have SSH-vsock support or something
-            pkgs.tmux
-            # Hack to make it easier to run kselftests that were built outside
-            # of Nix. KVM selftests shell out to addr2line on failure which is
-            # quite handy.
-            pkgs.binutils
-            pkgs.bpftrace
-            pkgs.perf
-          ];
-          boot.kernelParams = [
-            "nokaslr"
-            "earlyprintk=serial"
-            # Suggested by the error message of mm hugetlb selftests:
-            "hugepagesz=1G"
-            "hugepages=4"
-          ];
-          # I really don't know what the log levels are but this is the lowest
-          # one that shows WARNs.
-          boot.consoleLogLevel = 5;
-          # Tell stage-1 not to bother trying to load the virtio modules since
-          # we're using a custom kernel, the user has to take care of building
-          # those in. We need mkForce because qemu-guest.nix doesn't respect
-          # boot.inirtd.includeDefaultModules.
-          boot.initrd.kernelModules = lib.mkForce [ ];
-
-          # As an easy way to be able to run it from the kernel cmdline, just
-          # encode ktests into a systemd service. You can then run it with
-          # systemd.unit=ktests.service.
-          systemd.services.ktests = {
-            script =
-              let
-                ktestsOutputDir = virtualisation.vmVariant.virtualisation.sharedDirectories.ktests-output.target;
-              in
-              ''
+            # As an easy way to be able to run it from the kernel cmdline, just
+            # encode ktests into a systemd service. You can then run it with
+            # systemd.unit=ktests.service.
+            systemd.services.ktests = {
+              script = ''
                 # Convert the KTESTS_ARGS to an array so it can be expanded
                 # without glob expansion.
                 IFS=' ' read -r -a args <<< "$KTESTS_ARGS"
@@ -112,57 +113,58 @@ let
                   "''${args[@]}" \
                   || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))
               '';
-            serviceConfig = {
-              Type = "oneshot";
-              StandardOutput = "tty";
-              StandardError = "tty";
+              serviceConfig = {
+                Type = "oneshot";
+                StandardOutput = "tty";
+                StandardError = "tty";
+              };
+              onSuccess = [ "poweroff.target" ];
             };
-            onSuccess = [ "poweroff.target" ];
-          };
 
-          # Some mmtests fail if the system doesn't have swap. I don't wanna
-          # configure proper swap but let's try zswap.
-          zramSwap.enable = true;
+            # Some mmtests fail if the system doesn't have swap. I don't wanna
+            # configure proper swap but let's try zswap.
+            zramSwap.enable = true;
 
-          # Disable all networking stuff. The goal here was to speed up boot, it
-          # doesn't seem to have a measurable effect but at least it avoids
-          # having annoying errors in the logs.
-          networking = {
-            dhcpcd.enable = false;
-            firewall.enable = false;
-            useNetworkd = false;
-            networkmanager.enable = false;
-          };
-          services.resolved.enable = false;
-
-          # Not sure what this is but it seems irrelevant to this usecase.
-          # Disabling it avoids some log spam and also seems to shave a couple
-          # of hundred milliseconds off boot. BUT it breaks interactive login so
-          # leave it enabled.
-          security.enableWrappers = true;
-
-          # Don't bother storing logs to disk, that seems like it will just
-          # occasionally lead to unnecessary slowdowns for log rotation and
-          # stuff.
-          services.journald.storage = "volatile";
-
-          # Turns out this doesn't stop the initrd from faffing around with the
-          # device mapper but I guess disabling it might save some time
-          # somewhere.
-          services.lvm.enable = false;
-
-          services.openssh = {
-            enable = true;
-            settings = {
-              PermitEmptyPasswords = "yes";
-              PermitRootLogin = "yes";
+            # Disable all networking stuff. The goal here was to speed up boot, it
+            # doesn't seem to have a measurable effect but at least it avoids
+            # having annoying errors in the logs.
+            networking = {
+              dhcpcd.enable = false;
+              firewall.enable = false;
+              useNetworkd = false;
+              networkmanager.enable = false;
             };
-          };
-          users.users.root.initialHashedPassword = "";
-          security.pam.services.sshd.allowNullPassword = true;
+            services.resolved.enable = false;
 
-          nix.settings.require-sigs = false;
-        }
+            # Not sure what this is but it seems irrelevant to this usecase.
+            # Disabling it avoids some log spam and also seems to shave a couple
+            # of hundred milliseconds off boot. BUT it breaks interactive login so
+            # leave it enabled.
+            security.enableWrappers = true;
+
+            # Don't bother storing logs to disk, that seems like it will just
+            # occasionally lead to unnecessary slowdowns for log rotation and
+            # stuff.
+            services.journald.storage = "volatile";
+
+            # Turns out this doesn't stop the initrd from faffing around with the
+            # device mapper but I guess disabling it might save some time
+            # somewhere.
+            services.lvm.enable = false;
+
+            services.openssh = {
+              enable = true;
+              settings = {
+                PermitEmptyPasswords = "yes";
+                PermitRootLogin = "yes";
+              };
+            };
+            users.users.root.initialHashedPassword = "";
+            security.pam.services.sshd.allowNullPassword = true;
+
+            nix.settings.require-sigs = false;
+          }
+        )
       ];
   };
   # This is the "official" entry point for running NixOS as a QEMU guest, we'll
