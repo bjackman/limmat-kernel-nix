@@ -31,7 +31,7 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        limmat = inputs.limmat.packages."${system}".default;
+        limmat = inputs.limmat.packages."${system}".limmat-wrapped;
         limmatConfig = (
           pkgs.callPackage ./limmat-config.nix {
             lk-vm = self.packages."${system}".lk-vm;
@@ -63,7 +63,7 @@
             nativeBuildInputs = [ pkgs.makeWrapper ];
 
             installPhase = ''
-              makeWrapper ${limmat}/bin/limmat-wrapped $out/bin/limmat-kernel \
+              makeWrapper ${limmat}/bin/limmat $out/bin/limmat-kernel \
                 --set LIMMAT_CONFIG ${limmatTOML}
             '';
           };
