@@ -335,7 +335,7 @@ let
                   shift 2
                   ;;
                 -h|--help)
-                  usag/tmp/limmat-output-RolnKxe
+                  usage
                   exit 0
                   ;;
                 --)
