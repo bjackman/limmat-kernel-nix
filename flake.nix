@@ -141,7 +141,8 @@
             ])
             ++ limmatConfig.runtimeInputs;
           LIMMAT_CONFIG = self.packages."${system}".limmatTOML;
-          MY_ENV = "foo";
+          # Don't care about -march=native for this devShell.
+          NIX_ENFORCE_NO_NATIVE = 0;
         };
       }
     ))
