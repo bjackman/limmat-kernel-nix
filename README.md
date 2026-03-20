@@ -183,6 +183,16 @@ Now in another devShell you can attach GDB using something like:
 ```sh
 gdb .kunit/vmlinux -ex "target remote localhost:1234"
 ```
+
+### Load kernel modules
+
+`lk-vm` has a wrapped `modprobe` binary that is installed and hard-coded to load
+modules from `/mnt/kernel/modules_install`. For that to work, you need to run
+`lk-vm` with the `--tree` arg (to mount a kernel tree) and you need to run `make
+modules_install INSTALL_MOD_PATH=modules_install`) from the kernel tree to set
+up that `modules_install` dir. This is not realy supported but it can be used as
+a hack to fiddle around with testing module load and stuff.
+
 ## Developing this repo
 
 Mostly because of me not knowing Nix properly when I wrote it, the integration

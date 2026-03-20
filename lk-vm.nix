@@ -143,6 +143,22 @@ let
           kselftests
           # Other stuff is defined directly in the 64bit config, to avoid having
           # to compile for 32-bit runs.
+
+          # Because blktests really needs modprobe to work, replace modprobe
+          # with a version that looks in a special directory where the user can
+          # build modules (documented in the README) that can be loaded at
+          # runtime.
+          (pkgs.writeShellScriptBin "modprobe" ''
+            ${pkgs.kmod}/bin/modprobe -d /mnt/kernel/modules_install "$@"
+          '')
+          # (pkgs.kmod.overrideAttrs (oldAttrs: {
+          #   name = "kmod-lk-vm";
+          #   nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.makeWrapper ];
+          #   postInstall = oldAttrs.postInstall  + ''
+          #     makeWrapper $out/bin/kmod $out/bin/modprobe \
+          #       --add-flags "-d /mnt/kernel/modules_install"
+          #   '';
+          # }))
         ];
 
         documentation.enable = false;
