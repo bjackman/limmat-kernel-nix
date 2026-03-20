@@ -7,6 +7,10 @@
       url = "github:torvalds/linux";
       flake = false;
     };
+    blktests = {
+      url = "github:linux-blktests/blktests";
+      flake = false;
+    };
   };
 
   outputs =
@@ -70,6 +74,9 @@
           # Version of kselftests built from the nixpkgs kernel.
           kselftests = pkgs.callPackage ./kselftests.nix {
             kernelSrc = kernel;
+          };
+          blktests = pkgs.callPackage ./blktests.nix {
+            inherit inputs;
           };
           # Little tool for running tests.
           test-runner = pkgs.buildGoModule {
