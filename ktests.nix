@@ -8,6 +8,7 @@
   lib,
 
   # Dependency packages
+  blktests,
   kselftests,
   test-runner,
 }:
@@ -123,6 +124,54 @@ let
         nx_stack_32 = [ "lk-broken" ];
       };
     };
+
+    # Some of the tests from blktests that I have tried to run.
+    blktests =
+      let
+        blktestTags = {
+          throtl = {
+            # Oh. So none of these actually work, scsi_debug has to be a module.
+            "001" = [ "lk-broken" ];
+            "002" = [ "lk-broken" ];
+            "003" = [ "lk-broken" ];
+            "004" = [ "lk-broken" ];
+            "005" = [ "lk-broken" ];
+            "006" = [ "lk-broken" ];
+            "007" = [ "lk-broken" ];
+          };
+          block = {
+            # AI says this exercises the block cgroup stuff I wanted to play with
+            "037" = [ ];
+          };
+        };
+        # Wrapper script to run an individual blktests test and then print its
+        # logs (otherwise some tests just fail silently). Actually this doesn't
+        # run an individual test it runs the same tests multiple times under
+        # different configurations so there might be multiple logs :)
+        # Note this will often print duplicate logs.
+        wrapper = pkgs.writeShellScript "blktests-wrapper.sh" ''
+          name="$1"
+          ${blktests}/bin/blktests --output /tmp/blktests "$name"
+          rc="$?"
+          if [ "$rc" != 0 ]; then
+            for log in /tmp/blktests/**/"$name"*; do
+              if [ -s "$log" ]; then
+                echo "[ktests wrapper] Something failed, dumping $log"
+                cat $log
+              fi
+            done
+          fi
+          exit "$rc"
+        '';
+      in
+      lib.mapAttrsRecursive (path: tags: {
+        __is_test = true;
+        inherit tags;
+        command = [
+          wrapper
+          (lib.concatStringsSep "/" path)
+        ];
+      }) blktestTags;
   };
 
   # Convert the tests config to JSON and store in nix store

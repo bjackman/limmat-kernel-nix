@@ -1,0 +1,27 @@
+# Stuff to try and run some of the blktests.
+
+# SCSI_DEBUG deps
+CONFIG_SCSI=y
+CONFIG_SCSI_LOWLEVEL=y
+
+# Note this should really be a module, it has parameters that the tests wanna
+# change but you can only change them on insmod.
+CONFIG_SCSI_DEBUG=y
+
+# No idea why these are neede, AI suggested I enable these to make tests work,
+# and it worked.
+CONFIG_SCSI_PROC_FS=y
+CONFIG_CHR_DEV_SG=y
+CONFIG_BLK_DEV_BSG=y
+CONFIG_DEBUG_FS=y
+CONFIG_BLK_DEBUG_FS=y
+
+CONFIG_BLK_DEV_SD=y
+CONFIG_BLK_DEV_NULL_BLK=y
+
+CONFIG_CGROUPS=y
+CONFIG_BLK_CGROUP=y
+CONFIG_BLK_DEV_THROTTLING=y
+# I dunno why but things fall apart without a bunch of cgroup controllers enabled
+CONFIG_CGROUP_SCHED=y
+CONFIG_MEMCG=y
