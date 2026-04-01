@@ -7,6 +7,8 @@ Options:
     -t, --tree TREE      Optional path to a kernel tree.
     -k, --kernel PATH    Specify the path to the kernel image. If you set
                         --tree, defaults to the x86 bzImage in that treee.
+    --nixos-kernel       Use the kernel from nixpkgs. Incompatible with --tree
+                         --and --kernel.
     -c, --cmdline ARGS   Args to append to kernel cmdline. Single string.
     -q, --qemu-args ARGS Args to append to QEMU cmdline. Single string.
                         e.g. for a Skylake VM: "-cpu Skylake-Server,+vmx"
@@ -41,13 +43,14 @@ QEMU_OPTS=
 KTESTS=false
 SHUTDOWN=false
 VSOCK_CID=3
+USE_NIXOS_KERNEL=false
 
 KTESTS_ARGS=("--bail-on-failure" "*")
 KTESTS_OUTPUT_HOST=
 
 PARSED_ARGUMENTS=$(
     getopt -o t:k:c:dq:s::o:bh \
-    --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help,vsock-cid: -- "$@")
+    --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help,vsock-cid:,nixos-kernel -- "$@")
 
 # shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
@@ -66,6 +69,10 @@ while true; do
         -t|--tree)
             KERNEL_TREE="$2"
             shift 2
+            ;;
+        --nixos-kernel)
+            USE_NIXOS_KERNEL=true
+            shift
             ;;
         -c|--cmdline)
             CMDLINE="$2"
@@ -118,12 +125,14 @@ while true; do
     esac
 done
 
-if [[ -z "$KERNEL_PATH" && -n "$KERNEL_TREE" ]]; then
-    KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
-fi
-if [[ -z "$KERNEL_PATH" ]]; then
-    echo "Must set --kernel or --tree."
-    exit 1
+if ! "$USE_NIXOS_KERNEL"; then
+    if [[ -z "$KERNEL_PATH" && -n "$KERNEL_TREE" ]]; then
+        KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
+    fi
+    if [[ -z "$KERNEL_PATH" ]]; then
+        echo "Must set --kernel, --tree, or --nixos-kernel."
+        exit 1
+    fi
 fi
 
 # note the name of the KTESTS_OUTPUT_HOST variable is coupled with the
@@ -162,7 +171,9 @@ fi
 # This NixOS VM script only works with absolute paths.
 # The variable it uses depend on the hostname defined in the guest
 # configuration - those are passed to this script via the environment.
-declare "NIXPKGS_QEMU_KERNEL_${HOSTNAME}=$(realpath "$KERNEL_PATH")"
+if [[ -n "$KERNEL_PATH" ]]; then
+    declare "NIXPKGS_QEMU_KERNEL_${HOSTNAME}=$(realpath "$KERNEL_PATH")"
+fi
 KERNEL_TREE="$(realpath "$KERNEL_TREE")"
 export "NIXPKGS_QEMU_KERNEL_${HOSTNAME}"
 export KERNEL_TREE

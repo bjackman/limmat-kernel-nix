@@ -79,6 +79,8 @@ built from. This is handy if you don't have a kernel tree ready to go.
 nix run .#lk-vm -- --kernel $(nix build .#golden-kernel --no-link --print-out-paths)/bzImage
 ```
 
+Note you can also pass --nixos-kernel to use the kernel directly from nixpkgs.
+
 #### SSH into it
 
 Assuming you have
