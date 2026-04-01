@@ -50,8 +50,4 @@ in
     };
     onSuccess = [ "poweroff.target" ];
   };
-
-  # Some mmtests fail if the system doesn't have swap. I don't wanna
-  # configure proper swap but let's try zswap.
-  # zramSwap.enable = true;
 }
