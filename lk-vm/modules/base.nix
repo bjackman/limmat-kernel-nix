@@ -133,6 +133,7 @@ in
   environment.systemPackages = with pkgs; [
     ktests
     kselftests
+    kstresstests
     # Other stuff is defined directly in the 64bit config, to avoid having
     # to compile for 32-bit runs.
 

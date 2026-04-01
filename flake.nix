@@ -89,6 +89,10 @@
           ktests = pkgs.callPackage ./ktests.nix {
             inherit blktests kselftests test-runner;
           };
+          # Some experimental tools for stress-testing. This is different from
+          # ktests in that they run continuously so they never produce a "pass"
+          # signal.
+          kstresstests = pkgs.callPackage ./kstresstests.nix { };
 
           lk-vm = pkgs.callPackage ./lk-vm {
             inherit self;
@@ -154,7 +158,12 @@
     // {
       # Packages intended for use in the lk-vm guest.
       overlays.guest = final: prev: {
-        inherit (self.packages.${prev.stdenv.hostPlatform.system}) ktests kselftests test-runner;
+        inherit (self.packages.${prev.stdenv.hostPlatform.system})
+          ktests
+          kselftests
+          test-runner
+          kstresstests
+          ;
       };
     };
 }
