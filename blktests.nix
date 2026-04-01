@@ -10,6 +10,7 @@ let
   runtimeInputs = with pkgs; [
     bash
     coreutils # dd, stat, realpath
+    diffutils
     fio
     gawk
     gzip # zgrep
