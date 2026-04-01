@@ -90,7 +90,7 @@
             inherit blktests kselftests test-runner;
           };
 
-          lk-vm = pkgs.callPackage ./lk-vm.nix {
+          lk-vm = pkgs.callPackage ./lk-vm {
             inherit self;
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
