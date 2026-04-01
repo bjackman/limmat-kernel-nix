@@ -12,6 +12,7 @@ jobs:
     - uses: DeterminateSystems/magic-nix-cache-action@main
       with:
         use-flakehub: false
+    - run: nix flake check
     # Build first because Github's shitty UI doesn't handle the size of the Nix
     # build log very well.
     - run: nix build .#test-golden
