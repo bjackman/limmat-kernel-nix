@@ -45,7 +45,7 @@
       in
       {
         formatter = pkgs.nixfmt-tree;
-        checks.default = pkgs.callPackage ./check-nix-fmt.nix { };
+        checks.default = self.packages.${system} // pkgs.callPackage ./check-nix-fmt.nix { };
 
         packages = rec {
           # Export the TOML as a separate package. Also smush the limmatConfig
