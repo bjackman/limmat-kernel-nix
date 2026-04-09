@@ -45,8 +45,8 @@ SHUTDOWN=false
 VSOCK_CID=3
 USE_NIXOS_KERNEL=false
 
-KTESTS_ARGS=("--bail-on-failure" "*")
-KTESTS_OUTPUT_HOST=
+declare -a LKVM_RUN
+LKVM_OUTPUT_HOST=
 
 PARSED_ARGUMENTS=$(
     getopt -o t:k:c:dq:s::o:bh \
@@ -91,15 +91,27 @@ while true; do
             ;;
         -s|--ktests)
             KTESTS=true
+            # Set up base ktests flags
+            # shellcheck disable=SC2016 # LKVM_OUTPUT_DIR is expanded in the guest
+            LKVM_RUN=(
+                ktests --bail-on-failure
+                --junit-xml '$LKVM_OUTPUT_DIR'/junit.xml
+                --log-dir '$LKVM_OUTPUT_DIR'
+            )
+            # Add extra args if provided, otherwise add default of '*' to run
+            # all tests.
             if [[ -n "$2" ]]; then
-            # Split the args into an/tmp/limmat-output-RolnKx array. This lets us expand it into args
-            # later without glob expansion happening.
-            IFS=' ' read -r -a KTESTS_ARGS <<< "$2"
+                # Split the args into an array. This lets us expand it into args
+                # later without glob expansion happening.
+                IFS=' ' read -r -a extra_args <<< "$2"
+            else
+                extra_args=('*')
             fi
+            LKVM_RUN+=("${extra_args[@]}")
             shift 2
             ;;
         -o|--ktests-output)
-            KTESTS_OUTPUT_HOST="$2"
+            LKVM_OUTPUT_HOST="$2"
             shift 2
             ;;
         -b|--shutdown)
@@ -135,16 +147,16 @@ if ! "$USE_NIXOS_KERNEL"; then
     fi
 fi
 
-# note the name of the KTESTS_OUTPUT_HOST variable is coupled with the
+# note the name of the LKVM_OUTPUT_HOST variable is coupled with the
 # virtualisation.sharedDirectories option in the NixOS config.
-if ! "$KTESTS" && [[ -n "$KTESTS_OUTPUT_HOST" ]]; then
+if ! "$KTESTS" && [[ -n "$LKVM_OUTPUT_HOST" ]]; then
     echo "--ktests-output requires --ktests"
     exit 1
 fi
 # This needs to be set even if we aren't using --ktests, otherwise QEMU's
 # 9pfs setup fails and QEMU falls over.
-if [[ -z "$KTESTS_OUTPUT_HOST" ]]; then
-    KTESTS_OUTPUT_HOST=$(mktemp -d)
+if [[ -z "$LKVM_OUTPUT_HOST" ]]; then
+    LKVM_OUTPUT_HOST=$(mktemp -d)
 fi
 
 # If --tree wasn't provided, create a dummy directory since the shared
@@ -155,7 +167,7 @@ if [[ -z "$KERNEL_TREE" ]]; then
 fi
 
 if "$KTESTS"; then
-    CMDLINE="$CMDLINE systemd.unit=ktests.service systemd.setenv=KTESTS_ARGS=\"${KTESTS_ARGS[*]}\""
+    CMDLINE="$CMDLINE systemd.unit=lkvm-run.service systemd.setenv=LKVM_RUN=\"${LKVM_RUN[*]}\""
 elif "$SHUTDOWN"; then
     # I dunno why the systemd.unit= is needed here, possibly as NixOS bug,
     # based on the systemd manual I expect setting systemd.run should
@@ -177,7 +189,7 @@ fi
 KERNEL_TREE="$(realpath "$KERNEL_TREE")"
 export "NIXPKGS_QEMU_KERNEL_${HOSTNAME}"
 export KERNEL_TREE
-export KTESTS_OUTPUT_HOST
+export LKVM_OUTPUT_HOST
 export QEMU_KERNEL_PARAMS="$CMDLINE"
 export QEMU_OPTS
 
@@ -185,6 +197,6 @@ set +e
 "run-$HOSTNAME-vm" "$@"
 exit_code=$?
 if "$KTESTS"; then
-    echo "Ktests output: $KTESTS_OUTPUT_HOST"
+    echo "Ktests output: $LKVM_OUTPUT_HOST"
 fi
 exit "$exit_code"

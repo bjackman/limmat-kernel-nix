@@ -6,7 +6,7 @@
   ...
 }:
 {
-  imports = [ ./ktests.nix ];
+  imports = [ ./run.nix ];
 
   nixpkgs.overlays = [ self.overlays.guest ];
   networking.hostName = "testvm";
