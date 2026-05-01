@@ -18,7 +18,7 @@ jobs:
     - run: nix build .#test-golden
     - run: mkdir /tmp/limmat-db
     - run: ./result/bin/limmat-kernel-test-golden /tmp/limmat-db
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
         name: limmat-db
