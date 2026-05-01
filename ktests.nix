@@ -56,6 +56,8 @@ let
         ksft_vma_merge_sh.tags = [ "lk-broken" ];
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/23900155339#user-content-tr-BFu3lw-r0s3
         ksft_userfaultfd_sh = [ "flaky" ];
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/25218560161/job/73944777420
+        ksft_mkdirty_sh = [ "lk-broken" ];
       };
       kvm = {
         dirty_log_test.tags = [ "slow" ]; # It's not THAT slow
