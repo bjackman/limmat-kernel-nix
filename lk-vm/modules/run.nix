@@ -2,7 +2,7 @@
 # it is coupled to lk-vm.sh.
 # It basically runs the command in the LKVM_RUN environment variable, passing
 # LKVM_OUTPUT_DIR in the environment.
-{ pkgs, ...  }:
+{ pkgs, ... }:
 let
   outputDir = "/mnt/lkvm-output";
   # I/O port that will be used for the isa-debug-exit device. I don't know
