@@ -26,7 +26,6 @@
       # Attempt to ensure there's space left over in the rootfs (which
       # may be where /tmp is).
       diskSize = 2 * 1024; # Megabytes
-      memorySize = 16 * 1024;
       # This seems to speed up boot a bit, and also I'm finding some KVM
       # selftests hang the VM on a uniprocessor system.
       cores = 8;

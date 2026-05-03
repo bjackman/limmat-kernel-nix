@@ -10,11 +10,13 @@
     bpftrace
     perf
   ];
-  # This BIOS doesn't mess up the terminal and is apparently faster.
-  virtualisation.vmVariant.virtualisation.qemu.options = [
-    "-bios"
-    "qboot.rom"
-  ];
+  virtualisation.vmVariant.virtualisation = {
+    qemu.options = [
+      "-bios"
+      "qboot.rom"
+    ];
+    memorySize = 16 * 1024;
+  };
   boot.kernelParams = [
     # Suggested by the error message of mm hugetlb selftests:
     "hugepagesz=1G"

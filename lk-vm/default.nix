@@ -15,7 +15,7 @@ let
     modules = [
       ./modules/base.nix
       ./modules/${stdenv.hostPlatform.system}.nix
-      { _module.args = { inherit self; }; }
+      { _module.args = { inherit self hostPkgs; }; }
     ];
   };
   # Config to run on 32-bit x86
@@ -24,7 +24,7 @@ let
     modules = [
       ./modules/base.nix
       ./modules/i686-linux.nix
-      { _module.args = { inherit self; }; }
+      { _module.args = { inherit self hostPkgs; }; }
     ];
   };
   # Takes the result of a nixosSystem call and produces the executable.

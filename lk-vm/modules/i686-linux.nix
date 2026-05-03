@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, hostPkgs, ... }:
 {
   virtualisation.vmVariant.virtualisation.qemu = {
     # QEMU depends on a library that doesn't compile for 32-bit so we
