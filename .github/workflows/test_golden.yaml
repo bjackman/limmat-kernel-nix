@@ -16,18 +16,18 @@ jobs:
     # Build first because Github's shitty UI doesn't handle the size of the Nix
     # build log very well.
     - run: nix build .#test-golden
-    - run: mkdir /tmp/limmat-db
-    - run: ./result/bin/limmat-kernel-test-golden /tmp/limmat-db
+    - run: mkdir limmat-db
+    - run: ./result/bin/limmat-kernel-test-golden limmat-db
     - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
         name: limmat-db
-        path: /tmp/limmat-db
+        path: limmat-db
     # OK this kiinda works but it turns out for some reason this tool ignores
     # all but the first line of the <failure> content.
     - uses: dorny/test-reporter@v2
       if: ${{ !cancelled() }}       # run this step even if previous step failed
       with:
-        path: /tmp/limmat-db/**/junit.xml
+        path: limmat-db/**/junit.xml
         name: limmat-test-golden
         reporter: jest-junit
