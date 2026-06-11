@@ -234,6 +234,7 @@ in
             "x86"
             "base"
             "compile"
+            "mem-hotplug"
             "vm-boot"
             "kselftests"
             "debug"
