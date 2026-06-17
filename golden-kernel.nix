@@ -13,17 +13,20 @@ pkgs.stdenv.mkDerivation {
     elfutils
     openssl
     lk-kconfig
+    pahole
+    python3
+    zlib
+    perl
   ];
-  patchPhase = "patchShebangs scripts";
+  postPatch = ''
+    patchShebangs .
+  '';
   buildPhase = ''
-    # We need to copy source to a writable dir because src is read-only
-    cp -r $src/* .
-    chmod -R u+w .
-
-    lk-kconfig --frags "x86 base vm-boot kselftests debug"
-    make -j$NIX_BUILD_CORES bzImage
+    lk-kconfig --frags "x86 base vm-boot kselftests debug kselftests/bpf"
+    make -j$NIX_BUILD_CORES bzImage vmlinux
   '';
   installPhase = ''
     install -D arch/x86/boot/bzImage $out/bzImage
+    install -D vmlinux $out/vmlinux
   '';
 }

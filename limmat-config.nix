@@ -237,6 +237,7 @@ in
             "mem-hotplug"
             "vm-boot"
             "kselftests"
+            "kselftests/bpf"
             "debug"
           ];
         })

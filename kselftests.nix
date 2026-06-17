@@ -10,13 +10,14 @@
 
   # Explicit args.
   kernelSrc,
+  kernel,
 }:
 let
   # On 32-bit most stuff doesn't compile. On x86_64 I can build this subset of
   # kselftests. Assume that that will work on other systems too, although they
   # probably don't really.
   # TODO build the rest too
-  kselftestsTargets = if stdenv.hostPlatform.system == "i686-linux" then "x86" else "kvm mm x86";
+  kselftestsTargets = if stdenv.hostPlatform.system == "i686-linux" then "x86" else "kvm mm x86 bpf";
 in
 multiStdenv.mkDerivation {
   name = "kselftests";
@@ -26,21 +27,33 @@ multiStdenv.mkDerivation {
     flex
     rsync
     makeWrapper
+    llvmPackages.clang
+    llvmPackages.llvm
+    pahole
+    pkg-config
+    openssl
+    python3
+    python3Packages.docutils
   ];
   buildInputs = with pkgs; [
     libcap
     numactl
     binutils # For addr2line, see wrapProgram call
+    zlib
+    elfutils
   ];
+  hardeningDisable = [ "all" ];
   enableParallelBuilding = true;
+  NIX_CFLAGS_COMPILE = "-U_FORTIFY_SOURCE -O2 -Wno-unused-command-line-argument";
   postPatch = ''
-    patchShebangs scripts
+    patchShebangs .
+    sed -i 's/-Wall -Werror/-Wall -Wno-error=unused-command-line-argument/g' tools/testing/selftests/bpf/Makefile
   '';
   # Need to set -j explicitly because it doesn't go into the $makeFlags until
   # buildPhase.
   configurePhase = ''
     make -j$NIX_BUILD_CORES defconfig
-    scripts/config -e GUP_TEST
+    scripts/config -e GUP_TEST -e DEBUG_INFO_BTF -e BPF_SYSCALL
     make olddefconfig
     grep GUP_TEST .config
   '';
@@ -49,12 +62,13 @@ multiStdenv.mkDerivation {
     export LIBRARY_PATH="${pkgs.glibc_multi.out}/lib/32:${pkgs.glibc_multi.static}/lib:${pkgs.glibc_multi.static}/lib64:$LIBRARY_PATH"
     # HACK: Adding glibc.static to buildInputs breaks things due to a Nix bug.
     make -j$NIX_BUILD_CORES headers
+    ln -sf ${kernel}/vmlinux vmlinux
     # Need to set this in shell code, there's no way to pass flags with spaces
     # otherwise lmao i don fuken no m8 wo'eva
     makeFlagsArray+=("TARGETS=${kselftestsTargets}")
     # HACK: -I../ works around
     # https://lore.kernel.org/all/DFHI984SEFV3.2JL88CLHNT2SO@google.com/
-    makeFlagsArray+=("EXTRA_CFLAGS=-Wno-error=unused-result -fomit-frame-pointer -I../")
+    makeFlagsArray+=("EXTRA_CFLAGS=-Wno-error -Wno-error=unused-result -fomit-frame-pointer -I../")
   '';
   # Note these flags get re-used for both the buildPhase and the configurePhase.
   makeFlags = [
@@ -68,6 +82,9 @@ multiStdenv.mkDerivation {
     "KSFT_INSTALL_PATH=$(out)/bin"
     # Fail the build if the build fails, instead of just not outputting the tests.
     "FORCE_TARGETS=1"
+    "SKIP_TARGETS="
+    "LLD=ld"
+    "TEST_KMODS="
   ];
   preInstall = ''
     mkdir -p $out/bin

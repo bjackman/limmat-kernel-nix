@@ -1,4 +1,5 @@
 {
+  # Trivial comment to invalidate cache and force re-evaluation
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-26.05";
     limmat.url = "github:bjackman/limmat";
@@ -76,6 +77,7 @@
           # Version of kselftests built from the nixpkgs kernel.
           kselftests = pkgs.callPackage ./kselftests.nix {
             kernelSrc = kernel;
+            kernel = self.packages."${system}".golden-kernel;
           };
           blktests = pkgs.callPackage ./blktests.nix {
             inherit inputs;
