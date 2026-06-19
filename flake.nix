@@ -142,8 +142,14 @@
               limmat
               b4
               codespell
-              # No support for actually building with LLVM but clangd is
-              # compatible with GCC luckily.
+              # TODO: Add support for LLVM builds. Gemini is too stupid to
+              # figure this one out, it keeps going round in reasoning circles
+              # and making shit up. I think the key challlenge is that we need
+              # to use clang-unwrapped for the target builds, but use the
+              # wrapper for host tools. You can kinda work around this by just
+              # building with  LLVM=1 HOSTCC=cc HOSTLD=ld.
+              # Add clangd - don't yet support actually building with LLVM but
+              # clangd is (mostly) compatible with GCC luckily.
               clang-tools
             ])
             ++ (with self.packages."${system}"; [
