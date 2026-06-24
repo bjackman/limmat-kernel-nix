@@ -139,7 +139,7 @@ let
             fi
 
             ${lk-kconfig}/bin/lk-kconfig --frags "${fragsStr}" --enable "${enablesStr}"
-            make -sj"$(nproc)" bzImage CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= W=1 2>&1
+            make -sj"$(nproc)" CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= W=1 2>&1
             mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
           '';
       };
@@ -240,6 +240,15 @@ in
             "debug"
           ];
         })
+        (
+          mkBuild {
+            name = "mods";
+            configFrags = [ "x86" "base" "compile_modules" ];
+          }
+          // {
+            depends_on = [ "ksft" ]; # Hack to deprioritise
+          }
+        )
         (mkBuild {
           name = "asi";
           ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";

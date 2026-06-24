@@ -1,0 +1,6 @@
+# Stuff we might want to try compiling as a module coz I often break the build
+CONFIG_MODULES=y
+CONFIG_VIRTUALIZATION=y
+CONFIG_KVM=m
+CONFIG_KVM_INTEL=m
+CONFIG_KVM_AMD=m
