@@ -243,7 +243,11 @@ in
         (
           mkBuild {
             name = "mods";
-            configFrags = [ "x86" "base" "compile_modules" ];
+            configFrags = [
+              "x86"
+              "base"
+              "compile_modules"
+            ];
           }
           // {
             depends_on = [ "ksft" ]; # Hack to deprioritise
