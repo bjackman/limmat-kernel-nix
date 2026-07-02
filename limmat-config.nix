@@ -233,7 +233,6 @@ in
         (mkBuild {
           name = "ksft";
           configFrags = [
-            "x86"
             "base"
             "compile"
             "mem-hotplug"
@@ -246,7 +245,6 @@ in
           mkBuild {
             name = "mods";
             configFrags = [
-              "x86"
               "base"
               "compile_modules"
             ];
@@ -259,7 +257,6 @@ in
           name = "asi";
           ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
           configFrags = [
-            "x86"
             "base"
             "compile"
             "vm-boot"
