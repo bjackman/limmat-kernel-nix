@@ -43,6 +43,7 @@ buildStdenv.mkDerivation {
     libcap
     numactl
     binutils # For addr2line, see wrapProgram call
+    bash # Added so patchShebangs --host can find the target bash
   ];
   enableParallelBuilding = true;
   postPatch = ''
@@ -126,6 +127,7 @@ buildStdenv.mkDerivation {
       ];
     in
     ''
+      patchShebangs --host $out/bin
       wrapProgram $out/bin/run_kselftest.sh \
         --prefix PATH : "${lib.makeBinPath deps}"
     '';
