@@ -10,15 +10,59 @@
 }:
 let
   hostPkgs = pkgs;
+  makeCrossPkgs =
+    targetSystem:
+    import self.inputs.nixpkgs {
+      localSystem = stdenv.hostPlatform.system;
+      crossSystem = targetSystem;
+      overlays = [ self.overlays.guest ];
+    };
+
+  # Helper to create NixOS config, optionally cross-compiling
+  makeNixosConfig =
+    targetSystem:
+    let
+      isCross = targetSystem != stdenv.hostPlatform.system;
+      crossPkgs = if isCross then makeCrossPkgs targetSystem else null;
+    in
+    self.inputs.nixpkgs.lib.nixosSystem (
+      if isCross then {
+        # The system of the NixOS config is the TARGET system (so it is native to target)
+        system = targetSystem;
+        modules = [
+          ./modules/base.nix
+          ./modules/${targetSystem}.nix
+          {
+            nixpkgs.hostPlatform = targetSystem;
+            _module.args = {
+              inherit self hostPkgs crossPkgs;
+            };
+          }
+        ];
+      } else {
+        inherit pkgs;
+        modules = [
+          ./modules/base.nix
+          ./modules/${targetSystem}.nix
+          {
+            _module.args = {
+              inherit self hostPkgs crossPkgs;
+            };
+          }
+        ];
+      }
+    );
+
   # Config to run on the host's native architecture (default)
-  hostConfig = self.inputs.nixpkgs.lib.nixosSystem {
-    inherit pkgs;
-    modules = [
-      ./modules/base.nix
-      ./modules/${stdenv.hostPlatform.system}.nix
-      { _module.args = { inherit self hostPkgs; }; }
-    ];
-  };
+  hostConfig = makeNixosConfig stdenv.hostPlatform.system;
+
+  # Config to run on ARM64
+  aarch64Config =
+    if stdenv.hostPlatform.system == "aarch64-linux" then
+      hostConfig
+    else
+      makeNixosConfig "aarch64-linux";
+
   # Config to run on 32-bit x86
   i686Config = self.inputs.nixpkgs.lib.nixosSystem {
     pkgs = i686Pkgs;
@@ -28,14 +72,13 @@ let
       { _module.args = { inherit self hostPkgs; }; }
     ];
   };
+
   # Takes the result of a nixosSystem call and produces the executable.
   mkPkg =
     config:
     let
-      # nixosRunner is the "official" entry point for running NixOS as a QEMU guest,
-      # we'll wrap this into a custom runner that supports overriding the kernel etc
-      # at runtime.
       nixosRunner = config.config.system.build.vm;
+      targetSystem = config.config.nixpkgs.hostPlatform.system;
     in
     pkgs.writeShellApplication {
       name = "lk-vm";
@@ -44,20 +87,13 @@ let
         pkgs.getopt
       ];
       runtimeEnv.HOSTNAME = config.config.networking.hostName;
+      runtimeEnv.TARGET_SYSTEM = targetSystem;
       text = builtins.readFile ./lk-vm.sh;
     };
 in
-# Main output is the result built for the host platform i.e. probably
-# x86_64-linux.
 (mkPkg hostConfig)
 // {
-  # Also hang the configs on the result as with passthru so they can be
-  # inspected with nix eval etc.
-  inherit hostConfig i686Config;
-  # And then this version provides the 32-bit version if needed.
-  # Obviously it would be preferable and totally possible to just have the
-  # main executable have a --arch flag or whatever. But, that would make it
-  # depend on the 32-bit system, which is not cached by NixOS, so basically
-  # you'd have to compile a 32-bit system in order to use the 64-bit system.
+  inherit hostConfig i686Config aarch64Config;
   i686 = mkPkg i686Config;
+  aarch64 = mkPkg aarch64Config;
 }

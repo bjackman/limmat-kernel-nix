@@ -3,6 +3,8 @@
   config,
   lib,
   self,
+  hostPkgs,
+  crossPkgs ? null,
   ...
 }:
 {
@@ -10,9 +12,11 @@
 
   nixpkgs.overlays = [ self.overlays.guest ];
   networking.hostName = "testvm";
+  boot.loader.grub.enable = false;
   virtualisation.vmVariant = {
     virtualisation = {
       graphics = false;
+      qemu.package = hostPkgs.qemu;
       # Tell the VM runner script that it should mount a directory on the
       # host, named in the environment variable, to /mnt/kernel. That
       # variable must point to a directory. This is coupled with the script
@@ -86,10 +90,10 @@
   nix.settings.require-sigs = false;
   nix.enable = false;
 
-  environment.systemPackages = with pkgs; [
-    ktests
-    kselftests
-    kstresstests
+  environment.systemPackages = [
+    (if crossPkgs != null then crossPkgs.ktests else pkgs.ktests)
+    (if crossPkgs != null then crossPkgs.kselftests else pkgs.kselftests)
+    (if crossPkgs != null then crossPkgs.kstresstests else pkgs.kstresstests)
     # Other stuff is defined directly in the 64bit config, to avoid having
     # to compile for 32-bit runs.
 

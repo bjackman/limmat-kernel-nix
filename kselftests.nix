@@ -4,7 +4,6 @@
 {
   pkgs,
   lib,
-  multiStdenv,
   fetchpatch,
   stdenv,
 
@@ -12,13 +11,26 @@
   kernelSrc,
 }:
 let
+  isX86 = stdenv.hostPlatform.isx86;
+  buildStdenv = if isX86 then pkgs.multiStdenv else stdenv;
+
+  # Map Nix system to kernel ARCH
+  kernelArch = stdenv.hostPlatform.linuxArch;
+  kernelCrossCompile = stdenv.cc.targetPrefix;
+
   # On 32-bit most stuff doesn't compile. On x86_64 I can build this subset of
   # kselftests. Assume that that will work on other systems too, although they
   # probably don't really.
   # TODO build the rest too
-  kselftestsTargets = if stdenv.hostPlatform.system == "i686-linux" then "x86" else "kvm mm x86";
+  kselftestsTargets =
+    if stdenv.hostPlatform.system == "i686-linux" then
+      "x86"
+    else if isX86 then
+      "kvm mm x86"
+    else
+      "kvm mm";
 in
-multiStdenv.mkDerivation {
+buildStdenv.mkDerivation {
   name = "kselftests";
   src = kernelSrc;
   nativeBuildInputs = with pkgs; [
@@ -39,22 +51,45 @@ multiStdenv.mkDerivation {
   # Need to set -j explicitly because it doesn't go into the $makeFlags until
   # buildPhase.
   configurePhase = ''
-    make -j$NIX_BUILD_CORES defconfig
+    make -j$NIX_BUILD_CORES defconfig \
+      ARCH=${kernelArch} \
+      CROSS_COMPILE=${kernelCrossCompile} \
+      HOSTCC=${pkgs.buildPackages.stdenv.cc}/bin/cc
     scripts/config -e GUP_TEST
-    make olddefconfig
+    make olddefconfig \
+      ARCH=${kernelArch} \
+      CROSS_COMPILE=${kernelCrossCompile} \
+      HOSTCC=${pkgs.buildPackages.stdenv.cc}/bin/cc
     grep GUP_TEST .config
   '';
   preBuild = ''
-    export NIX_LDFLAGS="-L${pkgs.glibc_multi.out}/lib/32 -L${pkgs.glibc_multi.static}/lib -L${pkgs.glibc_multi.static}/lib64 $NIX_LDFLAGS"
-    export LIBRARY_PATH="${pkgs.glibc_multi.out}/lib/32:${pkgs.glibc_multi.static}/lib:${pkgs.glibc_multi.static}/lib64:$LIBRARY_PATH"
-    # HACK: Adding glibc.static to buildInputs breaks things due to a Nix bug.
-    make -j$NIX_BUILD_CORES headers
+    make -j$NIX_BUILD_CORES headers \
+      ARCH=${kernelArch} \
+      CROSS_COMPILE=${kernelCrossCompile} \
+      HOSTCC=${pkgs.buildPackages.stdenv.cc}/bin/cc
+  ''
+  + (
+    if isX86 then
+      ''
+        export NIX_LDFLAGS="-L${pkgs.glibc_multi.out}/lib/32 -L${pkgs.glibc_multi.static}/lib -L${pkgs.glibc_multi.static}/lib64 $NIX_LDFLAGS"
+        export LIBRARY_PATH="${pkgs.glibc_multi.out}/lib/32:${pkgs.glibc_multi.static}/lib:${pkgs.glibc_multi.static}/lib64:$LIBRARY_PATH"
+      ''
+    else
+      ''
+        # On non-x86, we don't need to add static glibc to the search path by default.
+        # It can cause the linker to incorrectly prefer static libc.a over dynamic libc.so
+        # when linking dynamic binaries, leading to versioned symbol errors (e.g. __getauxval).
+        true
+      ''
+  )
+  + ''
     # Need to set this in shell code, there's no way to pass flags with spaces
     # otherwise lmao i don fuken no m8 wo'eva
     makeFlagsArray+=("TARGETS=${kselftestsTargets}")
-    # HACK: -I../ works around
-    # https://lore.kernel.org/all/DFHI984SEFV3.2JL88CLHNT2SO@google.com/
     makeFlagsArray+=("EXTRA_CFLAGS=-Wno-error=unused-result -fomit-frame-pointer -I../")
+    makeFlagsArray+=("ARCH=${kernelArch}")
+    makeFlagsArray+=("CROSS_COMPILE=${kernelCrossCompile}")
+    makeFlagsArray+=("HOSTCC=${pkgs.buildPackages.stdenv.cc}/bin/cc")
   '';
   # Note these flags get re-used for both the buildPhase and the configurePhase.
   makeFlags = [
@@ -68,6 +103,7 @@ multiStdenv.mkDerivation {
     "KSFT_INSTALL_PATH=$(out)/bin"
     # Fail the build if the build fails, instead of just not outputting the tests.
     "FORCE_TARGETS=1"
+    "V=1"
   ];
   preInstall = ''
     mkdir -p $out/bin

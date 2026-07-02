@@ -125,9 +125,19 @@ while true; do
     esac
 done
 
+TARGET_SYSTEM="${TARGET_SYSTEM:-}"
+ARCH="x86"
+if [[ "$TARGET_SYSTEM" == "aarch64-linux" ]]; then
+    ARCH="arm64"
+fi
+
 if ! "$USE_NIXOS_KERNEL"; then
     if [[ -z "$KERNEL_PATH" && -n "$KERNEL_TREE" ]]; then
-        KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
+        if [[ "$ARCH" == "arm64" ]]; then
+            KERNEL_PATH="$KERNEL_TREE"/arch/arm64/boot/Image
+        else
+            KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
+        fi
     fi
     if [[ -z "$KERNEL_PATH" ]]; then
         echo "Must set --kernel, --tree, or --nixos-kernel."
@@ -183,8 +193,19 @@ export QEMU_OPTS
 
 set +e
 "run-$HOSTNAME-vm" "$@"
-exit_code=$?
+qemu_exit_code=$?
+
+exit_code=$qemu_exit_code
+
 if "$KTESTS"; then
     echo "Ktests output: $KTESTS_OUTPUT_HOST"
+    if [[ -f "$KTESTS_OUTPUT_HOST/exit_code" ]]; then
+        exit_code=$(cat "$KTESTS_OUTPUT_HOST/exit_code")
+    else
+        echo "Error: ktests did not record an exit code (VM crash?)" >&2
+        if [[ $qemu_exit_code -eq 0 ]]; then
+            exit_code=1
+        fi
+    fi
 fi
 exit "$exit_code"

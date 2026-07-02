@@ -94,12 +94,7 @@
             inherit inputs;
           };
           # Little tool for running tests.
-          test-runner = pkgs.buildGoModule {
-            pname = "test-runner";
-            version = "0.1.0";
-            src = ./test-runner;
-            vendorHash = "sha256-BCgQzMak7ebugES9UxNshpiH9VK+er5cxKS2aV6ogso=";
-          };
+          test-runner = pkgs.callPackage ./test-runner { };
           # Tool plus a config to run some kernel tests.
           ktests = pkgs.callPackage ./ktests.nix {
             inherit blktests kselftests test-runner;
@@ -183,12 +178,19 @@
     // {
       # Packages intended for use in the lk-vm guest.
       overlays.guest = final: prev: {
-        inherit (self.packages.${prev.stdenv.hostPlatform.system})
-          ktests
-          kselftests
-          test-runner
-          kstresstests
-          ;
+        kselftests = prev.callPackage ./kselftests.nix {
+          kernelSrc = self.inputs.kernel;
+        };
+        blktests = prev.callPackage ./blktests.nix {
+          inherit inputs;
+        };
+        test-runner = prev.callPackage ./test-runner { };
+        ktests = prev.callPackage ./ktests.nix {
+          blktests = final.blktests;
+          kselftests = final.kselftests;
+          test-runner = final.test-runner;
+        };
+        kstresstests = prev.callPackage ./kstresstests.nix { };
       };
     };
 }
