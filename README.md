@@ -42,10 +42,16 @@ command such as your preferred shell.
 
 ### Boot a VM
 
-Generate a kconfig that has the necessary features to boot in the VM:
+Generate a kconfig that has the necessary features to boot in the VM (this is the default):
 
+```sh
+lk-kconfig
 ```
-lk-kconfig "x86 base vm-boot"
+
+You can also customize the fragments, for example:
+
+```sh
+lk-kconfig --frags "x86 x86_64 base vm-boot"
 ```
 
 Now build your kernel (e.g. `make -sj100 bzImage`).
@@ -141,7 +147,7 @@ iterate on the tests themselves.
 
 #### Boot a 32bit VM (x86)
 
-Configure using `ARCH=i386 lk-vm --frags "i386 base vm-boot` and build the
+Configure using `lk-kconfig --arch i386` and build the
 bzImage while also setting `ARCH=i386`. Then use `nix run <this repo>#lk-vm.i686
 -- <args>` to run `lk-vm` in 32-bit mode.
 

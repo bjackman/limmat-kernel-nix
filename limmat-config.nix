@@ -118,6 +118,7 @@ let
       extraConfigs ? [ ],
       # Skip the test if this string doesn't appear in the repo.
       ifContains ? "",
+      arch ? "x86_64",
     }:
     {
       name = "build_${name}";
@@ -138,7 +139,7 @@ let
               exit 0
             fi
 
-            ${lk-kconfig}/bin/lk-kconfig --frags "${fragsStr}" --enable "${enablesStr}"
+            ${lk-kconfig}/bin/lk-kconfig --frags "${fragsStr}" --enable "${enablesStr}" --arch "${arch}"
             make -sj"$(nproc)" CC='ccache gcc' KBUILD_BUILD_TIMESTAMP= W=1 2>&1
             mv arch/x86/boot/bzImage "$LIMMAT_ARTIFACTS"
           '';
@@ -222,6 +223,7 @@ in
           mkBuild {
             name = "32";
             configFrags = [ "base" ];
+            arch = "i386";
           }
           // {
             depends_on = [ "ksft" ]; # Hack to deprioritise

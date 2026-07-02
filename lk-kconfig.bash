@@ -1,5 +1,35 @@
 AVAIL_FRAGS=$(find "$LK_KCONFIG_FRAGMENTS_DIR/" -type f -printf '%P ')
-FRAG_NAMES="base vm-boot ${ARCH:-x86}"
+
+get_default_frags() {
+    local arch="$1"
+    case "$arch" in
+        x86_64)
+            echo "base vm-boot x86 x86_64"
+            ;;
+        i386)
+            echo "base vm-boot x86 i386"
+            ;;
+        arm64)
+            echo "base vm-boot arm64"
+            ;;
+        *)
+            echo "Unsupported architecture: $arch" >&2
+            return 1
+            ;;
+    esac
+    return 0
+}
+
+# Determine defaults up front
+DEFAULT_ARCH="${ARCH:-$(uname -m)}"
+if ! DEFAULT_FRAG_NAMES=$(get_default_frags "$DEFAULT_ARCH"); then
+    exit 1
+fi
+
+# Initialize vars that might be overridden
+ARCH_ARG=""
+FRAG_NAMES=""
+ENABLE=""
 
 usage() {
     cat <<EOF
@@ -16,17 +46,17 @@ Options:
                          Available fragments are: $AVAIL_FRAGS
                          You can view their contents in $LK_KCONFIG_FRAGMENTS_DIR
                          You can pass a directory like kselftests to enable all
-                         fragments in that directory. This automatically
-                         includes the value of \$ARCH, defaulting to x86_64.
-                         Default: $FRAG_NAMES
+                         fragments in that directory.
+                         Default: $DEFAULT_FRAG_NAMES
     -e, --enable CONFIG  Space-separated list of extra configs to enable.
                          You can omit the CONFIG_ prefix.
+    -a, --arch ARCH      Target architecture (defaults to \$ARCH, falls back to $DEFAULT_ARCH).
     -h, --help           Display this help message and exit.
 
 EOF
 }
 
-PARSED_ARGUMENTS=$(getopt -o e:f:h --long enable:,frags:,help -- "$@")
+PARSED_ARGUMENTS=$(getopt -o e:f:a:h --long enable:,frags:,arch:,help -- "$@")
 
 # shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
@@ -36,8 +66,6 @@ if [ $? -ne 0 ]; then
 fi
 eval set -- "$PARSED_ARGUMENTS"
 
-ENABLE=
-
 while true; do
     case "$1" in
         -e|--enable)
@@ -46,6 +74,10 @@ while true; do
             ;;
         -f|--frags)
             FRAG_NAMES="$2"
+            shift 2
+            ;;
+        -a|--arch)
+            ARCH_ARG="$2"
             shift 2
             ;;
         --)
@@ -70,6 +102,43 @@ if [ $# -ne 0 ]; then
     exit 1
 fi
 
+ARCH="${ARCH_ARG:-$DEFAULT_ARCH}"
+if ! get_default_frags "$ARCH" >/dev/null; then
+    exit 1
+fi
+export ARCH
+
+# If FRAG_NAMES was not overridden, use default (adjusted for final arch if needed)
+if [[ -z "$FRAG_NAMES" ]]; then
+    FRAG_NAMES=$(get_default_frags "$ARCH")
+fi
+
+is_frag_compatible() {
+    local frag_path="$1"
+    local frag_name
+    frag_name=$(basename "$frag_path")
+
+    case "$frag_name" in
+        x86)
+            [[ "$ARCH" == "x86_64" || "$ARCH" == "i386" ]] && return 0
+            ;;
+        x86_64)
+            [[ "$ARCH" == "x86_64" ]] && return 0
+            ;;
+        i386)
+            [[ "$ARCH" == "i386" ]] && return 0
+            ;;
+        arm64)
+            [[ "$ARCH" == "arm64" ]] && return 0
+            ;;
+        *)
+            # Common fragment
+            return 0
+            ;;
+    esac
+    return 1
+}
+
 # Convert from a list of fragment names to a list of paths
 set -x
 FRAGS=
@@ -83,7 +152,9 @@ for frag in $FRAG_NAMES; do
       # This silly dance is suggested in https://www.shellcheck.net/wiki/SC2044
       while IFS= read -r -d '' dir_frag
       do
-        FRAGS="$FRAGS $dir_frag"
+        if is_frag_compatible "$dir_frag"; then
+          FRAGS="$FRAGS $dir_frag"
+        fi
       done < <(find "$new_frag" -type f -print0)
     else
       FRAGS="$FRAGS $new_frag"
