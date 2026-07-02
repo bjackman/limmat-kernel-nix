@@ -1,2 +1,15 @@
 CONFIG_64BIT=y
 CONFIG_X86_64=y
+CONFIG_X86_IO_APIC=y
+CONFIG_X86_LOCAL_APIC=y
+# Needed for the ioport hackery to shut down the VM and report the test exit
+# code to the host.
+CONFIG_X86_IOPL_IOPERM=y
+CONFIG_EARLY_PRINTK=y
+# TODO: These really belong in the vm-boot frag but gated by x86, requires fancy
+# predicates support.
+CONFIG_KERNEL_GZIP=y
+CONFIG_PROC_PID_ARCH_STATUS=y
+CONFIG_ACPI=y
+CONFIG_ACPI_AC=y
+CONFIG_ACPI_PROCESSOR=y

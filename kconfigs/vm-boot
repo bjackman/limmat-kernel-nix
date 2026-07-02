@@ -11,7 +11,6 @@
 #  - Cgroup controllers (the cgroups framework itself is present, otherwise
 #    NixOS's systemd falls over)
 #  - namespaces
-CONFIG_ACPI=y
 CONFIG_ADVISE_SYSCALLS=y
 CONFIG_AIO=y
 CONFIG_BINFMT_ELF=y
@@ -30,7 +29,6 @@ CONFIG_FILE_LOCKING=y
 CONFIG_FUTEX=y
 CONFIG_INOTIFY_USER=y
 CONFIG_NET=y
-CONFIG_KERNEL_GZIP=y
 CONFIG_MEMBARRIER=y
 CONFIG_MEMFD_CREATE=y
 CONFIG_MULTIUSER=y
@@ -50,8 +48,6 @@ CONFIG_TTY=y
 CONFIG_VHOST_MENU=y
 CONFIG_VIRTIO_MENU=y
 CONFIG_9P_FS=y
-CONFIG_ACPI_AC=y
-CONFIG_ACPI_PROCESSOR=y
 CONFIG_BLK_DEV=y
 CONFIG_BUFFER_HEAD=y
 CONFIG_DEVTMPFS_MOUNT=y
@@ -68,7 +64,6 @@ CONFIG_NET_9P_FD=y
 CONFIG_NET_9P_VIRTIO=y
 CONFIG_PRINTK_TIME=y
 CONFIG_PROC_PAGE_MONITOR=y
-CONFIG_PROC_PID_ARCH_STATUS=y
 CONFIG_PROC_SYSCTL=y
 CONFIG_RD_ZSTD=y
 CONFIG_SCSI=y
@@ -83,14 +78,11 @@ CONFIG_VIRTIO=y
 CONFIG_VIRTIO_BLK=y
 CONFIG_VIRTIO_CONSOLE=y
 CONFIG_VIRTIO_PCI=y
-CONFIG_X86_IO_APIC=y
-CONFIG_X86_LOCAL_APIC=y
+
 # Without this, NixOS's autologin doesn't work (Might be that user login is
 # completely broken, haven't tested).
 CONFIG_TMPFS_POSIX_ACL=y
-# Needed for the ioport hackery to shut down the VM and report the test exit
-# code to the host.
-CONFIG_X86_IOPL_IOPERM=y
+
 
 # Some tests expect swap to exist. I couldn't get storage swap to work (no idea
 # why, just silently didn't set it up) so we're using zswap. That needs to be
