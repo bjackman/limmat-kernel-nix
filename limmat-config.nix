@@ -8,11 +8,11 @@
   inputs,
 }:
 let
-  # TODO: Hm, cross-compilation appears to require building GCC.
+  # Easy way to disable Arm support in case the nixpkgs cache stops working.
   # https://discourse.nixos.org/t/are-cross-compilers-cached/75444
-  includeAarch64 = false;
+  includeAarch64 = true;
   pkgsAarch64 = import inputs.nixpkgs {
-    localSystem = pkgs.system;
+    localSystem = pkgs.stdenv.hostPlatform.system;
     crossSystem = "aarch64-linux";
   };
   # For simplicity, all the scripts just have a common set of runtimeInputs.
