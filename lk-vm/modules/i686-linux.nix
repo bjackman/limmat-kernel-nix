@@ -5,6 +5,5 @@
     # need to explicitly disable the guest agent and force the runner
     # to use the host's QEMU package
     guestAgent.enable = false;
-    package = hostPkgs.qemu;
   };
 }

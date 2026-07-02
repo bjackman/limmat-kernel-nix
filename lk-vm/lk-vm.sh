@@ -1,4 +1,3 @@
-
 usage() {
     cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
@@ -6,9 +5,9 @@ Usage: $(basename "$0") [OPTIONS]
 Options:
     -t, --tree TREE      Optional path to a kernel tree.
     -k, --kernel PATH    Specify the path to the kernel image. If you set
-                        --tree, defaults to the x86 bzImage in that treee.
+                        --tree, defaults to the kernel image in that tree.
     --nixos-kernel       Use the kernel from nixpkgs. Incompatible with --tree
-                         --and --kernel.
+                         and --kernel.
     -c, --cmdline ARGS   Args to append to kernel cmdline. Single string.
     -q, --qemu-args ARGS Args to append to QEMU cmdline. Single string.
                         e.g. for a Skylake VM: "-cpu Skylake-Server,+vmx"
@@ -29,6 +28,9 @@ Options:
                         running multiple instances at once you'll get errors.
                         Disable this by setting -1.
     -b, --shutdown       Just boot and then immediately shut down again.
+    -a, --arch ARCH      Architecture to boot (x86_64, i686, arm64).
+                        Defaults to x86_64, or the architecture of the
+                        single-arch package if using one.
     -h, --help           Display this help message and exit.
 
 EOF
@@ -48,9 +50,19 @@ USE_NIXOS_KERNEL=false
 KTESTS_ARGS=("--bail-on-failure" "*")
 KTESTS_OUTPUT_HOST=
 
+# Default values from environment (set by wrapper if using single-arch package)
+TARGET_SYSTEM="${TARGET_SYSTEM:-}"
+ARCH_DEFAULT="x86_64"
+if [[ "$TARGET_SYSTEM" == "aarch64-linux" ]]; then
+    ARCH_DEFAULT="arm64"
+elif [[ "$TARGET_SYSTEM" == "i686-linux" ]]; then
+    ARCH_DEFAULT="i686"
+fi
+ARCH="$ARCH_DEFAULT"
+
 PARSED_ARGUMENTS=$(
-    getopt -o t:k:c:dq:s::o:bh \
-    --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help,vsock-cid:,nixos-kernel -- "$@")
+    getopt -o t:k:c:dq:s::o:bha: \
+    --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help,vsock-cid:,nixos-kernel,arch: -- "$@")
 
 # shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
@@ -92,7 +104,7 @@ while true; do
         -s|--ktests)
             KTESTS=true
             if [[ -n "$2" ]]; then
-            # Split the args into an/tmp/limmat-output-RolnKx array. This lets us expand it into args
+            # Split the args into an array. This lets us expand it into args
             # later without glob expansion happening.
             IFS=' ' read -r -a KTESTS_ARGS <<< "$2"
             fi
@@ -110,6 +122,10 @@ while true; do
             VSOCK_CID="$2"
             shift 2
             ;;
+        -a|--arch)
+            ARCH="$2"
+            shift 2
+            ;;
         -h|--help)
             usage
             exit 0
@@ -125,15 +141,34 @@ while true; do
     esac
 done
 
-TARGET_SYSTEM="${TARGET_SYSTEM:-}"
-ARCH="x86"
-if [[ "$TARGET_SYSTEM" == "aarch64-linux" ]]; then
-    ARCH="arm64"
-fi
+# Normalize ARCH and set HOSTNAME and TARGET_SYSTEM
+case "$ARCH" in
+    x86_64)
+        HOSTNAME="testvm_x86_64"
+        TARGET_SYSTEM="x86_64-linux"
+        KERNEL_ARCH="x86"
+        ;;
+    i686|i386)
+        ARCH="i686"
+        HOSTNAME="testvm_i686"
+        TARGET_SYSTEM="i686-linux"
+        KERNEL_ARCH="x86"
+        ;;
+    arm64|aarch64)
+        ARCH="arm64"
+        HOSTNAME="testvm_aarch64"
+        TARGET_SYSTEM="aarch64-linux"
+        KERNEL_ARCH="arm64"
+        ;;
+    *)
+        echo "Unsupported architecture: $ARCH" >&2
+        exit 1
+        ;;
+esac
 
 if ! "$USE_NIXOS_KERNEL"; then
     if [[ -z "$KERNEL_PATH" && -n "$KERNEL_TREE" ]]; then
-        if [[ "$ARCH" == "arm64" ]]; then
+        if [[ "$KERNEL_ARCH" == "arm64" ]]; then
             KERNEL_PATH="$KERNEL_TREE"/arch/arm64/boot/Image
         else
             KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
@@ -190,6 +225,7 @@ export KERNEL_TREE
 export KTESTS_OUTPUT_HOST
 export QEMU_KERNEL_PARAMS="$CMDLINE"
 export QEMU_OPTS
+export TARGET_SYSTEM
 
 set +e
 "run-$HOSTNAME-vm" "$@"

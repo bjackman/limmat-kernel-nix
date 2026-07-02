@@ -10,6 +10,17 @@
 }:
 let
   hostPkgs = pkgs;
+  hostnameFor =
+    targetSystem:
+    if targetSystem == "x86_64-linux" then
+      "testvm_x86_64"
+    else if targetSystem == "i686-linux" then
+      "testvm_i686"
+    else if targetSystem == "aarch64-linux" then
+      "testvm_aarch64"
+    else
+      "testvm_unknown";
+
   makeCrossPkgs =
     targetSystem:
     import self.inputs.nixpkgs {
@@ -22,11 +33,30 @@ let
   makeNixosConfig =
     targetSystem:
     let
-      isCross = targetSystem != stdenv.hostPlatform.system;
+      isCross = targetSystem == "aarch64-linux" && stdenv.hostPlatform.system != "aarch64-linux";
       crossPkgs = if isCross then makeCrossPkgs targetSystem else null;
+      targetPkgs =
+        if targetSystem == stdenv.hostPlatform.system then
+          pkgs
+        else if targetSystem == "i686-linux" then
+          i686Pkgs
+        else
+          null;
     in
     self.inputs.nixpkgs.lib.nixosSystem (
-      if isCross then {
+      if targetPkgs != null && !isCross then {
+        pkgs = targetPkgs;
+        modules = [
+          ./modules/base.nix
+          ./modules/${targetSystem}.nix
+          {
+            networking.hostName = hostnameFor targetSystem;
+            _module.args = {
+              inherit self hostPkgs crossPkgs;
+            };
+          }
+        ];
+      } else {
         # The system of the NixOS config is the TARGET system (so it is native to target)
         system = targetSystem;
         modules = [
@@ -34,17 +64,7 @@ let
           ./modules/${targetSystem}.nix
           {
             nixpkgs.hostPlatform = targetSystem;
-            _module.args = {
-              inherit self hostPkgs crossPkgs;
-            };
-          }
-        ];
-      } else {
-        inherit pkgs;
-        modules = [
-          ./modules/base.nix
-          ./modules/${targetSystem}.nix
-          {
+            networking.hostName = hostnameFor targetSystem;
             _module.args = {
               inherit self hostPkgs crossPkgs;
             };
@@ -64,14 +84,11 @@ let
       makeNixosConfig "aarch64-linux";
 
   # Config to run on 32-bit x86
-  i686Config = self.inputs.nixpkgs.lib.nixosSystem {
-    pkgs = i686Pkgs;
-    modules = [
-      ./modules/base.nix
-      ./modules/i686-linux.nix
-      { _module.args = { inherit self hostPkgs; }; }
-    ];
-  };
+  i686Config =
+    if stdenv.hostPlatform.system == "i686-linux" then
+      hostConfig
+    else
+      makeNixosConfig "i686-linux";
 
   # Takes the result of a nixosSystem call and produces the executable.
   mkPkg =
@@ -90,10 +107,20 @@ let
       runtimeEnv.TARGET_SYSTEM = targetSystem;
       text = builtins.readFile ./lk-vm.sh;
     };
+
+  lk-vm-multi = pkgs.writeShellApplication {
+    name = "lk-vm";
+    runtimeInputs = [
+      hostConfig.config.system.build.vm
+      aarch64Config.config.system.build.vm
+      pkgs.getopt
+    ];
+    text = builtins.readFile ./lk-vm.sh;
+  };
 in
-(mkPkg hostConfig)
-// {
+lk-vm-multi // {
   inherit hostConfig i686Config aarch64Config;
+  x86_64 = mkPkg hostConfig;
   i686 = mkPkg i686Config;
   aarch64 = mkPkg aarch64Config;
 }

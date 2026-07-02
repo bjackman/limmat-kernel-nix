@@ -11,8 +11,8 @@
   kernelSrc,
 }:
 let
-  isX86 = stdenv.hostPlatform.isx86;
-  buildStdenv = if isX86 then pkgs.multiStdenv else stdenv;
+  isX86_64 = stdenv.hostPlatform.system == "x86_64-linux";
+  buildStdenv = if isX86_64 then pkgs.multiStdenv else stdenv;
 
   # Map Nix system to kernel ARCH
   kernelArch = stdenv.hostPlatform.linuxArch;
@@ -25,7 +25,7 @@ let
   kselftestsTargets =
     if stdenv.hostPlatform.system == "i686-linux" then
       "x86"
-    else if isX86 then
+    else if isX86_64 then
       "kvm mm x86"
     else
       "kvm mm";
@@ -69,16 +69,19 @@ buildStdenv.mkDerivation {
       HOSTCC=${pkgs.buildPackages.stdenv.cc}/bin/cc
   ''
   + (
-    if isX86 then
+    if isX86_64 then
       ''
         export NIX_LDFLAGS="-L${pkgs.glibc_multi.out}/lib/32 -L${pkgs.glibc_multi.static}/lib -L${pkgs.glibc_multi.static}/lib64 $NIX_LDFLAGS"
         export LIBRARY_PATH="${pkgs.glibc_multi.out}/lib/32:${pkgs.glibc_multi.static}/lib:${pkgs.glibc_multi.static}/lib64:$LIBRARY_PATH"
       ''
+    else if stdenv.hostPlatform.system == "i686-linux" then
+      ''
+        export NIX_LDFLAGS="-L${pkgs.glibc.static}/lib $NIX_LDFLAGS"
+        export LIBRARY_PATH="${pkgs.glibc.static}/lib:$LIBRARY_PATH"
+      ''
     else
       ''
-        # On non-x86, we don't need to add static glibc to the search path by default.
-        # It can cause the linker to incorrectly prefer static libc.a over dynamic libc.so
-        # when linking dynamic binaries, leading to versioned symbol errors (e.g. __getauxval).
+        # For aarch64-linux (and others), we don't use static glibc by default to avoid linker issues.
         true
       ''
   )

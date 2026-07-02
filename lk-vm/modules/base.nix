@@ -11,7 +11,7 @@
   imports = [ ./ktests.nix ];
 
   nixpkgs.overlays = [ self.overlays.guest ];
-  networking.hostName = "testvm";
+  networking.hostName = lib.mkDefault "testvm";
   boot.loader.grub.enable = false;
   virtualisation.vmVariant = {
     virtualisation = {
