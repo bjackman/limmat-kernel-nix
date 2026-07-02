@@ -217,11 +217,12 @@ nix shell ~/src/limmat-kernel-nix#test-golden --ignore-environment \
 This should be moved to a flake check and then the resulting limmat-db should be
 an output of the check derivation or something.
 
-## Build an Arm kernel
+## Boot an Arm VM
 
 ```
 lk-kconfig --arch arm64
-make ARCH=arm64 CROSS_COMPILE=aarch64-unknown-linux-gnu-  -sj100 vmlinux
+make ARCH=arm64 CROSS_COMPILE=aarch64-unknown-linux-gnu-  -sj100
+lk-vm --tree . --arch arm64
 ```
 
 ## TODO
