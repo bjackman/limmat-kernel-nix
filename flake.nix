@@ -22,16 +22,25 @@
       ...
     }:
     let
-      systems = with flake-utils.lib.system; [
-        x86_64-linux
-        i686-linux
-      ];
+      overlaysBySystem = {
+        ${flake-utils.lib.system.x86_64-linux} = [ ];
+        ${flake-utils.lib.system.i686-linux} = [
+          # Disable ShellCheck so we don't have to compile GHC.
+          (self: super: {
+            writeShellApplication = args: (super.writeShellApplication args).overrideAttrs (old: {
+              nativeBuildInputs = self.lib.filter (x: !self.lib.hasInfix "shellcheck" (self.lib.toLower (x.name or ""))) (old.nativeBuildInputs or [ ]);
+              checkPhase = ":";
+            });
+          })
+        ];
+      };
     in
-    (flake-utils.lib.eachSystem systems (
+    (flake-utils.lib.eachSystem (builtins.attrNames overlaysBySystem) (
       system:
       let
         pkgs = import nixpkgs {
           inherit system;
+          overlays = overlaysBySystem.${system};
         };
         limmat = inputs.limmat.packages."${system}".limmat-wrapped;
         limmatConfig = (
@@ -98,6 +107,10 @@
 
           lk-vm = pkgs.callPackage ./lk-vm {
             inherit self;
+            i686Pkgs = import nixpkgs {
+              system = "i686-linux";
+              overlays = overlaysBySystem."i686-linux";
+            };
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
 

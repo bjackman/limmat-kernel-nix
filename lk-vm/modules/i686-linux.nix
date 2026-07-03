@@ -7,17 +7,4 @@
     guestAgent.enable = false;
     package = hostPkgs.qemu;
   };
-  # Disable ShellCheck so we don't have to compile GHC
-  nixpkgs.overlays = [
-    (final: prev: {
-      writeShellApplication =
-        args:
-        prev.writeShellApplication (
-          args
-          // {
-            checkPhase = "";
-          }
-        );
-    })
-  ];
 }

@@ -6,12 +6,13 @@
   stdenv,
   lib,
   self,
+  i686Pkgs,
 }:
 let
   hostPkgs = pkgs;
   # Config to run on the host's native architecture (default)
   hostConfig = self.inputs.nixpkgs.lib.nixosSystem {
-    system = stdenv.hostPlatform.system;
+    inherit pkgs;
     modules = [
       ./modules/base.nix
       ./modules/${stdenv.hostPlatform.system}.nix
@@ -20,7 +21,7 @@ let
   };
   # Config to run on 32-bit x86
   i686Config = self.inputs.nixpkgs.lib.nixosSystem {
-    system = "i686-linux";
+    pkgs = i686Pkgs;
     modules = [
       ./modules/base.nix
       ./modules/i686-linux.nix
