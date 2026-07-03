@@ -7,4 +7,5 @@
     guestAgent.enable = false;
     package = hostPkgs.qemu;
   };
+  virtualisation.vmVariant.virtualisation.memorySize = 2046;
 }
