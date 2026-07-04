@@ -27,10 +27,14 @@
         ${flake-utils.lib.system.i686-linux} = [
           # Disable ShellCheck so we don't have to compile GHC.
           (self: super: {
-            writeShellApplication = args: (super.writeShellApplication args).overrideAttrs (old: {
-              nativeBuildInputs = self.lib.filter (x: !self.lib.hasInfix "shellcheck" (self.lib.toLower (x.name or ""))) (old.nativeBuildInputs or [ ]);
-              checkPhase = ":";
-            });
+            writeShellApplication =
+              args:
+              (super.writeShellApplication args).overrideAttrs (old: {
+                nativeBuildInputs = self.lib.filter (
+                  x: !self.lib.hasInfix "shellcheck" (self.lib.toLower (x.name or ""))
+                ) (old.nativeBuildInputs or [ ]);
+                checkPhase = ":";
+              });
           })
         ];
       };
