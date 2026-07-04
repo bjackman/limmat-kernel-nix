@@ -34,6 +34,7 @@ CONFIG_MEMFD_CREATE=y
 CONFIG_MULTIUSER=y
 CONFIG_OVERLAY_FS=y
 CONFIG_PCI=y
+CONFIG_PCI_HOST_GENERIC=y
 CONFIG_POSIX_TIMERS=y
 CONFIG_PRINTK=y
 CONFIG_PROC_FS=y
@@ -82,7 +83,6 @@ CONFIG_VIRTIO_PCI=y
 # Without this, NixOS's autologin doesn't work (Might be that user login is
 # completely broken, haven't tested).
 CONFIG_TMPFS_POSIX_ACL=y
-
 
 # Some tests expect swap to exist. I couldn't get storage swap to work (no idea
 # why, just silently didn't set it up) so we're using zswap. That needs to be
