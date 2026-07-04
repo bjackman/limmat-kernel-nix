@@ -37,6 +37,7 @@
               });
           })
         ];
+        ${flake-utils.lib.system.aarch64-linux} = [ ];
       };
     in
     (flake-utils.lib.eachSystem (builtins.attrNames overlaysBySystem) (
@@ -121,6 +122,12 @@
             inherit limmatConfig;
             kernelSrc = kernel;
           };
+        }
+        // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          # Cross-compiled kselftests, to iterate on the cross build without
+          # booting a guest. pkgsCross inherits our overlay, so this is the same
+          # derivation the aarch64 guest gets.
+          kselftests-aarch64 = pkgs.pkgsCross.aarch64-multiplatform.kselftests;
         };
 
         devShells.kernel = pkgs.mkShell {
