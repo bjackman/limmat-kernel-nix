@@ -37,6 +37,7 @@
               });
           })
         ];
+        ${flake-utils.lib.system.aarch64-linux} = [ ];
       };
     in
     (flake-utils.lib.eachSystem (builtins.attrNames overlaysBySystem) (
