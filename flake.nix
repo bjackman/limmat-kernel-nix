@@ -44,7 +44,7 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = overlaysBySystem.${system};
+          overlays = overlaysBySystem.${system} ++ [ self.overlays.guest ];
         };
         limmat = inputs.limmat.packages."${system}".limmat-wrapped;
         limmatConfig = (
@@ -86,28 +86,13 @@
           };
           default = limmat-kernel;
 
-          # Version of kselftests built from the nixpkgs kernel.
-          kselftests = pkgs.callPackage ./kselftests.nix {
-            kernelSrc = kernel;
-          };
-          blktests = pkgs.callPackage ./blktests.nix {
-            inherit inputs;
-          };
-          # Little tool for running tests.
-          test-runner = pkgs.buildGoModule {
-            pname = "test-runner";
-            version = "0.1.0";
-            src = ./test-runner;
-            vendorHash = "sha256-BCgQzMak7ebugES9UxNshpiH9VK+er5cxKS2aV6ogso=";
-          };
-          # Tool plus a config to run some kernel tests.
-          ktests = pkgs.callPackage ./ktests.nix {
-            inherit blktests kselftests test-runner;
-          };
-          # Some experimental tools for stress-testing. This is different from
-          # ktests in that they run continuously so they never produce a "pass"
-          # signal.
-          kstresstests = pkgs.callPackage ./kstresstests.nix { };
+          inherit (pkgs)
+            kselftests
+            blktests
+            test-runner
+            ktests
+            kstresstests
+            ;
 
           lk-vm = pkgs.callPackage ./lk-vm {
             inherit self;
@@ -181,14 +166,27 @@
       }
     ))
     // {
-      # Packages intended for use in the lk-vm guest.
+      # Test packages, as an overlay so they build for whatever package set
+      # they're applied to (the per-system `pkgs` and the lk-vm guest). Building
+      # from `final` rather than pulling out of `self.packages.<system>` means a
+      # cross guest cross-compiles them instead of emulating a native build.
       overlays.guest = final: prev: {
-        inherit (self.packages.${prev.stdenv.hostPlatform.system})
-          ktests
-          kselftests
-          test-runner
-          kstresstests
-          ;
+        # Little tool for running tests.
+        test-runner = final.buildGoModule {
+          pname = "test-runner";
+          version = "0.1.0";
+          src = ./test-runner;
+          vendorHash = "sha256-BCgQzMak7ebugES9UxNshpiH9VK+er5cxKS2aV6ogso=";
+        };
+        # Version of kselftests built from the nixpkgs kernel.
+        kselftests = final.callPackage ./kselftests.nix { kernelSrc = kernel; };
+        blktests = final.callPackage ./blktests.nix { inherit inputs; };
+        # Some experimental tools for stress-testing. This is different from
+        # ktests in that they run continuously so they never produce a "pass"
+        # signal.
+        kstresstests = final.callPackage ./kstresstests.nix { };
+        # Tool plus a config to run some kernel tests.
+        ktests = final.callPackage ./ktests.nix { };
       };
     };
 }
