@@ -179,12 +179,7 @@
       # cross guest cross-compiles them instead of emulating a native build.
       overlays.guest = final: prev: {
         # Little tool for running tests.
-        test-runner = final.buildGoModule {
-          pname = "test-runner";
-          version = "0.1.0";
-          src = ./test-runner;
-          vendorHash = "sha256-BCgQzMak7ebugES9UxNshpiH9VK+er5cxKS2aV6ogso=";
-        };
+        test-runner = final.callPackage ./test-runner { };
         # Version of kselftests built from the nixpkgs kernel.
         kselftests = final.callPackage ./kselftests.nix { kernelSrc = kernel; };
         blktests = final.callPackage ./blktests.nix { inherit inputs; };
