@@ -16,7 +16,16 @@ let
   # kselftests. Assume that that will work on other systems too, although they
   # probably don't really.
   # TODO build the rest too
-  kselftestsTargets = if stdenv.hostPlatform.system == "i686-linux" then "x86" else "kvm mm x86";
+  kselftestsTargets =
+    if stdenv.hostPlatform.system == "i686-linux" then
+      [ "x86" ]
+    else
+      [
+        "kvm"
+        "mm"
+        "x86"
+      ];
+  targetsString = lib.concatStringsSep " " kselftestsTargets;
 in
 multiStdenv.mkDerivation {
   name = "kselftests";
@@ -51,7 +60,7 @@ multiStdenv.mkDerivation {
     make -j$NIX_BUILD_CORES headers
     # Need to set this in shell code, there's no way to pass flags with spaces
     # otherwise lmao i don fuken no m8 wo'eva
-    makeFlagsArray+=("TARGETS=${kselftestsTargets}")
+    makeFlagsArray+=("TARGETS=${targetsString}")
     # HACK: -I../ works around
     # https://lore.kernel.org/all/DFHI984SEFV3.2JL88CLHNT2SO@google.com/
     makeFlagsArray+=("EXTRA_CFLAGS=-Wno-error=unused-result -fomit-frame-pointer -I../")
