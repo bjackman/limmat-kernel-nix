@@ -7,7 +7,7 @@
 { pkgs, lib }:
 pkgs.runCommand "check-nix-format"
   {
-    nativeBuildInputs = [ pkgs.nixfmt-rfc-style ];
+    nativeBuildInputs = [ pkgs.nixfmt ];
     src = lib.fileset.toSource {
       root = ./.;
       fileset = lib.fileset.gitTracked ./.;
