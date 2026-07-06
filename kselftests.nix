@@ -41,7 +41,7 @@ multiStdenv.mkDerivation {
   configurePhase = ''
     make -j$NIX_BUILD_CORES defconfig
     scripts/config -e GUP_TEST
-    make olddefconfig
+    make -j$NIX_BUILD_CORES olddefconfig
     grep GUP_TEST .config
   '';
   preBuild = ''
