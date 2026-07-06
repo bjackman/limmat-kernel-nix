@@ -183,8 +183,18 @@ export QEMU_OPTS
 
 set +e
 "run-$HOSTNAME-vm" "$@"
-exit_code=$?
+qemu_exit_code=$?
+
+exit_code=$qemu_exit_code
 if "$KTESTS"; then
     echo "Ktests output: $KTESTS_OUTPUT_HOST"
+    if [[ -f "$KTESTS_OUTPUT_HOST/exit_code" ]]; then
+        exit_code=$(cat "$KTESTS_OUTPUT_HOST/exit_code")
+    else
+        echo "Error: ktests did not record an exit code (VM crash?)" >&2
+        if [[ $qemu_exit_code -eq 0 ]]; then
+            exit_code=1
+        fi
+    fi
 fi
 exit "$exit_code"

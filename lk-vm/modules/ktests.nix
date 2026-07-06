@@ -3,18 +3,10 @@
 { pkgs, ... }:
 let
   ktestsOutputDir = "/mnt/ktests-output";
-  # I/O port that will be used for the isa-debug-exit device. I don't know
-  # how arbitrary this value is, I got it from Gemini who I suspect is
-  # cargo-culting from https://os.phil-opp.com/testing/
-  qemuExitPortHex = "0xf4";
 in
 {
   virtualisation.vmVariant = {
     virtualisation = {
-      qemu.options = [
-        "-device"
-        "isa-debug-exit,iobase=${qemuExitPortHex},iosize=0x04"
-      ];
       sharedDirectories = {
         ktests-output = {
           source = "$KTESTS_OUTPUT_HOST";
@@ -36,12 +28,21 @@ in
       # Convert the KTESTS_ARGS to an array so it can be expanded
       # without glob expansion.
       IFS=' ' read -r -a args <<< "$KTESTS_ARGS"
-      # Writing the value v to the isa-debug-exit port will cause QEMU to
-      # immediately exit with the exit code `v << 1 | 1`.
+
+      # Here we used to use the isa-debug-exit device on x86, but for Arm you
+      # need a different mechanism. Claude proposed just switching to
+      # communicating the exit code via a file, shrug, fine I guess. If we want
+      # to go back to something more like the old method, see:
+      # https://github.com/rust-embedded/qemu-exit
+      # Swallow the test result into $status so the service always succeeds;
+      # onSuccess (below) then powers off in both the pass and fail case.
+      status=0
       ${pkgs.ktests}/bin/ktests \
         --junit-xml ${ktestsOutputDir}/junit.xml --log-dir ${ktestsOutputDir} \
-        "''${args[@]}" \
-        || ${pkgs.ioport}/bin/outb ${qemuExitPortHex} $(( $? - 1 ))
+        "''${args[@]}" || status=$?
+
+      echo "$status" > ${ktestsOutputDir}/exit_code
+      sync
     '';
     serviceConfig = {
       Type = "oneshot";
