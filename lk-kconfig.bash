@@ -1,30 +1,7 @@
 AVAIL_FRAGS=$(find "$LK_KCONFIG_FRAGMENTS_DIR/" -type f -printf '%P ')
 
-get_default_frags() {
-    local arch="$1"
-    case "$arch" in
-        x86_64)
-            echo "base vm-boot x86 x86_64"
-            ;;
-        i386)
-            echo "base vm-boot x86 i386"
-            ;;
-        arm64)
-            echo "base vm-boot arm64"
-            ;;
-        *)
-            echo "Unsupported architecture: $arch" >&2
-            return 1
-            ;;
-    esac
-    return 0
-}
-
-# Determine defaults up front
+DEFAULT_FRAG_NAMES="base vm-boot"
 DEFAULT_ARCH="${ARCH:-$(uname -m)}"
-if ! DEFAULT_FRAG_NAMES=$(get_default_frags "$DEFAULT_ARCH"); then
-    exit 1
-fi
 
 # Initialize vars that might be overridden
 ARCH_ARG=""
@@ -43,15 +20,29 @@ actually set all the configs you meant to.
 
 Options:
     -f, --frags FRAGS    Space-separated list of kconfig fragments to merge.
-                         Available fragments are: $AVAIL_FRAGS
-                         You can view their contents in $LK_KCONFIG_FRAGMENTS_DIR
-                         You can pass a directory like kselftests to enable all
-                         fragments in that directory.
-                         Default: $DEFAULT_FRAG_NAMES
+                         See "Fragments" below. Default: $DEFAULT_FRAG_NAMES
     -e, --enable CONFIG  Space-separated list of extra configs to enable.
                          You can omit the CONFIG_ prefix.
-    -a, --arch ARCH      Target architecture (defaults to \$ARCH, falls back to $DEFAULT_ARCH).
+    -a, --arch ARCH      Target architecture: x86_64, i386 or arm64.
+                         Defaults to \$ARCH, else $DEFAULT_ARCH.
     -h, --help           Display this help message and exit.
+
+Fragments:
+    A fragment is a file (kconfigs/<name>) or a directory (kconfigs/<name>/...).
+    Naming a directory merges every file under it, except files named for an
+    architecture, which are only merged when building a matching --arch:
+        x86     x86_64 and i386
+        x86_64  x86_64
+        i386    i386
+        arm64   arm64
+        64bit   x86_64 and arm64
+    Any other filename (e.g. "common") is merged for all arches. This lets a
+    feature fragment like base or kselftests carry per-arch config without the
+    caller knowing the arch. You can also name a sub-file directly, e.g.
+    base/common.
+
+    Available fragments (contents in $LK_KCONFIG_FRAGMENTS_DIR):
+        $AVAIL_FRAGS
 
 EOF
 }
@@ -103,16 +94,21 @@ if [ $# -ne 0 ]; then
 fi
 
 ARCH="${ARCH_ARG:-$DEFAULT_ARCH}"
-if ! get_default_frags "$ARCH" >/dev/null; then
-    exit 1
-fi
+case "$ARCH" in
+    x86_64 | i386 | arm64) ;;
+    *)
+        echo "Unsupported architecture: $ARCH" >&2
+        exit 1
+        ;;
+esac
 export ARCH
 
-# If FRAG_NAMES was not overridden, use default (adjusted for final arch if needed)
+# If --frags wasn't given, use the defaults.
 if [[ -z "$FRAG_NAMES" ]]; then
-    FRAG_NAMES=$(get_default_frags "$ARCH")
+    FRAG_NAMES="$DEFAULT_FRAG_NAMES"
 fi
 
+# Whether an arch-named fragment applies to $ARCH; see --help for the table.
 is_frag_compatible() {
     local frag_path="$1"
     local frag_name
@@ -130,6 +126,9 @@ is_frag_compatible() {
             ;;
         arm64)
             [[ "$ARCH" == "arm64" ]] && return 0
+            ;;
+        64bit)
+            [[ "$ARCH" == "x86_64" || "$ARCH" == "arm64" ]] && return 0
             ;;
         *)
             # Common fragment

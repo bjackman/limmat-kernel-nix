@@ -51,8 +51,11 @@ lk-kconfig
 You can also customize the fragments, for example:
 
 ```sh
-lk-kconfig --frags "x86 x86_64 base vm-boot"
+lk-kconfig --frags "base vm-boot"
 ```
+
+See `lk-kconfig --help` for the available fragments and how per-arch fragment
+selection works.
 
 Now build your kernel (e.g. `make -sj100 bzImage`).
 

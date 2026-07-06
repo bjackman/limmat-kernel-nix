@@ -1,0 +1,14 @@
+# Debug options we only enable on 64-bit builds. These were historically
+# excluded from i386 (the old debug_i386 fragment); OBJTOOL in particular
+# doesn't build cleanly on 32-bit x86.
+CONFIG_DEBUG_BUGVERBOSE=y
+CONFIG_PRINTK_CALLER=y
+CONFIG_PRINTK_TIME=y
+CONFIG_SYMBOLIC_ERRNAME=y
+
+CONFIG_PAGE_EXTENSION=y
+CONFIG_PAGE_OWNER=y
+
+CONFIG_BUG_ON_DATA_CORRUPTION=y
+
+CONFIG_OBJTOOL=y

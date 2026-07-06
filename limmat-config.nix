@@ -222,7 +222,10 @@ in
         (
           mkBuild {
             name = "32";
-            configFrags = [ "base" ];
+            # Deliberately ultra-minimal (shouldn't even enable 64bit), so name
+            # base/common directly rather than the whole base/ dir (which would
+            # pull in the x86/i386 arch fragments).
+            configFrags = [ "base/common" ];
             arch = "i386";
           }
           // {
@@ -233,7 +236,6 @@ in
         (mkBuild {
           name = "ksft";
           configFrags = [
-            "x86"
             "base"
             "compile"
             "mem-hotplug"
@@ -246,7 +248,6 @@ in
           mkBuild {
             name = "mods";
             configFrags = [
-              "x86"
               "base"
               "compile_modules"
             ];
@@ -259,7 +260,6 @@ in
           name = "asi";
           ifContains = "CONFIG_MITIGATION_ADDRESS_SPACE_ISOLATION";
           configFrags = [
-            "x86"
             "base"
             "compile"
             "vm-boot"
