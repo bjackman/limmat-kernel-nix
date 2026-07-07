@@ -1,18 +1,21 @@
 {
   pkgs,
-  config,
   lib,
-  self,
+  hostPkgs,
+  testPkgs,
   ...
 }:
 {
   imports = [ ./ktests.nix ];
 
-  nixpkgs.overlays = [ self.overlays.guest ];
-  networking.hostName = "testvm";
+  networking.hostName = lib.mkDefault "testvm";
+  # The VM runs under the host's QEMU. For a cross/emulated guest (e.g. arm64 on
+  # x86_64) the guest's own QEMU would itself need emulating, so always use the
+  # host's.
   virtualisation.vmVariant = {
     virtualisation = {
       graphics = false;
+      qemu.package = hostPkgs.qemu;
       # Tell the VM runner script that it should mount a directory on the
       # host, named in the environment variable, to /mnt/kernel. That
       # variable must point to a directory. This is coupled with the script
@@ -32,6 +35,9 @@
     };
   };
   system.stateVersion = "25.05";
+  # The VM boots the kernel directly via QEMU, so there's no bootloader; disable
+  # grub to avoid pulling it into the closure / arch-specific bootloader defaults.
+  boot.loader.grub.enable = false;
   services.getty.autologinUser = "root";
   boot.kernelParams = [
     "nokaslr"
@@ -86,11 +92,13 @@
   nix.settings.require-sigs = false;
   nix.enable = false;
 
-  environment.systemPackages = with pkgs; [
-    ktests
-    kselftests
-    kstresstests
-    # Other stuff is defined directly in the 64bit config, to avoid having
+  environment.systemPackages = [
+    # Test packages come from testPkgs (cross-compiled for a non-host guest;
+    # see lk-vm/default.nix), not the guest's own package set.
+    testPkgs.ktests
+    testPkgs.kselftests
+    testPkgs.kstresstests
+    # Other stuff is defined directly in the per-arch configs, to avoid having
     # to compile for 32-bit runs.
 
     # Because blktests really needs modprobe to work, replace modprobe

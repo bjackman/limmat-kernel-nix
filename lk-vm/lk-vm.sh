@@ -6,7 +6,10 @@ Usage: $(basename "$0") [OPTIONS]
 Options:
     -t, --tree TREE      Optional path to a kernel tree.
     -k, --kernel PATH    Specify the path to the kernel image. If you set
-                        --tree, defaults to the x86 bzImage in that treee.
+                        --tree, defaults to the image for --arch in that tree
+                        (arch/x86/boot/bzImage or arch/arm64/boot/Image).
+    -a, --arch ARCH      Guest architecture: x86_64, i686, or arm64. Defaults to
+                        the arch of the launcher (see 'nix run .#lk-vm.<arch>').
     --nixos-kernel       Use the kernel from nixpkgs. Incompatible with --tree
                          --and --kernel.
     -c, --cmdline ARGS   Args to append to kernel cmdline. Single string.
@@ -48,9 +51,17 @@ USE_NIXOS_KERNEL=false
 KTESTS_ARGS=("--bail-on-failure" "*")
 KTESTS_OUTPUT_HOST=
 
+# Default arch comes from the launcher (TARGET_SYSTEM is baked in per package,
+# see lk-vm/default.nix); --arch overrides it.
+case "${TARGET_SYSTEM:-}" in
+    aarch64-linux) ARCH=arm64 ;;
+    i686-linux) ARCH=i686 ;;
+    *) ARCH=x86_64 ;;
+esac
+
 PARSED_ARGUMENTS=$(
-    getopt -o t:k:c:dq:s::o:bh \
-    --long tree:,kernel:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help,vsock-cid:,nixos-kernel -- "$@")
+    getopt -o t:k:a:c:dq:s::o:bh \
+    --long tree:,kernel:,arch:,cmdline:,qemu-args:,debug,ktests::,ktests-output:,shutdown,help,vsock-cid:,nixos-kernel -- "$@")
 
 # shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
@@ -68,6 +79,10 @@ while true; do
             ;;
         -t|--tree)
             KERNEL_TREE="$2"
+            shift 2
+            ;;
+        -a|--arch)
+            ARCH="$2"
             shift 2
             ;;
         --nixos-kernel)
@@ -92,7 +107,7 @@ while true; do
         -s|--ktests)
             KTESTS=true
             if [[ -n "$2" ]]; then
-            # Split the args into an/tmp/limmat-output-RolnKx array. This lets us expand it into args
+            # Split the args into an array. This lets us expand it into args
             # later without glob expansion happening.
             IFS=' ' read -r -a KTESTS_ARGS <<< "$2"
             fi
@@ -125,9 +140,33 @@ while true; do
     esac
 done
 
+# Resolve the arch into the guest hostname (which selects the runner) and the
+# in-tree kernel image path. HOSTNAME must match hostnameFor in
+# lk-vm/default.nix.
+case "$ARCH" in
+    x86_64)
+        HOSTNAME="testvm_x86_64"
+        KERNEL_IMAGE="arch/x86/boot/bzImage"
+        ;;
+    i686|i386)
+        ARCH="i686"
+        HOSTNAME="testvm_i686"
+        KERNEL_IMAGE="arch/x86/boot/bzImage"
+        ;;
+    arm64|aarch64)
+        ARCH="arm64"
+        HOSTNAME="testvm_aarch64"
+        KERNEL_IMAGE="arch/arm64/boot/Image"
+        ;;
+    *)
+        echo "Unsupported architecture: $ARCH" >&2
+        exit 1
+        ;;
+esac
+
 if ! "$USE_NIXOS_KERNEL"; then
     if [[ -z "$KERNEL_PATH" && -n "$KERNEL_TREE" ]]; then
-        KERNEL_PATH="$KERNEL_TREE"/arch/x86/boot/bzImage
+        KERNEL_PATH="$KERNEL_TREE/$KERNEL_IMAGE"
     fi
     if [[ -z "$KERNEL_PATH" ]]; then
         echo "Must set --kernel, --tree, or --nixos-kernel."

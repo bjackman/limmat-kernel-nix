@@ -1,6 +1,16 @@
-# This defines a script that runs a minimal NixOS VM with the kernel bzImage you
+# This defines a script that runs a minimal NixOS VM with the kernel image you
 # pass as an argument. Use lk-kconfig to configure the kernel so that it's
 # compatible with this hypervisor.
+#
+# A guest for a non-host arch (e.g. arm64 on an x86_64 host) runs under the
+# host's QEMU (TCG emulation). The guest OS is a *native* build for the target,
+# so it comes from the binary cache rather than being cross-compiled or built
+# under emulation. A consequence is that the guest's VM runner script is a
+# target-arch executable, so `lk-vm --arch arm64` needs binfmt registered for
+# the target on the host (boot.binfmt.emulatedSystems = [ "aarch64-linux" ]).
+# The test packages are built from this repo's kernel source and so can't come
+# from a cache; those we cross-compile (via the guest overlay on a cross
+# package set) instead of emulating.
 {
   pkgs,
   stdenv,
@@ -9,55 +19,103 @@
   i686Pkgs,
 }:
 let
+  inherit (self.inputs.nixpkgs.lib) nixosSystem;
   hostPkgs = pkgs;
-  # Config to run on the host's native architecture (default)
-  hostConfig = self.inputs.nixpkgs.lib.nixosSystem {
-    inherit pkgs;
-    modules = [
-      ./modules/base.nix
-      ./modules/${stdenv.hostPlatform.system}.nix
-      { _module.args = { inherit self hostPkgs; }; }
-    ];
-  };
-  # Config to run on 32-bit x86
-  i686Config = self.inputs.nixpkgs.lib.nixosSystem {
-    pkgs = i686Pkgs;
-    modules = [
-      ./modules/base.nix
-      ./modules/i686-linux.nix
-      { _module.args = { inherit self hostPkgs; }; }
-    ];
-  };
-  # Takes the result of a nixosSystem call and produces the executable.
+  hostSystem = stdenv.hostPlatform.system;
+
+  # e.g. "aarch64-linux" -> "testvm_aarch64". Coupled with the arch handling in
+  # lk-vm.sh, which dispatches to run-<hostname>-vm.
+  hostnameFor = targetSystem: "testvm_" + lib.removeSuffix "-linux" targetSystem;
+
+  # Native package set for the guest OS itself. arm64 substitutes from the
+  # cache; i686 isn't cached by NixOS so it gets compiled locally.
+  guestOsPkgs =
+    targetSystem:
+    if targetSystem == hostSystem then
+      pkgs
+    else if targetSystem == "i686-linux" then
+      i686Pkgs
+    else
+      import self.inputs.nixpkgs { system = targetSystem; };
+
+  # Test packages for the guest, built from the host toolchain. For a different
+  # arch these are cross-compiled by applying the guest overlay to a cross
+  # package set (see the header comment); for the host arch they already exist
+  # in `pkgs`.
+  guestTestPkgs =
+    targetSystem:
+    if targetSystem == hostSystem then
+      pkgs
+    else if targetSystem == "i686-linux" then
+      i686Pkgs.extend self.overlays.guest
+    else
+      import self.inputs.nixpkgs {
+        localSystem = hostSystem;
+        crossSystem = targetSystem;
+        overlays = [ self.overlays.guest ];
+      };
+
+  mkConfig =
+    targetSystem:
+    nixosSystem {
+      pkgs = guestOsPkgs targetSystem;
+      modules = [
+        ./modules/base.nix
+        ./modules/${targetSystem}.nix
+        {
+          networking.hostName = hostnameFor targetSystem;
+          _module.args = {
+            inherit self hostPkgs;
+            testPkgs = guestTestPkgs targetSystem;
+          };
+        }
+      ];
+    };
+
+  hostConfig = mkConfig hostSystem;
+  i686Config = mkConfig "i686-linux";
+  aarch64Config = mkConfig "aarch64-linux";
+
+  # Build the lk-vm launcher wrapping one or more guest configs. lk-vm.sh
+  # dispatches to run-<hostname>-vm based on --arch, so every guest we want to
+  # be able to boot needs its runner on PATH. `default` is the target system
+  # used when --arch isn't given.
   mkPkg =
-    config:
-    let
-      # nixosRunner is the "official" entry point for running NixOS as a QEMU guest,
-      # we'll wrap this into a custom runner that supports overriding the kernel etc
-      # at runtime.
-      nixosRunner = config.config.system.build.vm;
-    in
+    {
+      default,
+      configs,
+    }:
     pkgs.writeShellApplication {
       name = "lk-vm";
-      runtimeInputs = [
-        nixosRunner
-        pkgs.getopt
-      ];
-      runtimeEnv.HOSTNAME = config.config.networking.hostName;
+      runtimeInputs = [ pkgs.getopt ] ++ map (c: c.config.system.build.vm) configs;
+      runtimeEnv.TARGET_SYSTEM = default;
       text = builtins.readFile ./lk-vm.sh;
     };
 in
-# Main output is the result built for the host platform i.e. probably
-# x86_64-linux.
-(mkPkg hostConfig)
+# The default launcher covers the host arch plus arm64 (which emulates without a
+# big local build). i686 is a separate output because NixOS doesn't cache it, so
+# bundling it would mean compiling a whole 32-bit system just to get the rest.
+(mkPkg {
+  default = hostSystem;
+  configs = [
+    hostConfig
+    aarch64Config
+  ];
+})
 // {
-  # Also hang the configs on the result as with passthru so they can be
-  # inspected with nix eval etc.
-  inherit hostConfig i686Config;
-  # And then this version provides the 32-bit version if needed.
-  # Obviously it would be preferable and totally possible to just have the
-  # main executable have a --arch flag or whatever. But, that would make it
-  # depend on the 32-bit system, which is not cached by NixOS, so basically
-  # you'd have to compile a 32-bit system in order to use the 64-bit system.
-  i686 = mkPkg i686Config;
+  # Hang the configs on the result as passthru so they can be inspected with
+  # nix eval etc.
+  inherit hostConfig i686Config aarch64Config;
+  x86_64 = mkPkg {
+    default = "x86_64-linux";
+    configs = [ hostConfig ];
+  };
+  i686 = mkPkg {
+    default = "i686-linux";
+    configs = [ i686Config ];
+  };
+  aarch64 = mkPkg {
+    default = "aarch64-linux";
+    configs = [ aarch64Config ];
+  };
 }
