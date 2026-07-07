@@ -1,6 +1,6 @@
 # This module defines the stuff for running tests automatically via systemd,
 # it is coupled to lk-vm.sh.
-{ pkgs, ... }:
+{ testPkgs, ... }:
 let
   ktestsOutputDir = "/mnt/ktests-output";
 in
@@ -37,7 +37,7 @@ in
       # Swallow the test result into $status so the service always succeeds;
       # onSuccess (below) then powers off in both the pass and fail case.
       status=0
-      ${pkgs.ktests}/bin/ktests \
+      ${testPkgs.ktests}/bin/ktests \
         --junit-xml ${ktestsOutputDir}/junit.xml --log-dir ${ktestsOutputDir} \
         "''${args[@]}" || status=$?
 

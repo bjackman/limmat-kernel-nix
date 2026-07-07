@@ -163,6 +163,29 @@ i386:x86-64` before the `target remote localhost:1234` will work. However this
 seems to be unstable, I've been able to set breakpoints and step through the
 execution but I can't read memory.
 
+#### Boot an Arm64 VM
+
+Configure and cross-compile the kernel (the `devShell` has the aarch64
+toolchain), then boot it with `--arch arm64`:
+
+```sh
+lk-kconfig --arch arm64
+make ARCH=arm64 CROSS_COMPILE=aarch64-unknown-linux-gnu- -sj"$(nproc)" Image
+lk-vm --tree . --arch arm64
+```
+
+The default `lk-vm` supports `--arch` (as does `nix run <this repo>#lk-vm.aarch64`).
+
+The guest runs under the host's QEMU via TCG, so it's slow — but nothing is
+built under emulation: the guest OS is a native aarch64 build pulled from the
+binary cache, and the test packages (kselftests etc.) are cross-compiled.
+Because the guest OS is native to the target, its VM runner script is an aarch64
+executable, so booting it needs binfmt for aarch64 registered on the host:
+
+```nix
+boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+```
+
 ### Run KUnit tests
 
 The devShell should have everything set up to run KUnit tests. To run under
