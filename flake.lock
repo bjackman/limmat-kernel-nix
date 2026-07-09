@@ -3,11 +3,11 @@
     "blktests": {
       "flake": false,
       "locked": {
-        "lastModified": 1783297159,
-        "narHash": "sha256-GBMAzMToF8x24+JjS1FoSZtxparWavczcRP7vCLqVgU=",
+        "lastModified": 1783512811,
+        "narHash": "sha256-NXBj3lBLe/UQrtf4aSHeGneri8Dv7SXILLGXh8HcqG4=",
         "owner": "linux-blktests",
         "repo": "blktests",
-        "rev": "10f78d6a7ad01058ce4b3d67a9c1d66ebbaf8095",
+        "rev": "c542bafd7b2cc52cb6e6826e2e7ace3b9d148e27",
         "type": "github"
       },
       "original": {
