@@ -78,11 +78,11 @@
     "kernel": {
       "flake": false,
       "locked": {
-        "lastModified": 1783389096,
-        "narHash": "sha256-MTKLiDav2wGe/wsZKu7RzqkRkprayD/HiSQOJsBd4Jk=",
+        "lastModified": 1783639856,
+        "narHash": "sha256-0ldz6VDXG9gXbHQR8hPkBhY2m7qs7oUlP4RHswRr9aI=",
         "owner": "torvalds",
         "repo": "linux",
-        "rev": "0e35b9b6ec0ffcc5e23cbdec09f5c622ad532b53",
+        "rev": "a635d6748234582ea287c5ffeae28b9b23f91c7e",
         "type": "github"
       },
       "original": {
