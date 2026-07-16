@@ -160,6 +160,7 @@
               # Add clangd - don't yet support actually building with LLVM but
               # clangd is (mostly) compatible with GCC luckily.
               clang-tools
+              mergiraf
             ])
             ++ (with self.packages."${system}"; [
               lk-vm
