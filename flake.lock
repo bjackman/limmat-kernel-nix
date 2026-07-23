@@ -3,11 +3,11 @@
     "blktests": {
       "flake": false,
       "locked": {
-        "lastModified": 1783770818,
-        "narHash": "sha256-YpHQNgfza6xmEtAvc39QFNDLliR602gZ5lsmkQ9Xmj8=",
+        "lastModified": 1784765134,
+        "narHash": "sha256-pPEuRwGdvileTo83EvD2lnWjNIaUBKhXdGiw7n/KHeY=",
         "owner": "linux-blktests",
         "repo": "blktests",
-        "rev": "555fa9a71803f9666b215a6b0b62bb789b056557",
+        "rev": "16c72b4d29874ce2a29cf886fa8c52a6e3d46bcc",
         "type": "github"
       },
       "original": {
@@ -78,11 +78,11 @@
     "kernel": {
       "flake": false,
       "locked": {
-        "lastModified": 1784648079,
-        "narHash": "sha256-syKOwIc3lrdRCAF4JKxLlnlokbR2tTTo4IMrS1Q22G0=",
+        "lastModified": 1784745500,
+        "narHash": "sha256-80dEKhpFmeERJg5ZSjw/SSmIZhOl04EwsT9ws1HKiMU=",
         "owner": "torvalds",
         "repo": "linux",
-        "rev": "248951ddc14de84de3910f9b13f51491a8cd91df",
+        "rev": "4539944e515183668109bdf4d0c3d7d228383d88",
         "type": "github"
       },
       "original": {
