@@ -24,19 +24,9 @@
     let
       overlaysBySystem = {
         ${flake-utils.lib.system.x86_64-linux} = [ ];
-        ${flake-utils.lib.system.i686-linux} = [
-          # Disable ShellCheck so we don't have to compile GHC.
-          (self: super: {
-            writeShellApplication =
-              args:
-              (super.writeShellApplication args).overrideAttrs (old: {
-                nativeBuildInputs = self.lib.filter (
-                  x: !self.lib.hasInfix "shellcheck" (self.lib.toLower (x.name or ""))
-                ) (old.nativeBuildInputs or [ ]);
-                checkPhase = ":";
-              });
-          })
-        ];
+        # Shellcheck is a Haskell program, 32-bit builds aren't cached, we don't
+        # want to compile a Haskell toolchain.
+        ${flake-utils.lib.system.i686-linux} = [ self.overlays.noShellcheck ];
         ${flake-utils.lib.system.aarch64-linux} = [ ];
       };
     in
@@ -174,6 +164,19 @@
       }
     ))
     // {
+      # Modify the writeShellApplication helper to replace its checkPhase (which
+      # normally calls shellcheck) with a nop.
+      overlays.noShellcheck = final: prev: {
+        writeShellApplication =
+          args:
+          (prev.writeShellApplication args).overrideAttrs (old: {
+            nativeBuildInputs = final.lib.filter (
+              x: !final.lib.hasInfix "shellcheck" (final.lib.toLower (x.name or ""))
+            ) (old.nativeBuildInputs or [ ]);
+            checkPhase = ":";
+          });
+      };
+
       # Test packages, as an overlay so they build for whatever package set
       # they're applied to (the per-system `pkgs` and the lk-vm guest). Building
       # from `final` rather than pulling out of `self.packages.<system>` means a
