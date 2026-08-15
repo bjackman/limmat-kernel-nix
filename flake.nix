@@ -33,9 +33,27 @@
     (flake-utils.lib.eachSystem (builtins.attrNames overlaysBySystem) (
       system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = overlaysBySystem.${system} ++ [ self.overlays.guest ];
+        # Every nixpkgs instantiation in this flake happens here. Package sets
+        # are native for their system, so they substitute from the cache; a
+        # guest of another arch gets its OS and most of its test packages from
+        # here (see guestCrossPkgs for the exceptions).
+        guestPkgs = nixpkgs.lib.genAttrs (builtins.attrNames overlaysBySystem) (
+          targetSystem:
+          import nixpkgs {
+            system = targetSystem;
+            overlays = overlaysBySystem.${targetSystem} ++ [ self.overlays.guest ];
+          }
+        );
+        pkgs = guestPkgs.${system};
+
+        # Cross-compiled package sets, keyed by target system. Only for the
+        # guest packages built from sources no cache can know about (the kernel
+        # input, this repo); cross-compiling those beats emulating them.
+        # Everything else must come from guestPkgs: cross-compiling a package
+        # means cross-compiling its whole dependency closure, and no cache has
+        # cross builds.
+        guestCrossPkgs = {
+          aarch64-linux = pkgs.pkgsCross.aarch64-multiplatform;
         };
         limmat = inputs.limmat.packages."${system}".limmat-wrapped;
         limmatConfig = (
@@ -86,11 +104,7 @@
             ;
 
           lk-vm = pkgs.callPackage ./lk-vm {
-            inherit self;
-            i686Pkgs = import nixpkgs {
-              system = "i686-linux";
-              overlays = overlaysBySystem."i686-linux";
-            };
+            inherit self guestPkgs guestCrossPkgs;
           };
           lk-kconfig = pkgs.callPackage ./lk-kconfig.nix { };
 
@@ -115,9 +129,9 @@
         }
         // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
           # Cross-compiled kselftests, to iterate on the cross build without
-          # booting a guest. pkgsCross inherits our overlay, so this is the same
-          # derivation the aarch64 guest gets.
-          kselftests-aarch64 = pkgs.pkgsCross.aarch64-multiplatform.kselftests;
+          # booting a guest. Same package set the aarch64 guest uses, so this is
+          # the same derivation.
+          kselftests-aarch64 = guestCrossPkgs.aarch64-linux.kselftests;
         };
 
         devShells.kernel = pkgs.mkShell {
@@ -178,9 +192,9 @@
       };
 
       # Test packages, as an overlay so they build for whatever package set
-      # they're applied to (the per-system `pkgs` and the lk-vm guest). Building
-      # from `final` rather than pulling out of `self.packages.<system>` means a
-      # cross guest cross-compiles them instead of emulating a native build.
+      # they're applied to (the per-system `pkgs` and the lk-vm guests). Building
+      # from `final` rather than pulling out of `self.packages.<system>` means
+      # each package set builds its own, for its own platform.
       overlays.guest = final: prev: {
         # Little tool for running tests.
         test-runner = final.callPackage ./test-runner { };

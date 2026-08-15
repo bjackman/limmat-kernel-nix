@@ -8,15 +8,20 @@
 # under emulation. A consequence is that the guest's VM runner script is a
 # target-arch executable, so `lk-vm --arch arm64` needs binfmt registered for
 # the target on the host (boot.binfmt.emulatedSystems = [ "aarch64-linux" ]).
-# The test packages are built from this repo's kernel source and so can't come
-# from a cache; those we cross-compile (via the guest overlay on a cross
-# package set) instead of emulating.
+# The test packages that are built from sources no cache can know about (the
+# flake's kernel input, this repo) we cross-compile instead of emulating; the
+# rest are built natively so their dependencies substitute. See flake.nix,
+# which instantiates all the package sets.
 {
   pkgs,
   stdenv,
   lib,
   self,
-  i686Pkgs,
+  # Package sets, instantiated by the flake. guestPkgs is keyed by target
+  # system; guestCrossPkgs is keyed by the subset of those we cross-compile a
+  # few packages for.
+  guestPkgs,
+  guestCrossPkgs,
 }:
 let
   inherit (self.inputs.nixpkgs.lib) nixosSystem;
@@ -27,38 +32,24 @@ let
   # lk-vm.sh, which dispatches to run-<hostname>-vm.
   hostnameFor = targetSystem: "testvm_" + lib.removeSuffix "-linux" targetSystem;
 
-  # Native package set for the guest OS itself. arm64 substitutes from the
-  # cache; i686 isn't cached by NixOS so it gets compiled locally.
-  guestOsPkgs =
-    targetSystem:
-    if targetSystem == hostSystem then
-      pkgs
-    else if targetSystem == "i686-linux" then
-      i686Pkgs
-    else
-      import self.inputs.nixpkgs { system = targetSystem; };
-
-  # Test packages for the guest, built from the host toolchain. For a different
-  # arch these are cross-compiled by applying the guest overlay to a cross
-  # package set (see the header comment); for the host arch they already exist
-  # in `pkgs`.
+  # Test packages for the guest. These are the native ones, except that for a
+  # guest of another arch we take the packages built from sources no cache can
+  # know about from the cross set instead - building those is unavoidable, and
+  # cross-compiling beats emulating.
   guestTestPkgs =
     targetSystem:
-    if targetSystem == hostSystem then
-      pkgs
-    else if targetSystem == "i686-linux" then
-      i686Pkgs.extend self.overlays.guest
+    let
+      crossPkgs = guestCrossPkgs.${targetSystem} or null;
+    in
+    if targetSystem == hostSystem || crossPkgs == null then
+      guestPkgs.${targetSystem}
     else
-      import self.inputs.nixpkgs {
-        localSystem = hostSystem;
-        crossSystem = targetSystem;
-        overlays = [ self.overlays.guest ];
-      };
+      guestPkgs.${targetSystem}.extend (final: prev: { inherit (crossPkgs) kselftests test-runner; });
 
   mkConfig =
     targetSystem:
     nixosSystem {
-      pkgs = guestOsPkgs targetSystem;
+      pkgs = guestPkgs.${targetSystem};
       modules = [
         ./modules/base.nix
         ./modules/${targetSystem}.nix
