@@ -10,6 +10,19 @@
 
   # Explicit args.
   kernelSrc,
+
+  # Where to get the stock nixpkgs dependencies from - the libraries the tests
+  # link against and the programs they need on the target's PATH. Only the
+  # toolchain (stdenv) and the kernel source really have to come from `pkgs`.
+  # Defaults to `pkgs`, but when cross-compiling the caller should pass a
+  # *native* package set for the target: those substitute from the cache,
+  # whereas cross-compiling any of them means cross-compiling everything they
+  # depend on. Note this does mean a cross-built test binary loads libraries
+  # built against a different *build* of glibc than the one it links itself
+  # (the cross set's). They're the same version from the same nixpkgs, so the
+  # symbol versions match and the loader resolves libc.so.6 once, from the
+  # binary's own RPATH.
+  targetPkgs ? pkgs,
 }:
 let
   isX86_64 = stdenv.hostPlatform.system == "x86_64-linux";
@@ -47,7 +60,7 @@ buildStdenv.mkDerivation {
     rsync
     makeWrapper
   ];
-  buildInputs = with pkgs; [
+  buildInputs = with targetPkgs; [
     libcap
     numactl
     binutils # For addr2line, see wrapProgram call
@@ -127,7 +140,7 @@ buildStdenv.mkDerivation {
 
   postInstall =
     let
-      deps = with pkgs; [
+      deps = with targetPkgs; [
         # So that this can be run as a systemd service (where we don't inherit the
         # user's PATH), be very exhaustive about dependencies.
         which

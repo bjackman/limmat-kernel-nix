@@ -53,7 +53,17 @@
         # means cross-compiling its whole dependency closure, and no cache has
         # cross builds.
         guestCrossPkgs = {
-          aarch64-linux = pkgs.pkgsCross.aarch64-multiplatform;
+          aarch64-linux = pkgs.pkgsCross.aarch64-multiplatform.extend (
+            final: prev: {
+              # Cross-compile the selftests themselves, but take their
+              # dependencies from the native set, where they substitute.
+              # Otherwise each one drags its own closure into the cross build:
+              # libcap alone costs pam -> audit -> gawk plus
+              # systemd/util-linux/sqlite/tcl, and bash costs readline and
+              # ncurses.
+              kselftests = prev.kselftests.override { targetPkgs = guestPkgs.aarch64-linux; };
+            }
+          );
         };
         limmat = inputs.limmat.packages."${system}".limmat-wrapped;
         limmatConfig = (
