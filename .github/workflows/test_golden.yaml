@@ -8,7 +8,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
+    # lk-vm bundles a native aarch64 guest; a few per-config derivations
+    # (etc-fstab etc.) can't substitute and must be built under emulation. This
+    # mirrors boot.binfmt.emulatedSystems on the dev machines. The image
+    # registers the handlers with the F (fix binary) flag, so the interpreter is
+    # still reachable inside the Nix build sandbox.
+    - uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
     - uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: extra-platforms = aarch64-linux
     - uses: DeterminateSystems/magic-nix-cache-action@main
       with:
         use-flakehub: false
