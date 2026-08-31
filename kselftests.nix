@@ -63,6 +63,7 @@ buildStdenv.mkDerivation {
   buildInputs = with targetPkgs; [
     libcap
     numactl
+    libuuid
     binutils # For addr2line, see wrapProgram call
     bash # so `patchShebangs --host` can find the target bash
   ];
