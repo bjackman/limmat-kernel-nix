@@ -98,11 +98,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1782116253,
-        "narHash": "sha256-14nUcioflN2Y9lBG2L0rLuRc3+t+owF8f2yc5UUq6xI=",
+        "lastModified": 1788731536,
+        "narHash": "sha256-YvNC+Bx0d6BjfZrHUkrBTD2Y+Aud5eN7KesWx6fQD2M=",
         "owner": "bjackman",
         "repo": "limmat",
-        "rev": "9c49a12e11c4c727c92cb830fa9697808af10d1b",
+        "rev": "02409efdec745327cd8ea179364c4e21aec240ca",
         "type": "github"
       },
       "original": {
@@ -120,11 +120,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1763384566,
-        "narHash": "sha256-r+wgI+WvNaSdxQmqaM58lVNvJYJ16zoq+tKN20cLst4=",
+        "lastModified": 1782220280,
+        "narHash": "sha256-thLTFbp9D5Qknmh8q/v4FRpLGphUSijT3E86cbLYTXo=",
         "owner": "nix-community",
         "repo": "naersk",
-        "rev": "d4155d6ebb70fbe2314959842f744aa7cabbbf6a",
+        "rev": "9aa07bb0256d300219b30622d2454e85f7f3667e",
         "type": "github"
       },
       "original": {
