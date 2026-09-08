@@ -126,6 +126,14 @@ let
         # Disable) protection: active" (requires PAE). Seems bad but no time to
         # debug it.
         nx_stack_32 = [ "lk-broken" ];
+        # Under ptrace, out-of-range x32 syscall numbers leave the tracer's
+        # return value in place instead of getting -ENOSYS:
+        #   [FAIL] x32 syscall 0:-64 returned -9999, but it should have
+        #          returned -ENOSYS
+        # Appeared with the 7.3 merge window, looks like a real kernel bug
+        # rather than something about our setup, but it needs bisecting.
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/34062399874
+        syscall_numbering_64.tags = [ "lk-broken" ];
       };
     };
 
