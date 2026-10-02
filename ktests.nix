@@ -114,6 +114,10 @@ let
         tsc_scaling_test.tags = [ "flaky" ];
         # Failed once when running locally
         apic_bus_clock_test.tags = [ "flaky" ];
+        # Nested part sometimes fails with "No guest page faults triggered",
+        # passes on retry in the same run:
+        # https://github.com/bjackman/limmat-kernel-nix/actions/runs/36968351376
+        save_restore_pf_stress_test.tags = [ "flaky" ];
       };
       x86 = {
         # It prints SKIP but returns an error.
