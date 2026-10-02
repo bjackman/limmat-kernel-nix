@@ -55,9 +55,9 @@ let
         ksft_mremap_sh.tags = [ "lk-broken" ];
         ksft_vma_merge_sh.tags = [ "lk-broken" ];
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/23900155339#user-content-tr-BFu3lw-r0s3
-        ksft_userfaultfd_sh = [ "flaky" ];
+        ksft_userfaultfd_sh.tags = [ "flaky" ];
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/25218560161/job/73944777420
-        ksft_mkdirty_sh = [ "lk-broken" ];
+        ksft_mkdirty_sh.tags = [ "lk-broken" ];
       };
       kvm = {
         dirty_log_test.tags = [ "slow" ]; # It's not THAT slow
@@ -97,7 +97,7 @@ let
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19393418421/job/55490088190
         # Passed:
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19392874394/job/55488849774
-        msrs_test = [ "flaky" ];
+        msrs_test.tags = [ "flaky" ];
         # Failed:
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/19392874394/job/55488849774
         # Passed:
@@ -124,12 +124,12 @@ let
         test_shadow_stack_64.tags = [ "lk-broken" ];
         # This one goes into an infinite loop but only in GHA:
         # https://github.com/bjackman/limmat-kernel-nix/actions/runs/20803287757/job/59752430820#step:8:32
-        mov_ss_trap_32 = [ "lk-broken" ];
-        mov_ss_trap_64 = [ "lk-broken" ];
+        mov_ss_trap_32.tags = [ "lk-broken" ];
+        mov_ss_trap_64.tags = [ "lk-broken" ];
         # On 32-bit kernels this fails, even when dmesg reports "NX (Execute
         # Disable) protection: active" (requires PAE). Seems bad but no time to
         # debug it.
-        nx_stack_32 = [ "lk-broken" ];
+        nx_stack_32.tags = [ "lk-broken" ];
         # Under ptrace, out-of-range x32 syscall numbers leave the tracer's
         # return value in place instead of getting -ENOSYS:
         #   [FAIL] x32 syscall 0:-64 returned -9999, but it should have
